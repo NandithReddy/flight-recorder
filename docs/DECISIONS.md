@@ -268,11 +268,75 @@ On the demo, this auto-proposes `output_contains("18.33")` — and the degraded
 agent, which skips the calculator and answers "roughly 25%", fails it without
 anyone writing a line of test code.
 
-**Matching is exact substring, deliberately.** Normalising digits would make
-`1.2` match inside `1,200,000` and manufacture a verification the run never
-performed. A false negative here costs one un-proposed assertion; a false
-positive silently certifies a hallucinated number.
-
 The same analysis is shown at freeze time as verified/unchecked claims, which is
 useful on its own — it tells you how much of an answer the agent actually
 checked.
+
+**Superseded in part by D-021**: presence in a tool output turned out not to be
+sufficient, and the matching rule changed from substring to whole-token.
+
+---
+
+### D-020 · Ollama is the default provider; no API key is required to run this
+
+The project runs end to end on local models with zero external spend. A Claude
+subscription does not grant API access — those are separately billed products —
+and a harness whose development requires metered inference is a harness that
+does not get developed.
+
+For a *regression* harness the subject model's intelligence matters much less
+than it appears to. What the fixtures need is runs that call tools and can
+plausibly get worse. An 8B model regresses just as legibly as a frontier one,
+and does it for free, unlimited, offline.
+
+The adapter talks to Ollama's native `/api/chat` rather than its
+OpenAI-compatible endpoint. The native shape reports true prompt and eval token
+counts, and writing a second adapter against a genuinely different wire format
+is what proves the `ModelClient` seam is real rather than an OpenAI schema in
+disguise.
+
+Local inference reports `costUsd: 0` with `costUnknown: false` — it is unmetered,
+not unpriced, and those are different claims. The gateway adapter stays for
+anyone who wants hosted models; it is now one row of the matrix rather than the
+foundation.
+
+**This also gave the matrix its second real axis.** Local versus hosted moves
+quality, cost and latency simultaneously, which is exactly the three-way
+tradeoff the report exists to make visible. Before this, the matrix could only
+vary prompts.
+
+---
+
+### D-021 · Verification follows provenance, not presence
+
+Supersedes the matching rule in D-019. A tool's output counts as evidence only
+if the tool's own inputs were themselves grounded — in the user's question, or
+in an earlier grounded tool output. Otherwise the tool faithfully computed
+something from numbers the model invented, and its output launders a
+hallucination into an apparently checked fact.
+
+**This was not a hypothetical.** Asked for quarterly growth, `llama3.2:3b`
+skipped the lookup entirely, called the calculator with `450` and `500` — values
+it made up — and answered "11.11%". Arithmetically correct. Completely
+fabricated. And under D-019's presence-only rule, `11.11` appeared in the
+calculator's output, so the proposer would have pinned it as a verified fact.
+
+The same question to `qwen2.5:7b` produced a correct 18.33% via a real lookup.
+Under the provenance rule the first run has zero grounded literals and the
+second has one, which is the right answer to a question the previous rule got
+backwards.
+
+Two supporting changes:
+
+- **Whole-token matching, not substring.** `1,420,000` and `1420000` normalise
+  to the same number, so comma variants match; but `1.2` no longer matches
+  inside `1,200,000`, because tokens are compared whole. This is strictly better
+  than D-019's rule in both directions.
+- **Small integers are exempt from grounding.** The `100` in a percentage is
+  arithmetic scaffolding, not a claim about the world. The ceiling is 100 and
+  configurable. `450` and `500` are above it and are correctly treated as
+  claims.
+
+Worth keeping for the writeup: the flaw was invisible against the scripted mock
+and surfaced within minutes of pointing the harness at a real small model. The
+fixture that looked adequate was testing the fixture.

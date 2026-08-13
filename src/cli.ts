@@ -11,6 +11,14 @@ import { makeConfig } from "./core/ids.ts";
 import { SqliteTraceStore } from "./store/sqlite-store.ts";
 import { record, replay } from "./replay/replay.ts";
 import { createMockClient, type MockQuality } from "./provider/mock.ts";
+import { createGatewayClient } from "./provider/ai-gateway.ts";
+import {
+  createOllamaClient,
+  DEFAULT_OLLAMA_HOST,
+  isOllamaRunning,
+  listOllamaModels,
+  OllamaUnavailableError,
+} from "./provider/ollama.ts";
 import { CACHE_MULTIPLIERS, PRICES, priceFor } from "./provider/pricing.ts";
 import { analyzeOutput, evaluateAll } from "./freeze/assertions.ts";
 import { freeze } from "./freeze/freezer.ts";
@@ -44,14 +52,36 @@ function parseFlags(args: string[]): { positional: string[]; flags: Map<string, 
   return { positional, flags };
 }
 
-function configFor(quality: MockQuality) {
+const DEFAULT_LOCAL_MODEL = "llama3.2:3b";
+
+interface Target {
+  provider: string;
+  model: string;
+  quality: MockQuality;
+}
+
+function targetFrom(flags: Map<string, string>, quality: MockQuality): Target {
+  const provider = flags.get("provider") ?? "mock";
+  const model =
+    flags.get("model") ?? (provider === "ollama" ? DEFAULT_LOCAL_MODEL : "demo-model");
+  return { provider, model, quality };
+}
+
+function configFor(target: Target) {
   return makeConfig({
-    provider: "mock",
-    model: "demo-model",
-    promptVersion: quality === "good" ? "v1" : "v2-degraded",
+    provider: target.provider,
+    model: target.model,
+    // Only the mock has a degraded prompt; real providers vary by model.
+    promptVersion: target.provider === "mock" && target.quality === "degraded" ? "v2-degraded" : "v1",
     toolset: ["search", "calculate"],
     temperature: 0,
   });
+}
+
+function clientFor(target: Target) {
+  if (target.provider === "ollama") return createOllamaClient();
+  if (target.provider === "gateway") return createGatewayClient();
+  return createMockClient({ quality: target.quality });
 }
 
 const usd = (n: number) => `$${n.toFixed(6)}`;
@@ -88,16 +118,32 @@ async function main(argv: string[]): Promise<number> {
 
   switch (command) {
     case "record": {
-      const quality = (rest[0] ?? "good") as MockQuality;
+      const { positional, flags } = parseFlags(rest);
+      const quality = (positional[0] ?? "good") as MockQuality;
+      const target = targetFrom(flags, quality);
+
+      if (target.provider === "ollama" && !(await isOllamaRunning())) {
+        throw new OllamaUnavailableError(DEFAULT_OLLAMA_HOST);
+      }
+
       const { trace } = await record({
         agent: demoAgent,
-        client: createMockClient({ quality }),
-        config: configFor(quality),
+        client: clientFor(target),
+        config: configFor(target),
         input: DEMO_QUESTION,
         store,
-        tags: [quality],
+        tags: target.provider === "mock" ? [quality] : [target.provider],
       });
       printTrace(trace);
+      return 0;
+    }
+
+    case "models": {
+      if (!(await isOllamaRunning())) throw new OllamaUnavailableError(DEFAULT_OLLAMA_HOST);
+      const models = await listOllamaModels();
+      console.log(bold(`local models  ${dim(DEFAULT_OLLAMA_HOST)}`));
+      for (const model of models) console.log(`  ${model}`);
+      if (models.length === 0) console.log(dim("  none — pull one with `ollama pull llama3.2:3b`"));
       return 0;
     }
 
@@ -129,14 +175,17 @@ async function main(argv: string[]): Promise<number> {
     }
 
     case "replay": {
-      const id = rest[0];
-      if (!id) throw new Error("usage: fr replay <trace-id> [good|degraded]");
-      const quality = (rest[1] ?? "degraded") as MockQuality;
+      const { positional, flags } = parseFlags(rest);
+      const id = positional[0];
+      if (!id) throw new Error("usage: fr replay <trace-id> [good|degraded] [--provider ollama]");
+      const quality = (positional[1] ?? "degraded") as MockQuality;
+      const target = targetFrom(flags, quality);
+
       const { baseline, candidate } = await replay({
         traceId: id,
         agent: demoAgent,
-        client: createMockClient({ quality }),
-        config: configFor(quality),
+        client: clientFor(target),
+        config: configFor(target),
         store,
       });
       console.log(bold("baseline"));

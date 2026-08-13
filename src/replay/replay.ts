@@ -18,6 +18,14 @@ import type { TraceStore } from "../store/types.ts";
 export interface AgentContext {
   recorder: Recorder;
   client: ModelClient;
+  /**
+   * The model to call, taken from the RunConfig.
+   *
+   * An agent must not hardcode this: the model is half of what a config varies,
+   * so an agent that names its own model silently ignores the matrix and every
+   * row of the report compares the same thing against itself.
+   */
+  model: string;
 }
 
 /** What an agent must expose to be recordable and replayable. */
@@ -71,7 +79,11 @@ export async function record(options: RunOptions): Promise<RecordResult> {
   let output: unknown = null;
   let error: { message: string; type?: string } | null = null;
   try {
-    output = await options.agent.run(options.input, { recorder, client });
+    output = await options.agent.run(options.input, {
+      recorder,
+      client,
+      model: options.config.model,
+    });
   } catch (caught) {
     error =
       caught instanceof Error

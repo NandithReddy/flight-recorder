@@ -27,7 +27,12 @@ async function slowLookup(input: { key: string }): Promise<string> {
 }
 
 /** Runs entirely inside the caller's scope, so its spans nest under it. */
-async function researchSubAgent(scope: SpanScope, client: AgentContext["client"], topic: string) {
+async function researchSubAgent(
+  scope: SpanScope,
+  client: AgentContext["client"],
+  model: string,
+  topic: string,
+) {
   const scoped = scope.wrapModel(client);
   const readSource = scope.wrapTool("read_source", async (input: { url: string }) => {
     await sleep(2);
@@ -35,14 +40,14 @@ async function researchSubAgent(scope: SpanScope, client: AgentContext["client"]
   });
 
   const plan = await scoped.generate({
-    model: "demo-model",
+    model,
     messages: [{ role: "user", content: `Plan research on ${topic}` }],
   });
 
   await readSource({ url: "https://example.invalid/doc" });
 
   const summary = await scoped.generate({
-    model: "demo-model",
+    model,
     messages: [{ role: "user", content: `Summarise: ${plan.text}` }],
   });
 
@@ -54,10 +59,11 @@ export const nestedAgent: RecordableAgent<string, string> = {
 
   async run(topic: string, ctx: AgentContext): Promise<string> {
     const client = ctx.recorder.wrapModel(ctx.client);
+    const model = ctx.model;
 
     // Root-level model call.
     await client.generate({
-      model: "demo-model",
+      model,
       messages: [{ role: "user", content: topic }],
     });
 
@@ -72,7 +78,7 @@ export const nestedAgent: RecordableAgent<string, string> = {
       name: "delegate",
       input: { topic },
     });
-    const findings = await researchSubAgent(delegation.scope, ctx.client, topic);
+    const findings = await researchSubAgent(delegation.scope, ctx.client, model, topic);
     delegation.end({ output: findings });
 
     return findings;

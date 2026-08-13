@@ -23,7 +23,7 @@ Requires Node 22.6+ (25 recommended — it runs TypeScript directly).
 
 ```bash
 npm install
-npm test          # 67 tests
+npm test          # 70 tests
 npm run typecheck
 ```
 
@@ -37,8 +37,8 @@ npm run fr -- replay <trace-id> degraded   # re-run under a worse config
 npm run fr -- check <case-id> <new-trace>  # evaluate the case
 ```
 
-No API key needed. Phases 0–3 run against a deterministic mock provider that
-costs nothing.
+No API key needed, at any phase. The default provider is a deterministic mock;
+add `--provider ollama` for real local models.
 
 ## What the demo shows
 
@@ -75,7 +75,7 @@ reviewed in a pull request like any other test). See
 
 | Command | Does |
 |---|---|
-| `fr record [good\|degraded]` | Run the demo agent, store the trace |
+| `fr record [good\|degraded]` | Run the demo agent (`--provider mock\|ollama\|gateway`, `--model`) |
 | `fr ls [limit]` | List stored traces |
 | `fr show <trace-id>` | Print one trace with its spans |
 | `fr replay <trace-id> [quality]` | Re-run a trace's input under a new config |
@@ -83,14 +83,43 @@ reviewed in a pull request like any other test). See
 | `fr freeze <trace-id>` | Promote a trace to a test case (`--suite`, `--drop`, `--tag`) |
 | `fr cases [--suite name]` | List frozen cases |
 | `fr check <case-id> <trace-id>` | Evaluate a case's assertions (tier 1 only) |
+| `fr models` | List locally available Ollama models |
 | `fr price [YYYY-MM-DD]` | Cost table, with promotional rates resolved |
 | `fr stats` | Store size and dedupe savings |
 
-## Using a real provider
+## Real models, no API key
 
-Phases 0–3 need no key. When you want real model calls, copy `.env.example` to
-`.env` and set `AI_GATEWAY_API_KEY` — one key reaches every provider, which is
-what makes a cross-vendor config matrix cheap to run.
+The whole project runs on local models. No key, no metered spend, offline.
+
+```bash
+brew install ollama && ollama serve &
+ollama pull llama3.2:3b
+ollama pull qwen2.5:7b
+
+npm run fr -- models                                  # list what's available
+npm run fr -- record --provider ollama --model qwen2.5:7b
+```
+
+A hosted provider is still supported for anyone who wants one — set
+`AI_GATEWAY_API_KEY` (see `.env.example`) and pass `--provider gateway`. It is
+one row of the matrix, not a prerequisite.
+
+### What two local models already show
+
+Same agent, same question, same prompt:
+
+| | llama3.2:3b | qwen2.5:7b |
+|---|---|---|
+| Answer | **11.11%** | **18.33%** |
+| Looked the figures up? | no | yes |
+| Numbers used | `450`, `500` — invented | 1,200,000 → 1,420,000 |
+| Wall time | **2.2s** | 10.4s |
+| Tokens | **539** | 1,105 |
+| Grounded claims | **0 of 3** | 1 of 1 |
+
+The 3B model is 4.6× faster, uses half the tokens, and is confidently wrong.
+Every resource metric prefers it. That is the entire argument for measuring
+quality and cost together.
 
 ## Observability
 
@@ -107,7 +136,7 @@ telemetry pipeline may sample and drop, and a test fixture may not. See
 ```
 src/core/       the seven objects everything is built from
 src/otel/       GenAI semantic conventions + test tracing
-src/provider/   ModelClient seam, mock client, AI Gateway adapter, cost table
+src/provider/   ModelClient seam, mock + Ollama + AI Gateway adapters, cost table
 src/recorder/   span capture, redaction, sampling, trace assembly
 src/store/      trace storage — SQLite (default) and filesystem
 src/freeze/     assertion proposal, evaluation, suite files
@@ -124,7 +153,8 @@ docs/           spec, phase checklist, decision log
 
 One thing is still open, and it is not delegable: the ~200 human labels the
 judge calibration depends on in phase 4. Without them the judge is an LLM
-graded by an LLM, which is exactly the failure that tier exists to catch.
+graded by an LLM, which is exactly the failure that tier exists to catch. The
+labelling itself needs no API key.
 
-The gateway adapter also has not yet made a real API call — no key is
-configured. First task of phase 3.
+The hosted gateway adapter has still never made a real API call — it is unit
+tested but unexercised. That is deliberate: nothing in the project requires it.

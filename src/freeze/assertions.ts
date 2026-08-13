@@ -125,45 +125,118 @@ export function evaluateAll(assertions: Assertion[], trace: Trace): AssertionRes
 
 export interface OutputLiteral {
   value: string;
-  /** The tool whose output also contained this literal, if any. */
+  /** The tool whose grounded output contained this literal, if any. */
   verifiedBy: string | null;
 }
 
+export interface GroundingOptions {
+  /**
+   * Integers at or below this are treated as arithmetic scaffolding rather than
+   * claims about the world — the `100` in a percentage, a `2` in a doubling.
+   * Real metrics are larger; invented ones (`450`, `500`) are not exempt.
+   */
+  constantCeiling?: number;
+}
+
 /**
- * Splits the literals in the final answer into those a tool actually produced
- * and those the model asserted on its own.
- *
- * This is the highest-signal thing we can compute from a trace without a judge.
- * A number in the answer that also appears in a tool result is a claim the run
- * checked; a number that appears nowhere else is a claim the model made up, and
- * that distinction is exactly the failure this harness exists to catch.
+ * Canonical numeric form: `1,420,000` and `1420000` are the same number, and a
+ * trailing separator belongs to the prose rather than the value.
  */
-export function analyzeOutput(trace: Trace): OutputLiteral[] {
+function normalizeNumber(token: string): string {
+  return token.replace(/,+$/, "").replaceAll(",", "");
+}
+
+/**
+ * Numbers appearing as whole tokens.
+ *
+ * Whole tokens, not substrings. Substring matching would let `1.2` match inside
+ * `1,200,000` and certify a claim the run never made; comparing normalised
+ * tokens catches the comma variants without inventing that match.
+ */
+function numberTokens(text: string): Set<string> {
+  const out = new Set<string>();
+  for (const match of text.matchAll(/-?\d[\d,]*(?:\.\d+)?/g)) out.add(normalizeNumber(match[0]));
+  return out;
+}
+
+function isSubstantial(token: string, ceiling: number): boolean {
+  const value = Math.abs(Number(token));
+  if (Number.isNaN(value)) return true;
+  return !Number.isInteger(value) || value > ceiling;
+}
+
+/**
+ * Splits the literals in the final answer into those the run actually
+ * established and those the model asserted on its own.
+ *
+ * Verification has to follow provenance, not just presence. A tool's output is
+ * evidence only if the tool's own inputs were themselves grounded — otherwise
+ * the tool faithfully computed something from numbers the model invented, and
+ * its output launders a hallucination into an apparently checked fact.
+ *
+ * This is not hypothetical. A 3B model asked for quarterly growth skipped the
+ * lookup entirely, called the calculator with `450` and `500`, and answered
+ * "11.11%" — arithmetically correct, entirely fabricated, and indistinguishable
+ * from a real answer to a presence-only check.
+ */
+export function analyzeOutput(trace: Trace, options: GroundingOptions = {}): OutputLiteral[] {
+  const ceiling = options.constantCeiling ?? 100;
   const text = outputText(trace);
 
   const candidates = new Set<string>();
   for (const match of text.matchAll(/-?\d[\d,]*(?:\.\d+)?/g)) {
+    // Trailing separators belong to the prose, not the number ("450, and ...").
+    const token = match[0].replace(/,+$/, "");
     // Single digits are too common to be evidence of anything.
-    if (match[0].length >= 2) candidates.add(match[0]);
+    if (token.length >= 2) candidates.add(token);
   }
   for (const match of text.matchAll(/"([^"]{3,60})"/g)) {
     if (match[1]) candidates.add(match[1]);
   }
 
-  const toolOutputs: { name: string; text: string }[] = trace.spans
-    .filter((span: Span) => span.kind === "tool")
-    .map((span) => ({
-      name: span.name,
-      text: typeof span.output === "string" ? span.output : JSON.stringify(span.output ?? null),
-    }));
+  // Anything in the question came from outside the model, so it is grounded.
+  const grounded = new Map<string, string>();
+  for (const token of numberTokens(outputTextOf(trace.input))) grounded.set(token, "input");
 
-  return [...candidates].map((value) => ({
-    value,
-    // Deliberately an exact substring match. Normalising digits would make
-    // "1.2" match inside "1,200,000" and manufacture verification that the run
-    // never did — a false positive here is far worse than a false negative.
-    verifiedBy: toolOutputs.find((tool) => tool.text.includes(value))?.name ?? null,
-  }));
+  const groundedText: { name: string; text: string }[] = [];
+
+  for (const span of trace.spans) {
+    if (span.kind !== "tool") continue;
+
+    const inputText = outputTextOf(span.input);
+    const outputStr = outputTextOf(span.output);
+
+    // Every substantial number the model handed this tool must already be
+    // grounded, or the tool is computing over invented values.
+    const needed = [...numberTokens(inputText)].filter((token) =>
+      isSubstantial(token, ceiling),
+    );
+    const isGrounded = needed.every((token) => grounded.has(token));
+    if (!isGrounded) continue;
+
+    for (const token of numberTokens(outputStr)) {
+      if (!grounded.has(token)) grounded.set(token, span.name);
+    }
+    groundedText.push({ name: span.name, text: outputStr });
+  }
+
+  return [...candidates].map((value) => {
+    const normalized = normalizeNumber(value);
+    const byNumber = grounded.get(normalized);
+    if (byNumber !== undefined && byNumber !== "input") return { value, verifiedBy: byNumber };
+
+    // Non-numeric literals fall back to presence in a grounded tool output.
+    if (byNumber === undefined && !/^\-?\d/.test(value)) {
+      const source = groundedText.find((tool) => tool.text.includes(value));
+      if (source) return { value, verifiedBy: source.name };
+    }
+
+    return { value, verifiedBy: null };
+  });
+}
+
+function outputTextOf(value: unknown): string {
+  return typeof value === "string" ? value : JSON.stringify(value ?? null);
 }
 
 // ---------------------------------------------------------------------------

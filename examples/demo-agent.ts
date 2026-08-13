@@ -40,8 +40,32 @@ const KNOWLEDGE_BASE: Record<string, string> = {
     "Q3 monthly active users: 1,200,000. Q4 monthly active users: 1,420,000.",
 };
 
+/**
+ * Keyword-overlap lookup rather than an exact key match.
+ *
+ * The exact match was fine against a scripted mock, which always sent the same
+ * string. A real model phrases the query however it likes — "active user
+ * growth", "MAU last quarter" — and an exact match returns nothing, so the
+ * agent gets no data and the run fails for reasons that have nothing to do with
+ * the model's ability. A fixture that only works with one phrasing is testing
+ * the fixture.
+ */
 function search(input: { query: string }): string {
-  return KNOWLEDGE_BASE[input.query.toLowerCase()] ?? "No matching records found.";
+  const words = new Set(
+    input.query
+      .toLowerCase()
+      .split(/[^a-z0-9]+/)
+      .filter((word) => word.length > 2),
+  );
+
+  let best: { entry: string; score: number } | null = null;
+  for (const [key, entry] of Object.entries(KNOWLEDGE_BASE)) {
+    const keyWords = key.split(" ");
+    const score = keyWords.filter((word) => words.has(word)).length / keyWords.length;
+    if (score > 0 && (best === null || score > best.score)) best = { entry, score };
+  }
+
+  return best ? best.entry : "No matching records found.";
 }
 
 /**
@@ -117,8 +141,29 @@ function calculate(input: { expression: string }): string {
 // Agent
 // ---------------------------------------------------------------------------
 
-const SYSTEM_PROMPT =
-  "You are a metrics analyst. Verify every number with a tool before reporting it.";
+/**
+ * Written against a real model, not a scripted one.
+ *
+ * The first version — "verify every number with a tool" — was enough for the
+ * mock, which followed a script. A real 3B model read it and called `calculate`
+ * with `(100 * (active_users_last_quarter - ...))`: variable names it had
+ * invented, for values it had never looked up. The prompt never said where
+ * numbers come from or that expressions must contain literals.
+ *
+ * This is the version a careful engineer writes after seeing that trace. It is
+ * deliberately not tuned for any one model — which model can follow it is a
+ * result the matrix should report, not something to prompt around.
+ */
+const SYSTEM_PROMPT = [
+  "You are a metrics analyst.",
+  "",
+  "Workflow, in order:",
+  "1. Call `search` to retrieve the figures you need. Never answer from memory.",
+  "2. Call `calculate` to derive any percentage or change, passing an expression",
+  "   built only from the literal numbers `search` returned. Expressions must",
+  "   contain digits and operators only — never variable names or placeholders.",
+  "3. State the answer, quoting the figures you retrieved.",
+].join("\n");
 
 const MAX_STEPS = 8;
 
@@ -138,7 +183,7 @@ export const demoAgent: RecordableAgent<string, string> = {
 
     for (let step = 0; step < MAX_STEPS; step += 1) {
       const response = await ctx.client.generate({
-        model: "demo-model",
+        model: ctx.model,
         messages,
         tools: TOOL_SPECS,
         temperature: 0,

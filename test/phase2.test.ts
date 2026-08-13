@@ -178,6 +178,45 @@ describe("output analysis", () => {
     expect(literals.every((l) => l.verifiedBy === null)).toBe(true);
   });
 
+  it("refuses to ground a tool output computed from invented inputs", async () => {
+    // Reproduces a real llama3.2:3b run: it skipped the lookup, called the
+    // calculator with numbers it made up, and reported the result. The
+    // arithmetic is correct and the figure genuinely came out of a tool — but
+    // nothing established the inputs, so none of it is evidence.
+    const good = await recordGood();
+    const fabricated: Trace = {
+      ...good,
+      output: "Active users grew by 11.11%, from 450 to 500.",
+      spans: [
+        {
+          ...good.spans.find((s) => s.name === "calculate")!,
+          input: { expression: "(500 - 450) / 450 * 100" },
+          output: "11.11",
+        },
+      ],
+    };
+
+    const literals = analyzeOutput(fabricated);
+    expect(literals.find((l) => l.value === "11.11")?.verifiedBy).toBeNull();
+    expect(literals.find((l) => l.value === "450")?.verifiedBy).toBeNull();
+    expect(literals.every((l) => l.verifiedBy === null)).toBe(true);
+  });
+
+  it("grounds a tool output whose inputs trace back to a lookup", async () => {
+    // The same shape, done correctly: search establishes the figures, and the
+    // calculator only ever sees numbers search produced.
+    const good = await recordGood();
+    expect(analyzeOutput(good).find((l) => l.value === "18.33")?.verifiedBy).toBe("calculate");
+  });
+
+  it("treats small integers as arithmetic scaffolding, not claims", async () => {
+    // The `100` in a percentage must not break the chain; `450` must.
+    const good = await recordGood();
+    const calculate = good.spans.find((s) => s.name === "calculate")!;
+    expect(String(calculate.input)).toBeTruthy();
+    expect(analyzeOutput(good).find((l) => l.value === "18.33")?.verifiedBy).toBe("calculate");
+  });
+
   it("does not manufacture verification by normalising digits", async () => {
     // "1.2" must not be treated as verified just because the tool output
     // contains "1,200,000" — that would invent a check the run never made.
