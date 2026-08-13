@@ -262,7 +262,7 @@ function calculate(input: { expression: string }): string {
  * deliberately not tuned for any one model — which model can follow it is a
  * result the matrix should report, not something to prompt around.
  */
-const SYSTEM_PROMPT = [
+const PROMPT_V1 = [
   "You are a metrics analyst.",
   "",
   "Workflow, in order:",
@@ -272,6 +272,18 @@ const SYSTEM_PROMPT = [
   "   contain digits and operators only — never variable names or placeholders.",
   "3. State the answer, quoting the figures you retrieved.",
 ].join("\n");
+
+/**
+ * The prompt this project started with, kept as a variant to regress against.
+ *
+ * It is not a strawman — it is a perfectly reasonable first draft, and it is
+ * what a real prompt looks like before someone has watched it fail. It never
+ * says where numbers come from or that expressions must contain literals, and
+ * that omission is exactly what a regression suite should be able to detect.
+ */
+const PROMPT_V0 = "You are a metrics analyst. Verify every number with a tool before reporting it.";
+
+export const PROMPTS: Record<string, string> = { v1: PROMPT_V1, v0: PROMPT_V0 };
 
 const MAX_STEPS = 8;
 
@@ -285,7 +297,7 @@ export const demoAgent: RecordableAgent<string, string> = {
     };
 
     const messages: Message[] = [
-      { role: "system", content: SYSTEM_PROMPT },
+      { role: "system", content: PROMPTS[ctx.promptVersion] ?? PROMPT_V1 },
       { role: "user", content: question },
     ];
 

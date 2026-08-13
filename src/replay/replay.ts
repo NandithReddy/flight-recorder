@@ -25,6 +25,13 @@ export interface AgentContext {
    * row of the report compares the same thing against itself.
    */
   model: string;
+  /**
+   * Which prompt variant to use, from the RunConfig.
+   *
+   * Same reasoning as `model`: an agent that hardcodes its prompt makes the
+   * matrix unable to vary the thing that regresses most often in practice.
+   */
+  promptVersion: string;
 }
 
 /** What an agent must expose to be recordable and replayable. */
@@ -85,6 +92,7 @@ export async function record(options: RunOptions): Promise<RecordResult> {
       recorder,
       client,
       model: options.config.model,
+      promptVersion: options.config.promptVersion,
     });
   } catch (caught) {
     error =

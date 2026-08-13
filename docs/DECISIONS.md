@@ -541,3 +541,54 @@ regression. On real data it now reports, unprompted:
 That is llama3.2:3b's entire failure mode — skip the lookup, do arithmetic on
 invented numbers — stated in one sentence across 20 of 25 cases, with nobody
 reading a trace.
+
+---
+
+### D-035 · A pair with an empty side never reaches the labeller
+
+Found by labelling for real: 28 of the first 49 pairs had a blank candidate,
+because that run errored and produced nothing.
+
+Those pairs are not judgement calls. "An answer beats no answer" is obvious to
+the human and equally obvious to the judge, so queueing them does two bad
+things: it spends a person's attention on freebies, and it **inflates kappa** —
+human and judge agree perfectly on every one of them for reasons that have
+nothing to do with how well the judge judges.
+
+The pool already skipped *identical* pairs for exactly this reason. An empty
+side is the same problem and was simply missed. An errored run is tier 1's
+job — `no_error` catches it without an opinion.
+
+**The error rates that produced them are worth keeping:**
+
+| model | errored |
+|---|---|
+| qwen2.5:7b | 0 / 60 |
+| llama3.2:3b | 13 / 30 |
+| llama3.1:8b | 26 / 30 |
+
+The larger llama fails nearly nine times in ten on this task. Bigger is not
+better, and a harness that only reported averages would have hidden it.
+
+---
+
+### D-036 · Prompt version is a matrix axis, because it is the axis that regresses
+
+`RunConfig.promptVersion` existed from phase 0 but the demo agent ignored it, so
+the matrix could only vary models. That is the wrong half: in practice prompts
+regress far more often than models change.
+
+It is also where the useful calibration pairs live. A weaker prompt on a
+reliable model produces *complete but worse* answers — genuine judgement calls,
+where a model swap tends to produce either an identical answer or a crash.
+`--prompts v1,v0` now crosses prompt variants over models and temperatures.
+
+The v0 variant is not a strawman. It is the prompt this project actually started
+with, and it is what a real prompt looks like before someone has watched it
+fail: it never says where numbers come from, or that expressions must contain
+literals rather than variable names.
+
+**A finding from running it:** qwen2.5:7b scores 83% under v0 and 82% under v1 —
+the prompt change that made llama3.2:3b invent variable names barely touches it.
+Prompt sensitivity is model-specific, which is an argument for testing the pair
+rather than either alone.

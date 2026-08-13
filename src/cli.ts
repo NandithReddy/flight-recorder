@@ -84,6 +84,7 @@ interface Target {
   model: string;
   quality: MockQuality;
   temperature?: number;
+  promptVersion?: string;
 }
 
 function targetFrom(flags: Map<string, string>, quality: MockQuality): Target {
@@ -91,15 +92,23 @@ function targetFrom(flags: Map<string, string>, quality: MockQuality): Target {
   const model =
     flags.get("model") ?? (provider === "ollama" ? DEFAULT_LOCAL_MODEL : "demo-model");
   const temp = flags.get("temp");
-  return { provider, model, quality, temperature: temp === undefined ? 0 : Number(temp) };
+  return {
+    provider,
+    model,
+    quality,
+    temperature: temp === undefined ? 0 : Number(temp),
+    ...(flags.has("prompt") ? { promptVersion: flags.get("prompt")! } : {}),
+  };
 }
 
 function configFor(target: Target) {
   return makeConfig({
     provider: target.provider,
     model: target.model,
-    // Only the mock has a degraded prompt; real providers vary by model.
-    promptVersion: target.provider === "mock" && target.quality === "degraded" ? "v2-degraded" : "v1",
+    promptVersion:
+      target.promptVersion ??
+      // The mock's "degraded" flag is its own prompt variant.
+      (target.provider === "mock" && target.quality === "degraded" ? "v2-degraded" : "v1"),
     toolset: ["search", "calculate"],
     temperature: target.temperature ?? 0,
   });
@@ -373,15 +382,21 @@ async function main(argv: string[]): Promise<number> {
         .split(",")
         .map((m) => m.trim()) as ReplayMode[];
 
-      // "model@0.7" varies temperature as well as model — both are config.
-      const configs = models.map((entry) => {
+      // "model@0.7" varies temperature as well as model, and --prompts crosses
+      // prompt variants over all of them. Model, temperature and prompt are all
+      // config, so all three belong in the matrix.
+      const prompts = (flags.get("prompts") ?? "v1").split(",").map((p) => p.trim());
+      const configs = models.flatMap((entry) => {
         const [model, temp] = entry.split("@");
-        return configFor({
-          provider,
-          model: model!,
-          quality: "good",
-          temperature: temp === undefined ? 0 : Number(temp),
-        });
+        return prompts.map((promptVersion) =>
+          configFor({
+            provider,
+            model: model!,
+            quality: "good",
+            temperature: temp === undefined ? 0 : Number(temp),
+            promptVersion,
+          }),
+        );
       });
 
       if (provider === "ollama" && !(await isOllamaRunning())) {
@@ -408,6 +423,7 @@ async function main(argv: string[]): Promise<number> {
             model: config.model,
             quality: "good",
             temperature: config.temperature,
+            promptVersion: config.promptVersion,
           }),
         onEvent: (event) => {
           if (event.type === "start" && event.skipped > 0) {
@@ -692,13 +708,16 @@ async function main(argv: string[]): Promise<number> {
       if (suite.cases.length === 0) throw new Error(`Suite "${suite.name}" has no cases.`);
 
       const provider = flags.get("provider") ?? "ollama";
+      // "model@temp#prompt" — every axis a config can vary.
       const parseTarget = (spec: string) => {
-        const [model, temp] = spec.split("@");
+        const [modelAndTemp, promptVersion] = spec.split("#");
+        const [model, temp] = modelAndTemp!.split("@");
         return configFor({
           provider,
           model: model!,
           quality: "good",
           temperature: temp === undefined ? 0 : Number(temp),
+          ...(promptVersion ? { promptVersion } : {}),
         });
       };
 
@@ -842,17 +861,19 @@ async function main(argv: string[]): Promise<number> {
 
   seed                          record every task and freeze each as a case
       --suite <name> --limit N    where to write, how many tasks
+      --prompt <version>          which prompt variant to record with
   matrix                        run every case across every config and mode
       --suite <name>              suite to run (default: default)
       --models a,b@0.7            model ids, optionally with @temperature
+      --prompts v1,v0             prompt variants, crossed with the models
       --modes live,stubbed        which replay modes to run
       --concurrency 2             cells in flight
       --no-resume                 re-run cells that already have attempts
   agents                        list registered agents
 
   report                        compare two configs, with intervals
-      --baseline <model[@temp]>   the side to compare against
-      --candidate <model[@temp]>  the side under test
+      --baseline <model[@temp][#prompt]>   the side to compare against
+      --candidate <model[@temp][#prompt]>  the side under test
       --suite <name> --mode live  which cases, which replay mode
       --set <name>                use that label set's calibrated judge
       --no-judge                  deterministic assertions only

@@ -677,3 +677,39 @@ describe("calibration", () => {
     expect(stored?.n).toBe(30);
   });
 });
+
+describe("label pool quality", () => {
+  it("never queues a pair where one side produced nothing", async () => {
+    const store = new LabelStore(join(root, "labels"));
+    const result = await store.addItems("s", [
+      { task: "t1", baseline: "18.33%", candidate: "" },
+      { task: "t2", baseline: "", candidate: "25%" },
+      { task: "t3", baseline: "   ", candidate: "25%" },
+      { task: "t4", baseline: "18.33%", candidate: "25%" },
+    ]);
+
+    // Only the pair where both models actually answered is a judgement call.
+    expect(result.added).toBe(1);
+    expect(result.skipped).toBe(3);
+    expect(result.set.items[0]!.task).toBe("t4");
+  });
+
+  it("keeps an errored run out of kappa rather than inflating agreement", async () => {
+    // A pool of blanks would produce perfect human/judge agreement for reasons
+    // that say nothing about the judge, so those pairs must never reach it.
+    const store = new LabelStore(join(root, "labels"));
+    const blanks = Array.from({ length: 20 }, (_, i) => ({
+      task: `t${i}`,
+      baseline: `answer ${i}`,
+      candidate: "",
+    }));
+    const real = Array.from({ length: 5 }, (_, i) => ({
+      task: `r${i}`,
+      baseline: `answer ${i}`,
+      candidate: `different answer ${i}`,
+    }));
+
+    const result = await store.addItems("s", [...blanks, ...real]);
+    expect(result.added).toBe(5);
+  });
+});
