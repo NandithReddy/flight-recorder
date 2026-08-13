@@ -9,6 +9,8 @@
  */
 
 import { Recorder } from "../recorder/recorder.ts";
+import { keepEverything, type Sampler, type SamplingDecision } from "../recorder/sampling.ts";
+import type { Redactor } from "../recorder/redact.ts";
 import type { AgentRef, RunConfig, Trace } from "../core/types.ts";
 import type { ModelClient } from "../provider/types.ts";
 import type { TraceStore } from "../store/types.ts";
@@ -32,15 +34,28 @@ export interface RunOptions {
   store?: TraceStore;
   replayOf?: string | null;
   tags?: string[];
+  /** Applied on the way in; defaults to the standard credential ruleset. */
+  redact?: Redactor;
+  /** Decides whether the trace reaches the store. Defaults to keeping all. */
+  sampler?: Sampler;
 }
 
-/** Record one run of an agent, storing the trace if a store is supplied. */
-export async function record(options: RunOptions): Promise<Trace> {
+/**
+ * Record one run of an agent.
+ *
+ * The trace is always returned in full — sampling only decides whether it is
+ * persisted, never whether it is captured. A caller that wants the trace for
+ * this request gets it regardless of the policy.
+ */
+export async function record(
+  options: RunOptions,
+): Promise<Trace & { sampling?: SamplingDecision }> {
   const recorder = new Recorder({
     agent: options.agent.ref,
     config: options.config,
     replayOf: options.replayOf ?? null,
     tags: options.tags ?? [],
+    ...(options.redact ? { redact: options.redact } : {}),
   });
 
   const client = recorder.wrapModel(options.client);
@@ -57,8 +72,11 @@ export async function record(options: RunOptions): Promise<Trace> {
   }
 
   const trace = recorder.finish({ input: options.input, output, error });
-  await options.store?.put(trace);
-  return trace;
+
+  const sampling = (options.sampler ?? keepEverything)(trace);
+  if (sampling.keep) await options.store?.put(trace);
+
+  return Object.assign(trace, { sampling });
 }
 
 export interface ReplayResult {

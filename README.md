@@ -4,9 +4,10 @@ An evaluation and regression harness for LLM agents. It records real agent
 runs, freezes them into replayable test cases, and blocks any change that
 quietly makes the agent worse.
 
-> **Status: phase 0 of 8 — spike complete.** The end-to-end skeleton works:
-> record → store → replay → naive diff. No scoring, no statistics, no CI gate
-> yet. See [docs/PHASES.md](docs/PHASES.md).
+> **Status: phase 1 of 8 complete.** Record → store → replay → naive diff, with
+> OpenTelemetry GenAI spans, credential redaction, sampling, real cost
+> accounting, and a provider adapter for the Vercel AI Gateway. No scoring, no
+> statistics, no CI gate yet. See [docs/PHASES.md](docs/PHASES.md).
 
 ## Why
 
@@ -22,7 +23,7 @@ Requires Node 22.6+ (25 recommended — it runs TypeScript directly).
 
 ```bash
 npm install
-npm test          # 12 tests
+npm test          # 40 tests
 npm run typecheck
 ```
 
@@ -57,17 +58,35 @@ That is the failure mode this project exists to catch.
 | `fr show <trace-id>` | Print one trace with its spans |
 | `fr replay <trace-id> [quality]` | Re-run a trace's input under a new config |
 | `fr diff <baseline> <candidate>` | Naive side-by-side — **not** scoring |
+| `fr price [YYYY-MM-DD]` | Cost table, with promotional rates resolved |
 | `fr stats` | Store size and dedupe status |
+
+## Using a real provider
+
+Phases 0–3 need no key. When you want real model calls, copy `.env.example` to
+`.env` and set `AI_GATEWAY_API_KEY` — one key reaches every provider, which is
+what makes a cross-vendor config matrix cheap to run.
+
+## Observability
+
+The recorder emits OpenTelemetry spans using the GenAI semantic conventions, so
+traces land in any collector you already run. With no OTel SDK registered it is
+a no-op and costs nothing.
+
+The `Trace` object is assembled separately from those spans, on purpose: a
+telemetry pipeline may sample and drop, and a test fixture may not. See
+[DECISIONS D-010](docs/DECISIONS.md).
 
 ## Layout
 
 ```
 src/core/       the seven objects everything is built from
-src/provider/   provider-agnostic ModelClient seam + mock client
-src/recorder/   span capture, redaction, trace assembly
+src/otel/       GenAI semantic conventions + test tracing
+src/provider/   ModelClient seam, mock client, AI Gateway adapter, cost table
+src/recorder/   span capture, redaction, sampling, trace assembly
 src/store/      content-addressed trace storage
 src/replay/     record and replay entrypoints
-examples/       demo agent used as the harness's test subject
+examples/       demo + nested agents used as the harness's test subjects
 docs/           spec, phase checklist, decision log
 ```
 

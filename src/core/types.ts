@@ -20,6 +20,12 @@ export interface Usage {
   inputTokens: number;
   outputTokens: number;
   costUsd: number;
+  /** Tokens served from the provider's prompt cache, billed at a fraction. */
+  cacheReadTokens?: number;
+  /** Tokens written to the prompt cache, billed at a premium. */
+  cacheWriteTokens?: number;
+  /** True when the model was absent from the price table and cost is a floor. */
+  costUnknown?: boolean;
 }
 
 export interface RunError {

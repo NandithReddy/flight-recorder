@@ -14,8 +14,17 @@
     "test:watch": "vitest"
   },
   "devDependencies": {
+    "@opentelemetry/sdk-trace-base": "^2.10.0",
     "@types/node": "^26.2.0",
     "typescript": "^7.0.2",
     "vitest": "^4.1.10"
+  },
+  "dependencies": {
+    "@opentelemetry/api": "^1.9.1",
+    "@opentelemetry/resources": "^2.10.0",
+    "@opentelemetry/sdk-trace-node": "^2.10.0",
+    "@opentelemetry/semantic-conventions": "^1.43.0",
+    "ai": "^7.0.64",
+    "zod": "^4.4.3"
   }
 }

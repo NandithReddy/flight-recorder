@@ -11,6 +11,7 @@ import { makeConfig } from "./core/ids.ts";
 import { FsTraceStore } from "./store/fs-store.ts";
 import { record, replay } from "./replay/replay.ts";
 import { createMockClient, type MockQuality } from "./provider/mock.ts";
+import { CACHE_MULTIPLIERS, PRICES, priceFor } from "./provider/pricing.ts";
 import { DEMO_QUESTION, demoAgent } from "../examples/demo-agent.ts";
 import type { Trace } from "./core/types.ts";
 
@@ -129,6 +130,31 @@ async function main(argv: string[]): Promise<number> {
       return 0;
     }
 
+    case "price": {
+      const at = rest[0] ? new Date(rest[0]) : new Date();
+      if (Number.isNaN(at.getTime())) throw new Error("usage: fr price [YYYY-MM-DD]");
+
+      console.log(bold(`Cost table  ${dim(`as of ${at.toISOString().slice(0, 10)}`)}`));
+      console.log(
+        dim("  model".padEnd(26) + "in $/MTok".padStart(12) + "out $/MTok".padStart(12)),
+      );
+      for (const model of Object.keys(PRICES)) {
+        const p = priceFor(model, at);
+        console.log(
+          `  ${model.padEnd(24)}${p.inputPerMTok.toFixed(2).padStart(12)}${p.outputPerMTok
+            .toFixed(2)
+            .padStart(12)}${p.intro ? dim("  intro") : ""}`,
+        );
+      }
+      console.log(
+        dim(
+          `\n  cache: read ×${CACHE_MULTIPLIERS.read}, write ×${CACHE_MULTIPLIERS.write5m} (5m) / ` +
+            `×${CACHE_MULTIPLIERS.write1h} (1h), applied to the input rate`,
+        ),
+      );
+      return 0;
+    }
+
     case "stats": {
       const s = await store.stats();
       console.log(`traces ${s.traces} · blobs ${s.blobs} · ${(s.bytes / 1024).toFixed(1)} KiB`);
@@ -144,6 +170,7 @@ async function main(argv: string[]): Promise<number> {
   show <trace-id>               print one trace with its spans
   replay <trace-id> [quality]   re-run a trace's input under a new config
   diff <baseline> <candidate>   naive side-by-side (NOT scoring)
+  price [YYYY-MM-DD]            cost table, with promotional rates resolved
   stats                         store size and dedupe status
 `);
       return command ? 1 : 0;

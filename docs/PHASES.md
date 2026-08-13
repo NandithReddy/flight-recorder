@@ -6,8 +6,8 @@ Full rationale for each phase lives in [spec.html](./spec.html).
 | # | Phase | Days | Status |
 |---|-------|------|--------|
 | 00 | Spike | 1–2 | **done** |
-| 01 | Recorder | 3–5 | next |
-| 02 | Store + freezer | 2–3 | |
+| 01 | Recorder | 3–5 | **done** |
+| 02 | Store + freezer | 2–3 | next |
 | 03 | Replayer | 4–6 | |
 | 04 | Scorer | 5–7 | |
 | 05 | Reporter | 3–4 | |
@@ -36,19 +36,36 @@ throws nothing, errors nothing, and reads as fluent English. It is also
 
 ---
 
-## Phase 01 — Recorder — next
+## Phase 01 — Recorder — **done**
 
 **Exit criterion:** a real agent run produces a complete, replayable trace.
 
-- [ ] Replace hand-rolled spans with OpenTelemetry GenAI semantic conventions
-- [ ] Keep the current `Recorder` surface so nothing downstream changes
-- [ ] Real provider adapter (decision pending — see DECISIONS D-002)
-- [ ] Redaction ruleset with tests, applied on the way in
-- [ ] Sampling: configurable rate, but always keep errored and flagged runs
-- [ ] Span nesting verified against a genuinely nested agent
-- [ ] Cost table per provider, replacing the mock's synthetic prices
+- [x] OpenTelemetry GenAI semantic conventions (`src/otel/conventions.ts`)
+- [x] `Recorder` surface preserved — all 12 phase-0 tests pass unchanged
+- [x] Real provider adapter: AI SDK via the Vercel AI Gateway (DECISIONS D-012)
+- [x] Redaction ruleset with tests, applied on the way in
+- [x] Sampling wired into `record()`; errors and flagged runs always kept
+- [x] Span nesting verified against a genuinely nested agent
+- [x] Cost table with cache multipliers and promotional pricing
+- [x] 40 tests passing, `tsc --noEmit` clean
 
-## Phase 02 — Store + freezer
+**Evidence.** `fr price` resolves Sonnet 5 to its promotional $2/$10 today and
+to $3/$15 on 2026-09-01. The nested-agent test asserts a sub-agent's spans
+parent to the delegating span while two concurrent tool calls both parent to the
+root — the case a stack-based recorder gets wrong intermittently.
+
+**What phase 01 caught in its own instrumentation.** A failing span count
+revealed that `AgentContext.client` arrives already wrapped, so an agent
+re-wrapping it recorded two spans per model call and doubled every token and
+cost total — no error, no symptom, just wrong numbers. Fixed in the API rather
+than the test (DECISIONS D-011). Keep this for the phase 07 writeup.
+
+**Live-provider verification is still outstanding.** The gateway adapter is
+tested for credential handling, message conversion, and cost mapping, but has
+not made a real API call — no key is configured yet. First task of phase 02:
+export `AI_GATEWAY_API_KEY` and record one real trace.
+
+## Phase 02 — Store + freezer — next
 
 **Exit criterion:** ten cases created from real traces in under twenty minutes.
 

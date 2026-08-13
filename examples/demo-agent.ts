@@ -144,7 +144,13 @@ export const demoAgent: RecordableAgent<string, string> = {
         temperature: 0,
       });
 
-      messages.push({ role: "assistant", content: response.text });
+      // The assistant turn must carry its tool calls: a real provider rejects a
+      // tool result whose originating call is missing from the turn before it.
+      messages.push({
+        role: "assistant",
+        content: response.text,
+        toolCalls: response.toolCalls,
+      });
 
       if (response.finishReason !== "tool_use" || response.toolCalls.length === 0) {
         return response.text;
@@ -155,7 +161,12 @@ export const demoAgent: RecordableAgent<string, string> = {
         const content = tool
           ? await tool(call.input as never)
           : `No such tool: ${call.name}`;
-        messages.push({ role: "tool", content, toolCallId: call.id });
+        messages.push({
+          role: "tool",
+          content,
+          toolCallId: call.id,
+          toolName: call.name,
+        });
       }
     }
 

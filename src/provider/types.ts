@@ -10,11 +10,23 @@ import type { Usage } from "../core/types.ts";
 
 export type Role = "system" | "user" | "assistant" | "tool";
 
+/**
+ * A turn in the conversation.
+ *
+ * `toolCalls` on an assistant turn is not optional bookkeeping — it is the link
+ * between a call and its result. The phase-0 mock ignored history structure and
+ * got away without it; a real provider rejects a tool result whose originating
+ * call is missing from the assistant turn that precedes it.
+ */
 export interface Message {
   role: Role;
   content: string;
-  /** Set on `tool` messages to link the result back to its call. */
+  /** `assistant` turns only: the calls this turn requested. */
+  toolCalls?: ToolCall[];
+  /** `tool` turns only: which call this result answers. */
   toolCallId?: string;
+  /** `tool` turns only: the tool that produced it. */
+  toolName?: string;
 }
 
 export interface ToolSpec {
