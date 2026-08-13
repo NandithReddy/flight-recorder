@@ -8,14 +8,41 @@
  */
 
 import { makeConfig } from "./core/ids.ts";
-import { FsTraceStore } from "./store/fs-store.ts";
+import { SqliteTraceStore } from "./store/sqlite-store.ts";
 import { record, replay } from "./replay/replay.ts";
 import { createMockClient, type MockQuality } from "./provider/mock.ts";
 import { CACHE_MULTIPLIERS, PRICES, priceFor } from "./provider/pricing.ts";
+import { analyzeOutput, evaluateAll } from "./freeze/assertions.ts";
+import { freeze } from "./freeze/freezer.ts";
+import { SuiteStore } from "./freeze/suite.ts";
 import { DEMO_QUESTION, demoAgent } from "../examples/demo-agent.ts";
 import type { Trace } from "./core/types.ts";
 
-const store = new FsTraceStore();
+const store = new SqliteTraceStore();
+const suites = new SuiteStore();
+
+/** Minimal flag parsing: `--name value` and `--name`. */
+function parseFlags(args: string[]): { positional: string[]; flags: Map<string, string> } {
+  const positional: string[] = [];
+  const flags = new Map<string, string>();
+
+  for (let i = 0; i < args.length; i += 1) {
+    const arg = args[i]!;
+    if (!arg.startsWith("--")) {
+      positional.push(arg);
+      continue;
+    }
+    const name = arg.slice(2);
+    const next = args[i + 1];
+    if (next !== undefined && !next.startsWith("--")) {
+      flags.set(name, next);
+      i += 1;
+    } else {
+      flags.set(name, "true");
+    }
+  }
+  return { positional, flags };
+}
 
 function configFor(quality: MockQuality) {
   return makeConfig({
@@ -30,6 +57,9 @@ function configFor(quality: MockQuality) {
 const usd = (n: number) => `$${n.toFixed(6)}`;
 const dim = (s: string) => `\x1b[2m${s}\x1b[0m`;
 const bold = (s: string) => `\x1b[1m${s}\x1b[0m`;
+const red = (s: string) => `\x1b[31m${s}\x1b[0m`;
+const green = (s: string) => `\x1b[32m${s}\x1b[0m`;
+const yellow = (s: string) => `\x1b[33m${s}\x1b[0m`;
 
 function printTrace(trace: Trace): void {
   console.log(bold(trace.id));
@@ -130,6 +160,114 @@ async function main(argv: string[]): Promise<number> {
       return 0;
     }
 
+    case "freeze": {
+      const { positional, flags } = parseFlags(rest);
+      const id = positional[0];
+      if (!id) throw new Error("usage: fr freeze <trace-id> [--suite name] [--drop 3,5] [--tag p0]");
+
+      const trace = await store.get(id);
+      if (!trace) throw new Error(`No trace with id ${id}`);
+
+      const drop = (flags.get("drop") ?? "")
+        .split(",")
+        .map((n) => Number.parseInt(n.trim(), 10))
+        .filter((n) => Number.isInteger(n) && n > 0);
+
+      const tags = (flags.get("tag") ?? "").split(",").map((t) => t.trim()).filter(Boolean);
+
+      // Show what the run actually verified before showing the assertions.
+      const literals = analyzeOutput(trace);
+      const checked = literals.filter((l) => l.verifiedBy !== null);
+      const unchecked = literals.filter((l) => l.verifiedBy === null);
+
+      console.log(bold("claims in the answer"));
+      for (const literal of checked) {
+        console.log(`  ${green("verified")}  ${literal.value}  ${dim(`from ${literal.verifiedBy}`)}`);
+      }
+      for (const literal of unchecked) {
+        console.log(`  ${yellow("unchecked")} ${literal.value}  ${dim("no tool produced this")}`);
+      }
+      if (literals.length === 0) console.log(dim("  (no literal claims found)"));
+
+      const { testCase, proposals, dropped } = freeze({ trace, drop, tags });
+
+      console.log();
+      console.log(bold("assertions"));
+      proposals.forEach((proposal, index) => {
+        const n = index + 1;
+        const isDropped = dropped.includes(proposal);
+        const mark = isDropped ? dim("drop") : proposal.assertion.hard ? red("hard") : dim("soft");
+        const label = `${String(n).padStart(2)}. ${mark} ${proposal.assertion.kind}(${proposal.assertion.value})`;
+        console.log(isDropped ? dim(label) : label);
+        console.log(dim(`      ${proposal.rationale}`));
+      });
+
+      const { path, replaced } = await suites.addCase(flags.get("suite") ?? "default", testCase);
+      console.log();
+      console.log(
+        `${replaced ? "updated" : "added"} ${bold(testCase.id)} ` +
+          `(${testCase.assertions.length} assertions) in ${path}`,
+      );
+      return 0;
+    }
+
+    case "cases": {
+      const { flags } = parseFlags(rest);
+      const names = flags.has("suite") ? [flags.get("suite")!] : await suites.list();
+      if (names.length === 0) {
+        console.log(dim("No suites yet. Run: npm run fr -- freeze <trace-id>"));
+        return 0;
+      }
+
+      for (const name of names) {
+        const suite = await suites.read(name);
+        console.log(bold(`${name}  ${dim(`${suite.cases.length} cases`)}`));
+        for (const testCase of suite.cases) {
+          const hard = testCase.assertions.filter((a) => a.hard).length;
+          console.log(
+            `  ${testCase.id}  ${String(testCase.assertions.length).padStart(2)} assertions ` +
+              `${dim(`(${hard} hard)`)}  ${dim(`from ${testCase.sourceTraceId}`)}` +
+              (testCase.tags.length ? `  [${testCase.tags.join(", ")}]` : ""),
+          );
+        }
+      }
+      return 0;
+    }
+
+    case "check": {
+      const { positional, flags } = parseFlags(rest);
+      const [caseId, traceId] = positional;
+      if (!caseId || !traceId) throw new Error("usage: fr check <case-id> <trace-id> [--suite name]");
+
+      const suite = await suites.read(flags.get("suite") ?? "default");
+      const testCase = suite.cases.find((c) => c.id === caseId);
+      if (!testCase) throw new Error(`No case ${caseId} in suite ${suite.name}`);
+
+      const trace = await store.get(traceId);
+      if (!trace) throw new Error(`No trace with id ${traceId}`);
+
+      const results = evaluateAll(testCase.assertions, trace);
+      console.log(bold(`${testCase.id} vs ${traceId}`) + dim("   (tier 1 only — not scoring)"));
+
+      let hardFailures = 0;
+      for (const result of results) {
+        const { assertion, pass, detail } = result;
+        if (!pass && assertion.hard) hardFailures += 1;
+        const mark = pass ? green("pass") : assertion.hard ? red("FAIL") : yellow("warn");
+        console.log(
+          `  ${mark}  ${assertion.kind}(${assertion.value})  ${dim(detail)}`,
+        );
+      }
+
+      const passed = results.filter((r) => r.pass).length;
+      console.log();
+      console.log(
+        `${passed}/${results.length} assertions passed` +
+          (hardFailures > 0 ? red(`  ·  ${hardFailures} hard failures`) : ""),
+      );
+      return hardFailures > 0 ? 1 : 0;
+    }
+
     case "price": {
       const at = rest[0] ? new Date(rest[0]) : new Date();
       if (Number.isNaN(at.getTime())) throw new Error("usage: fr price [YYYY-MM-DD]");
@@ -157,19 +295,37 @@ async function main(argv: string[]): Promise<number> {
 
     case "stats": {
       const s = await store.stats();
-      console.log(`traces ${s.traces} · blobs ${s.blobs} · ${(s.bytes / 1024).toFixed(1)} KiB`);
-      console.log(dim(`root   ${store.root}`));
+      const d = await store.dedupeStats();
+      const saved = d.naiveBytes > 0 ? 1 - d.storedBytes / d.naiveBytes : 0;
+      console.log(
+        `traces ${s.traces} · payloads ${s.blobs} · ${(s.bytes / 1024).toFixed(1)} KiB stored`,
+      );
+      console.log(
+        dim(
+          `dedupe ${d.references} references to ${d.uniquePayloads} unique payloads · ` +
+            `${(saved * 100).toFixed(1)}% smaller than storing them inline`,
+        ),
+      );
+      console.log(dim(`db     ${store.path}`));
       return 0;
     }
 
     default:
-      console.log(`fr — Flight Recorder (phase 0)
+      console.log(`fr — Flight Recorder (phase 2)
 
   record [good|degraded]        run the demo agent and store the trace
   ls [limit]                    list stored traces
   show <trace-id>               print one trace with its spans
   replay <trace-id> [quality]   re-run a trace's input under a new config
   diff <baseline> <candidate>   naive side-by-side (NOT scoring)
+
+  freeze <trace-id>             promote a trace to a test case
+      --suite <name>              suite to write to (default: default)
+      --drop 3,5                  leave out proposals by number
+      --tag p0,billing            tags for the case
+  cases [--suite <name>]        list frozen cases
+  check <case-id> <trace-id>    evaluate a case's assertions (tier 1 only)
+
   price [YYYY-MM-DD]            cost table, with promotional rates resolved
   stats                         store size and dedupe status
 `);

@@ -1,0 +1,82 @@
+{
+  "name": "example",
+  "baselineCommit": null,
+  "cases": [
+    {
+      "id": "case_5f13c857e23844199ce3",
+      "sourceTraceId": "trace_63d3b2da34b54670b656",
+      "baselineTraceId": "trace_63d3b2da34b54670b656",
+      "tags": [
+        "p0"
+      ],
+      "createdAt": 1786635790530,
+      "input": "How much did active users grow last quarter, in percent?",
+      "rubric": null,
+      "assertions": [
+        {
+          "id": "assert_c0a3ebbda18d49f1a565",
+          "kind": "no_error",
+          "value": 1,
+          "hard": true,
+          "note": "the baseline run completed without error"
+        },
+        {
+          "id": "assert_68c3e45c718a43bfa2ed",
+          "kind": "tool_called",
+          "value": "search",
+          "hard": true,
+          "note": "the baseline called search"
+        },
+        {
+          "id": "assert_5e9218ba19924fc79089",
+          "kind": "tool_called",
+          "value": "calculate",
+          "hard": true,
+          "note": "the baseline called calculate"
+        },
+        {
+          "id": "assert_2f765ddc6d164b3b9a32",
+          "kind": "output_contains",
+          "value": "18.33",
+          "hard": true,
+          "note": "\"18.33\" was produced by calculate and appears in the answer"
+        },
+        {
+          "id": "assert_2554e1f6a31c4c179b88",
+          "kind": "output_contains",
+          "value": "1,200,000",
+          "hard": true,
+          "note": "\"1,200,000\" was produced by search and appears in the answer"
+        },
+        {
+          "id": "assert_2b7cf5a10faf4e399657",
+          "kind": "output_contains",
+          "value": "1,420,000",
+          "hard": true,
+          "note": "\"1,420,000\" was produced by search and appears in the answer"
+        },
+        {
+          "id": "assert_fee875f514bb463e9a41",
+          "kind": "max_steps",
+          "value": 7,
+          "hard": true,
+          "note": "the baseline took 5 steps"
+        },
+        {
+          "id": "assert_23858df510324950af9c",
+          "kind": "max_cost_usd",
+          "value": 0.00173,
+          "hard": false,
+          "note": "the baseline cost $0.001155"
+        },
+        {
+          "id": "assert_60cc41d3482f425daf2a",
+          "kind": "max_wall_ms",
+          "value": 54,
+          "hard": false,
+          "note": "the baseline took 18ms"
+        }
+      ]
+    }
+  ]
+}

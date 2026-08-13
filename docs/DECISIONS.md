@@ -92,7 +92,7 @@ under test must never hand model output to an evaluator.
 
 ---
 
-### D-009 · Filesystem store now, SQLite in phase 2
+### D-009 · Filesystem store now, SQLite in phase 2 — **partly superseded by D-015**
 
 `FsTraceStore` writes content-addressed blobs plus a JSON index. The blob
 layout is already the one SQLite will point at, so the phase 2 migration
@@ -192,3 +192,87 @@ Two details that would each have produced silently-wrong numbers:
 
 An unpriced model yields cost 0 with `costUnknown: true` rather than a
 confident-looking free run.
+
+---
+
+### D-015 · One transactional SQLite file, using Node's built-in driver
+
+Supersedes the storage half of D-009. `node:sqlite` ships with Node 22.6+, so
+this needs no dependency and no native compile step — better than the
+`better-sqlite3` the spec assumed, purely because it did not exist as a
+practical option when the spec was written.
+
+The bigger change is that traces, payloads and the index now live in **one
+transactional file** rather than an index plus loose blobs. The phase-0 store
+needed defensive code for "the index references a blob that is not there"; that
+state can no longer exist, and the whole store is one file to copy or delete.
+
+`FsTraceStore` stays. Two implementations behind one interface is what proves
+the interface is real, and the phase-2 tests run the same contract against both.
+
+**Reverses if:** payloads grow past what belongs in a local file and want object
+storage. That is an implementation swap behind `TraceStore`, not a redesign.
+
+---
+
+### D-016 · Payloads are extracted bottom-up
+
+Deduplication walks each value from the leaves upward, extracting any subtree
+over the threshold. Direction is the whole trick.
+
+Top-down would extract each span's entire input as one payload — and every
+span's input is unique, so it would dedupe nothing while adding indirection.
+Going upward, the repeated system prompt and tool schemas are extracted first,
+and the wrapper that contained them is then small enough to stay inline. The
+part that actually repeats is the part that gets shared.
+
+Measured on twelve identical demo runs: 5 unique payloads backing 60 references,
+43% smaller than storing them inline.
+
+---
+
+### D-017 · Traces are data, cases are code
+
+Traces live in the database: large, numerous, machine-written, nobody reviews
+them. Test cases live in a committed JSON file under `flightrecorder/suites/`:
+small, few, human-approved, and a change to one should show up in a pull request
+exactly like a change to a unit test.
+
+The file is written with a fixed key order and stable formatting, because what
+makes a file reviewable is that its diff shows only what actually changed.
+
+---
+
+### D-018 · The evaluator lives with the freezer, not the scorer
+
+Phase 4 owns scoring, so tier-1 evaluation nominally belongs there. It is here
+because the proposer cannot be correct without it: an assertion proposed from a
+trace that does not hold *on that trace* is a bug in the proposer, and the only
+way to know is to run it. `freeze()` therefore evaluates every assertion against
+its source and throws `InvalidProposalError` rather than writing a case whose
+baseline fails — which would poison every report built on it.
+
+Phase 4's tiered scorer builds on this, rather than beside it.
+
+---
+
+### D-019 · Assertions are proposed from what the run verified
+
+The proposer's best heuristic: take the literals in the final answer, and keep
+the ones that also appear in some tool's output. A number the agent's own tool
+produced is a **checked fact**; a number that appears nowhere else is a claim the
+model asserted on its own. Pinning the first kind is safe and catches exactly the
+failure this project exists to catch.
+
+On the demo, this auto-proposes `output_contains("18.33")` — and the degraded
+agent, which skips the calculator and answers "roughly 25%", fails it without
+anyone writing a line of test code.
+
+**Matching is exact substring, deliberately.** Normalising digits would make
+`1.2` match inside `1,200,000` and manufacture a verification the run never
+performed. A false negative here costs one un-proposed assertion; a false
+positive silently certifies a hallucinated number.
+
+The same analysis is shown at freeze time as verified/unchecked claims, which is
+useful on its own — it tells you how much of an answer the agent actually
+checked.

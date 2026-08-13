@@ -4,10 +4,10 @@ An evaluation and regression harness for LLM agents. It records real agent
 runs, freezes them into replayable test cases, and blocks any change that
 quietly makes the agent worse.
 
-> **Status: phase 1 of 8 complete.** Record → store → replay → naive diff, with
-> OpenTelemetry GenAI spans, credential redaction, sampling, real cost
-> accounting, and a provider adapter for the Vercel AI Gateway. No scoring, no
-> statistics, no CI gate yet. See [docs/PHASES.md](docs/PHASES.md).
+> **Status: phase 2 of 8 complete.** Record → store → **freeze** → replay →
+> check. Traces go to a transactional SQLite store with payload dedupe; test
+> cases are auto-proposed from a recording and committed to git. No LLM judge,
+> no statistics, no CI gate yet. See [docs/PHASES.md](docs/PHASES.md).
 
 ## Why
 
@@ -23,17 +23,18 @@ Requires Node 22.6+ (25 recommended — it runs TypeScript directly).
 
 ```bash
 npm install
-npm test          # 40 tests
+npm test          # 67 tests
 npm run typecheck
 ```
 
-Record a run from the built-in demo agent, then replay it under a degraded
-configuration:
+Record a run, freeze it into a test case, then replay under a degraded
+configuration and check the case against it:
 
 ```bash
-npm run fr -- record
-npm run fr -- ls
-npm run fr -- replay <trace-id> degraded
+npm run fr -- record                       # capture a good run
+npm run fr -- freeze <trace-id>            # propose assertions, write a case
+npm run fr -- replay <trace-id> degraded   # re-run under a worse config
+npm run fr -- check <case-id> <new-trace>  # evaluate the case
 ```
 
 No API key needed. Phases 0–3 run against a deterministic mock provider that
@@ -47,7 +48,28 @@ error. It does not throw. It reads as confident, fluent English — and it is
 **33% cheaper and 33% faster**, so anything optimising on cost alone would
 promote it.
 
-That is the failure mode this project exists to catch.
+Freezing the good run proposes nine assertions with no hand-authoring, because
+`18.33` appears in both the calculator's output and the final answer — which
+makes it a checked fact rather than a claim. Checking that case against the
+degraded run gives:
+
+```
+FAIL  tool_called(calculate)   called: search
+FAIL  output_contains(18.33)   "18.33" absent from the output
+pass  max_steps(7)             3 steps (limit 7)
+pass  max_cost_usd(0.00173)    $0.000774 (limit $0.001730)
+pass  max_wall_ms(54)          13ms (limit 54ms)
+```
+
+Every resource check passes. Only the semantic ones catch it. That is the
+failure mode this project exists to catch.
+
+## Where things live
+
+Traces are data and live in `.flightrecorder/traces.db` (local, gitignored).
+Test cases are code and live in `flightrecorder/suites/*.json` (committed, and
+reviewed in a pull request like any other test). See
+[DECISIONS D-017](docs/DECISIONS.md).
 
 ## Commands
 
@@ -58,8 +80,11 @@ That is the failure mode this project exists to catch.
 | `fr show <trace-id>` | Print one trace with its spans |
 | `fr replay <trace-id> [quality]` | Re-run a trace's input under a new config |
 | `fr diff <baseline> <candidate>` | Naive side-by-side — **not** scoring |
+| `fr freeze <trace-id>` | Promote a trace to a test case (`--suite`, `--drop`, `--tag`) |
+| `fr cases [--suite name]` | List frozen cases |
+| `fr check <case-id> <trace-id>` | Evaluate a case's assertions (tier 1 only) |
 | `fr price [YYYY-MM-DD]` | Cost table, with promotional rates resolved |
-| `fr stats` | Store size and dedupe status |
+| `fr stats` | Store size and dedupe savings |
 
 ## Using a real provider
 
@@ -84,9 +109,11 @@ src/core/       the seven objects everything is built from
 src/otel/       GenAI semantic conventions + test tracing
 src/provider/   ModelClient seam, mock client, AI Gateway adapter, cost table
 src/recorder/   span capture, redaction, sampling, trace assembly
-src/store/      content-addressed trace storage
+src/store/      trace storage — SQLite (default) and filesystem
+src/freeze/     assertion proposal, evaluation, suite files
 src/replay/     record and replay entrypoints
 examples/       demo + nested agents used as the harness's test subjects
+flightrecorder/ committed test suites
 docs/           spec, phase checklist, decision log
 ```
 

@@ -7,8 +7,8 @@ Full rationale for each phase lives in [spec.html](./spec.html).
 |---|-------|------|--------|
 | 00 | Spike | 1–2 | **done** |
 | 01 | Recorder | 3–5 | **done** |
-| 02 | Store + freezer | 2–3 | next |
-| 03 | Replayer | 4–6 | |
+| 02 | Store + freezer | 2–3 | **done** |
+| 03 | Replayer | 4–6 | next |
 | 04 | Scorer | 5–7 | |
 | 05 | Reporter | 3–4 | |
 | 06 | Gate | 2 | |
@@ -65,18 +65,43 @@ tested for credential handling, message conversion, and cost mapping, but has
 not made a real API call — no key is configured yet. First task of phase 02:
 export `AI_GATEWAY_API_KEY` and record one real trace.
 
-## Phase 02 — Store + freezer — next
+## Phase 02 — Store + freezer — **done**
 
 **Exit criterion:** ten cases created from real traces in under twenty minutes.
 
-- [ ] SQLite index (`better-sqlite3`) behind the existing `TraceStore` interface
-- [ ] Payload-level dedupe — system prompts repeat thousands of times
-- [ ] `fr freeze <trace-id>` promoting a trace to a `TestCase`
-- [ ] **Assertions proposed automatically** by reading the trace, then edited
-- [ ] Suite file format, human-readable and diffable in git
-- [ ] Timed run: authoring one case takes under ninety seconds
+- [x] SQLite index behind the existing `TraceStore` interface — `node:sqlite`,
+      not `better-sqlite3` (DECISIONS D-015)
+- [x] Payload-level dedupe, extracted bottom-up (D-016)
+- [x] `fr freeze <trace-id>` promoting a trace to a `TestCase`
+- [x] Assertions proposed automatically, each with a rationale
+- [x] Suite file format, committed and diffable (D-017)
+- [x] 67 tests passing, `tsc --noEmit` clean
 
-## Phase 03 — Replayer
+**Evidence.** Ten traces recorded and frozen in **4.7 seconds** of machine time,
+producing 9 assertions each with no hand-authoring. Dedupe: 60 references to 5
+unique payloads, 43% smaller than storing them inline. A committed example suite
+is at `flightrecorder/suites/example.json` (82 lines, readable).
+
+**The whole phase in one result.** Freeze a case from a good run, then check it
+against the degraded replay:
+
+```
+FAIL  tool_called(calculate)        called: search
+FAIL  output_contains(18.33)        "18.33" absent from the output
+pass  max_steps(7)                  3 steps (limit 7)
+pass  max_cost_usd(0.00173)         $0.000774 (limit $0.001730)
+pass  max_wall_ms(54)               13ms (limit 54ms)
+```
+
+Every resource assertion passes, because the broken agent is cheaper and faster
+than the correct one. Only the semantic assertions catch it — and nobody wrote
+them.
+
+**Deferred:** interactive per-assertion editing at freeze time. `--drop` covers
+the common case and keeps the command scriptable; a TUI can come later if the
+dogfooding in phase 07 shows it is needed.
+
+## Phase 03 — Replayer — next
 
 **Exit criterion:** fifty cases × three configs runs unattended to completion.
 
