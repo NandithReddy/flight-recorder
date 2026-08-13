@@ -72,7 +72,7 @@ describe("stable identity", () => {
 
 describe("recorder", () => {
   it("captures model and tool spans with usage and wall time", async () => {
-    const trace = await record({
+    const { trace } = await record({
       agent: demoAgent,
       client: createMockClient({ quality: "good" }),
       config: goodConfig,
@@ -98,7 +98,7 @@ describe("recorder", () => {
       },
     };
 
-    const trace = await record({
+    const { trace } = await record({
       agent: exploding,
       client: createMockClient(),
       config: goodConfig,
@@ -135,7 +135,7 @@ describe("recorder", () => {
 
 describe("store", () => {
   it("round-trips a trace through content-addressed storage", async () => {
-    const trace = await record({
+    const { trace } = await record({
       agent: demoAgent,
       client: createMockClient(),
       config: goodConfig,
@@ -151,7 +151,7 @@ describe("store", () => {
   });
 
   it("stores one blob when the same trace is written twice", async () => {
-    const trace = await record({
+    const { trace } = await record({
       agent: demoAgent,
       client: createMockClient(),
       config: goodConfig,
@@ -175,7 +175,7 @@ describe("store", () => {
 
 describe("replay", () => {
   it("re-runs a stored trace's input and links the new trace to the old one", async () => {
-    const baseline = await record({
+    const { trace: baseline } = await record({
       agent: demoAgent,
       client: createMockClient({ quality: "good" }),
       config: goodConfig,
@@ -198,7 +198,7 @@ describe("replay", () => {
   });
 
   it("surfaces a silent regression: the degraded config skips verification", async () => {
-    const baseline = await record({
+    const { trace: baseline } = await record({
       agent: demoAgent,
       client: createMockClient({ quality: "good" }),
       config: goodConfig,

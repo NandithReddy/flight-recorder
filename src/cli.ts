@@ -59,7 +59,7 @@ async function main(argv: string[]): Promise<number> {
   switch (command) {
     case "record": {
       const quality = (rest[0] ?? "good") as MockQuality;
-      const trace = await record({
+      const { trace } = await record({
         agent: demoAgent,
         client: createMockClient({ quality }),
         config: configFor(quality),

@@ -246,7 +246,7 @@ describe("sampling in the record path", () => {
       stats: async () => ({ traces: 0, blobs: 0, bytes: 0 }),
     };
 
-    const trace = await record({
+    const { trace, sampling } = await record({
       agent: demoAgent,
       client: createMockClient(),
       config,
@@ -257,9 +257,11 @@ describe("sampling in the record path", () => {
 
     // Captured and returned to the caller...
     expect(trace.spans.length).toBe(5);
-    expect(trace.sampling?.keep).toBe(false);
+    expect(sampling.keep).toBe(false);
     // ...but never persisted.
     expect(stored.length).toBe(0);
+    // ...and the trace itself is untouched by the decision.
+    expect(Object.hasOwn(trace, "sampling")).toBe(false);
   });
 
   it("persists a run the policy keeps", async () => {
@@ -372,7 +374,7 @@ describe("otel emission", () => {
   it("is a no-op when no tracer is registered", async () => {
     // Constructed without a tracer: the global API returns a noop, so this must
     // still record a complete Trace without throwing.
-    const trace = await record({
+    const { trace } = await record({
       agent: demoAgent,
       client: createMockClient(),
       config,
@@ -388,7 +390,7 @@ describe("otel emission", () => {
 
 describe("span nesting", () => {
   it("nests a sub-agent's spans under the delegating span", async () => {
-    const trace = await record({
+    const { trace } = await record({
       agent: nestedAgent,
       client: createMockClient(),
       config,
@@ -411,7 +413,7 @@ describe("span nesting", () => {
   });
 
   it("parents concurrent tool calls to the root, not to each other", async () => {
-    const trace = await record({
+    const { trace } = await record({
       agent: nestedAgent,
       client: createMockClient(),
       config,
@@ -461,7 +463,7 @@ describe("span nesting", () => {
   });
 
   it("keeps every span in the trace regardless of nesting depth", async () => {
-    const trace = await record({
+    const { trace } = await record({
       agent: nestedAgent,
       client: createMockClient(),
       config,

@@ -40,16 +40,24 @@ export interface RunOptions {
   sampler?: Sampler;
 }
 
+export interface RecordResult {
+  trace: Trace;
+  sampling: SamplingDecision;
+}
+
 /**
  * Record one run of an agent.
  *
  * The trace is always returned in full — sampling only decides whether it is
  * persisted, never whether it is captured. A caller that wants the trace for
  * this request gets it regardless of the policy.
+ *
+ * The sampling decision rides alongside the trace rather than on it. Attaching
+ * it to the trace would mutate a value that D-004 requires to be immutable and
+ * content-addressed: the same trace would then hash differently depending on
+ * whether you hashed it before or after this function returned.
  */
-export async function record(
-  options: RunOptions,
-): Promise<Trace & { sampling?: SamplingDecision }> {
+export async function record(options: RunOptions): Promise<RecordResult> {
   const recorder = new Recorder({
     agent: options.agent.ref,
     config: options.config,
@@ -76,7 +84,7 @@ export async function record(
   const sampling = (options.sampler ?? keepEverything)(trace);
   if (sampling.keep) await options.store?.put(trace);
 
-  return Object.assign(trace, { sampling });
+  return { trace, sampling };
 }
 
 export interface ReplayResult {
@@ -95,7 +103,7 @@ export async function replay(options: {
   const baseline = await options.store.get(options.traceId);
   if (!baseline) throw new Error(`No trace with id ${options.traceId}`);
 
-  const candidate = await record({
+  const { trace: candidate } = await record({
     agent: options.agent,
     client: options.client,
     config: options.config,
