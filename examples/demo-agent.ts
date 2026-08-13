@@ -242,7 +242,7 @@ function evaluateExpression(source: string): number {
 }
 
 function calculate(input: { expression: string }): string {
-  return evaluateExpression(input.expression).toFixed(2);
+  return evaluateExpression(input.expression).toFixed(1);
 }
 
 // ---------------------------------------------------------------------------
