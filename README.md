@@ -4,9 +4,11 @@ An evaluation and regression harness for LLM agents. It records real agent
 runs, freezes them into replayable test cases, and blocks any change that
 quietly makes the agent worse.
 
-> **Status: phase 3 of 8 complete.** Record → freeze → **run the matrix** →
-> check, across models and both replay modes, resumable. No LLM judge, no
-> statistics, no CI gate yet. See [docs/PHASES.md](docs/PHASES.md).
+> **Status: phases 0–3 complete, phase 4 built.** Record → freeze → run the
+> matrix → **score**. The three-tier scorer, pairwise judge and calibration
+> harness are done and tested; the judge's trust score is waiting on human
+> labels, which is the one thing the harness must not generate for itself.
+> No report or CI gate yet. See [docs/PHASES.md](docs/PHASES.md).
 
 ## Why
 
@@ -22,7 +24,7 @@ Requires Node 22.6+ (25 recommended — it runs TypeScript directly).
 
 ```bash
 npm install
-npm test          # 97 tests
+npm test          # 137 tests
 npm run typecheck
 ```
 
@@ -84,6 +86,10 @@ reviewed in a pull request like any other test). See
 | `fr check <case-id> <trace-id>` | Evaluate a case's assertions (tier 1 only) |
 | `fr matrix` | Run every case × config × mode (`--models`, `--modes`, `--concurrency`) |
 | `fr agents` | List registered agents |
+| `fr seed` | Record every task in the set and freeze each as a case |
+| `fr pool --set <name>` | Build blind judge-vs-human comparison pairs |
+| `fr label --set <name>` | Label pairs blind — `1` / `2` / `t` / `s` / `q` |
+| `fr calibrate --set <name>` | Measure the judge against those labels, write κ |
 | `fr models` | List locally available Ollama models |
 | `fr price [YYYY-MM-DD]` | Cost table, with promotional rates resolved |
 | `fr stats` | Store size and dedupe savings |
@@ -151,6 +157,41 @@ baseline, one recorded call never made at all.
 
 Re-running the same matrix resumes every finished cell, so an interrupted run
 costs seconds rather than starting over.
+
+## Scoring, and why the judge is not trusted by default
+
+Three tiers, cheapest first:
+
+1. **Deterministic assertions.** A hard failure ends it — the judge is never
+   called, which is what keeps judging a small fraction of a run rather than a
+   second pass over everything.
+2. **A pairwise judge.** "Is B worse than A" is far more stable than scoring one
+   answer out of ten, and it is the question a regression report actually asks.
+   Which answer is shown first is fixed by a hash of the item id: unbiased
+   across the set, identical on every re-run.
+3. **Calibration against human labels.** The judge runs over pairs a person has
+   labelled blind, and the result is Cohen's κ — agreement corrected for luck.
+
+That third tier is the point. Raw agreement is a flattering and mostly
+meaningless number: if 70% of pairs are ties and the judge always says "tie", it
+agrees 70% of the time while knowing nothing. κ scores that at zero, and there
+is a test asserting exactly that.
+
+**An uncalibrated judge is untrusted, not assumed good.** Below κ = 0.6 the
+report marks judged verdicts untrusted rather than presenting them as fact.
+Deterministic verdicts carry no such caveat — an assertion either held or it
+did not.
+
+```bash
+npm run fr -- pool  --set metrics     # build blind comparison pairs
+npm run fr -- label --set metrics     # a person labels them
+npm run fr -- calibrate --set metrics # measure the judge, write κ
+```
+
+Labels live in `flightrecorder/labels/`, committed. They are the most expensive
+data here and the only part nobody can generate — if a model labels the
+calibration set, the judge has been graded by a model, which is the exact
+failure this tier exists to detect.
 
 ## Observability
 

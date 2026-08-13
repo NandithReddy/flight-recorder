@@ -23,14 +23,31 @@ import { CACHE_MULTIPLIERS, PRICES, priceFor } from "./provider/pricing.ts";
 import { analyzeOutput, evaluateAll } from "./freeze/assertions.ts";
 import { freeze } from "./freeze/freezer.ts";
 import { SuiteStore } from "./freeze/suite.ts";
-import { DEMO_QUESTION, demoAgent } from "../examples/demo-agent.ts";
+import { DEMO_QUESTION, demoAgent, TASKS } from "../examples/demo-agent.ts";
 import { runMatrix } from "./replay/matrix.ts";
 import { listAgents } from "./replay/registry.ts";
 import "../examples/register.ts";
+import { createInterface } from "node:readline/promises";
+import { createJudge } from "./score/judge.ts";
+import { calibrate, MIN_LABELS } from "./score/calibration.ts";
+import {
+  formatConfusion,
+  interpretKappa,
+  isTrustworthy,
+  TRUST_THRESHOLD,
+} from "./score/kappa.ts";
+import {
+  labelledItems,
+  LabelStore,
+  resolveChoice,
+  unlabelledItems,
+  type NewLabelItem,
+} from "./score/labels.ts";
 import type { ReplayMode, Trace } from "./core/types.ts";
 
 const store = new SqliteTraceStore();
 const suites = new SuiteStore();
+const labels = new LabelStore();
 
 /** Minimal flag parsing: `--name value` and `--name`. */
 function parseFlags(args: string[]): { positional: string[]; flags: Map<string, string> } {
@@ -61,13 +78,15 @@ interface Target {
   provider: string;
   model: string;
   quality: MockQuality;
+  temperature?: number;
 }
 
 function targetFrom(flags: Map<string, string>, quality: MockQuality): Target {
   const provider = flags.get("provider") ?? "mock";
   const model =
     flags.get("model") ?? (provider === "ollama" ? DEFAULT_LOCAL_MODEL : "demo-model");
-  return { provider, model, quality };
+  const temp = flags.get("temp");
+  return { provider, model, quality, temperature: temp === undefined ? 0 : Number(temp) };
 }
 
 function configFor(target: Target) {
@@ -77,7 +96,7 @@ function configFor(target: Target) {
     // Only the mock has a degraded prompt; real providers vary by model.
     promptVersion: target.provider === "mock" && target.quality === "degraded" ? "v2-degraded" : "v1",
     toolset: ["search", "calculate"],
-    temperature: 0,
+    temperature: target.temperature ?? 0,
   });
 }
 
@@ -349,9 +368,16 @@ async function main(argv: string[]): Promise<number> {
         .split(",")
         .map((m) => m.trim()) as ReplayMode[];
 
-      const configs = models.map((model) =>
-        configFor({ provider, model, quality: "good" }),
-      );
+      // "model@0.7" varies temperature as well as model — both are config.
+      const configs = models.map((entry) => {
+        const [model, temp] = entry.split("@");
+        return configFor({
+          provider,
+          model: model!,
+          quality: "good",
+          temperature: temp === undefined ? 0 : Number(temp),
+        });
+      });
 
       if (provider === "ollama" && !(await isOllamaRunning())) {
         throw new OllamaUnavailableError(DEFAULT_OLLAMA_HOST);
@@ -372,7 +398,12 @@ async function main(argv: string[]): Promise<number> {
         concurrency: Number(flags.get("concurrency") ?? 2),
         resume: flags.get("no-resume") !== "true",
         clientFor: (config) =>
-          clientFor({ provider: config.provider, model: config.model, quality: "good" }),
+          clientFor({
+            provider: config.provider,
+            model: config.model,
+            quality: "good",
+            temperature: config.temperature,
+          }),
         onEvent: (event) => {
           if (event.type === "start" && event.skipped > 0) {
             console.log(dim(`resuming — ${event.skipped} cells already done`));
@@ -432,6 +463,222 @@ async function main(argv: string[]): Promise<number> {
         }
       }
       return 0;
+    }
+
+    case "seed": {
+      const { flags } = parseFlags(rest);
+      const target = targetFrom(flags, "good");
+      const suiteName = flags.get("suite") ?? "default";
+      const limit = Number(flags.get("limit") ?? TASKS.length);
+
+      if (target.provider === "ollama" && !(await isOllamaRunning())) {
+        throw new OllamaUnavailableError(DEFAULT_OLLAMA_HOST);
+      }
+
+      const tasks = TASKS.slice(0, limit);
+      console.log(bold(`recording ${tasks.length} tasks on ${target.model}`));
+
+      let frozen = 0;
+      for (const [index, task] of tasks.entries()) {
+        const { trace } = await record({
+          agent: demoAgent,
+          client: clientFor(target),
+          config: configFor(target),
+          input: task,
+          store,
+          tags: ["seed"],
+        });
+
+        if (trace.error) {
+          console.log(`  ${red("err ")} ${String(index + 1).padStart(2)}. ${dim(trace.error.message)}`);
+          continue;
+        }
+
+        try {
+          const { testCase } = freeze({ trace });
+          await suites.addCase(suiteName, testCase);
+          frozen += 1;
+          console.log(
+            `  ${green("ok  ")} ${String(index + 1).padStart(2)}. ` +
+              `${String(testCase.assertions.length).padStart(2)} assertions  ${dim(task.slice(0, 52))}`,
+          );
+        } catch (error) {
+          console.log(
+            `  ${yellow("skip")} ${String(index + 1).padStart(2)}. ` +
+              dim(error instanceof Error ? error.message.split("\n")[0]! : String(error)),
+          );
+        }
+      }
+
+      console.log();
+      console.log(`${frozen} cases in suite "${suiteName}"`);
+      return 0;
+    }
+
+    case "pool": {
+      const { flags } = parseFlags(rest);
+      const suite = await suites.read(flags.get("suite") ?? "default");
+      const setName = flags.get("set") ?? "default";
+
+      const pairs: NewLabelItem[] = [];
+      for (const testCase of suite.cases) {
+        const baseline = await store.get(testCase.baselineTraceId);
+        if (!baseline) continue;
+
+        for (const attempt of store.listAttempts(testCase.id)) {
+          if (attempt.traceId === "" || attempt.traceId === baseline.id) continue;
+          const candidate = await store.get(attempt.traceId);
+          if (!candidate) continue;
+
+          pairs.push({
+            task: String(testCase.input),
+            baseline: String(baseline.output ?? ""),
+            candidate: String(candidate.output ?? ""),
+            caseId: testCase.id,
+            baselineTraceId: baseline.id,
+            candidateTraceId: candidate.id,
+            baselineModel: baseline.config.model,
+            candidateModel: candidate.config.model,
+          });
+        }
+      }
+
+      const { set, added, skipped } = await labels.addItems(setName, pairs);
+      console.log(
+        `${added} pairs added, ${skipped} skipped as duplicate or identical.\n` +
+          `"${setName}" now holds ${set.items.length} pairs, ` +
+          `${unlabelledItems(set).length} awaiting a label.`,
+      );
+      if (added > 0) console.log(dim(`\nLabel them with:  npm run fr -- label --set ${setName}`));
+      return 0;
+    }
+
+    case "label": {
+      const { flags } = parseFlags(rest);
+      const setName = flags.get("set") ?? "default";
+      const set = await labels.read(setName);
+      const queue = unlabelledItems(set).slice(0, Number(flags.get("limit") ?? 1000));
+
+      if (queue.length === 0) {
+        const done = labelledItems(set).length;
+        console.log(
+          done > 0
+            ? `All ${done} pairs in "${setName}" are labelled.`
+            : `"${setName}" is empty. Build it with: npm run fr -- pool --set ${setName}`,
+        );
+        return 0;
+      }
+
+      console.log(bold(`Labelling "${setName}" — ${queue.length} pairs to go`));
+      console.log(
+        dim(
+          "You are shown two answers to the same task, in a random order, without\n" +
+            "being told which came from where. Pick the better one.\n" +
+            "  1 = first answer   2 = second answer   t = equally good   s = skip   q = save and quit\n",
+        ),
+      );
+
+      const rl = createInterface({ input: process.stdin, output: process.stdout });
+      let labelled = 0;
+
+      try {
+        for (const [index, item] of queue.entries()) {
+          const first = item.presentedFirst === "baseline" ? item.baseline : item.candidate;
+          const second = item.presentedFirst === "baseline" ? item.candidate : item.baseline;
+
+          console.log(bold(`\n[${index + 1}/${queue.length}]  ${item.task}`));
+          console.log(`\n  ${bold("1.")} ${first}`);
+          console.log(`\n  ${bold("2.")} ${second}`);
+
+          const answer = (await rl.question("\n  better? [1/2/t/s/q] ")).trim().toLowerCase();
+          if (answer === "q") break;
+          if (answer === "s" || answer === "") continue;
+          if (!["1", "2", "t"].includes(answer)) {
+            console.log(dim("  unrecognised — skipping"));
+            continue;
+          }
+
+          item.human = resolveChoice(item, answer === "t" ? "tie" : (answer as "1" | "2"));
+          item.labelledAt = Date.now();
+          labelled += 1;
+          // Save after every label: a crash must never cost a person's work.
+          await labels.write(set);
+        }
+      } finally {
+        rl.close();
+      }
+
+      const total = labelledItems(set).length;
+      console.log(`\n${labelled} labelled this session · ${total} labelled in total.`);
+      if (total < MIN_LABELS) {
+        console.log(dim(`Calibration needs at least ${MIN_LABELS}.`));
+      } else {
+        console.log(dim(`Ready to calibrate:  npm run fr -- calibrate --set ${setName}`));
+      }
+      return 0;
+    }
+
+    case "calibrate": {
+      const { flags } = parseFlags(rest);
+      const setName = flags.get("set") ?? "default";
+      const set = await labels.read(setName);
+      const judgeModel = flags.get("judge") ?? "qwen2.5:7b";
+
+      if (!(await isOllamaRunning())) throw new OllamaUnavailableError(DEFAULT_OLLAMA_HOST);
+
+      const total = labelledItems(set).length;
+      console.log(bold(`calibrating ${judgeModel} against ${total} human labels`));
+
+      const result = await calibrate({
+        set,
+        judge: createJudge({ client: createOllamaClient(), model: judgeModel }),
+        judgeModel,
+        measurePositionBias: flags.get("position-bias") === "true",
+        onProgress: (done, n) => {
+          if (done % 10 === 0 || done === n) process.stdout.write(`\r  ${done}/${n}`);
+        },
+      });
+      process.stdout.write("\n\n");
+
+      const k = result.kappa;
+      const trusted = isTrustworthy(k.kappa);
+      console.log(
+        `${bold("kappa")}  ${k.kappa.toFixed(3)}  ` +
+          `${dim(`(${k.interval.lower.toFixed(3)} to ${k.interval.upper.toFixed(3)}, 95%)`)}  ` +
+          (trusted ? green(interpretKappa(k.kappa)) : red(`${interpretKappa(k.kappa)} — below ${TRUST_THRESHOLD}`)),
+      );
+      console.log(
+        dim(
+          `raw agreement ${(k.observedAgreement * 100).toFixed(1)}% · ` +
+            `chance alone would give ${(k.expectedAgreement * 100).toFixed(1)}%`,
+        ),
+      );
+      console.log();
+      for (const line of formatConfusion(k)) console.log(dim(`  ${line}`));
+
+      console.log();
+      console.log(
+        dim(
+          `unreadable replies ${(result.stored.unparsedRate * 100).toFixed(1)}%` +
+            (result.stored.positionFlipRate !== null
+              ? ` · position flips ${(result.stored.positionFlipRate * 100).toFixed(1)}%`
+              : "") +
+            ` · judge used ${result.usage.inputTokens + result.usage.outputTokens} tokens`,
+        ),
+      );
+
+      const path = await labels.writeCalibration(setName, result.stored);
+      console.log(dim(`\nwritten to ${path}`));
+
+      if (!trusted) {
+        console.log(
+          yellow(
+            `\nThis judge is not trustworthy enough to gate on. Verdicts it produces\n` +
+              `will be marked untrusted in the report. Try a stronger judge model.`,
+          ),
+        );
+      }
+      return trusted ? 0 : 1;
     }
 
     case "agents": {
@@ -500,13 +747,21 @@ async function main(argv: string[]): Promise<number> {
   cases [--suite <name>]        list frozen cases
   check <case-id> <trace-id>    evaluate a case's assertions (tier 1 only)
 
+  seed                          record every task and freeze each as a case
+      --suite <name> --limit N    where to write, how many tasks
   matrix                        run every case across every config and mode
       --suite <name>              suite to run (default: default)
-      --models a,b                comma-separated model ids
+      --models a,b@0.7            model ids, optionally with @temperature
       --modes live,stubbed        which replay modes to run
       --concurrency 2             cells in flight
       --no-resume                 re-run cells that already have attempts
   agents                        list registered agents
+
+  pool --set <name>             build judge-vs-human pairs from stored attempts
+  label --set <name>            label pairs blind (1 / 2 / t / s / q)
+  calibrate --set <name>        measure the judge against those labels
+      --judge <model>             judge model (default qwen2.5:7b)
+      --position-bias             also run both orders to measure bias
 
   price [YYYY-MM-DD]            cost table, with promotional rates resolved
   stats                         store size and dedupe status

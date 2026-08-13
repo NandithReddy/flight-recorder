@@ -9,8 +9,8 @@ Full rationale for each phase lives in [spec.html](./spec.html).
 | 01 | Recorder | 3–5 | **done** |
 | 02 | Store + freezer | 2–3 | **done** |
 | 03 | Replayer | 4–6 | **done** |
-| 04 | Scorer | 5–7 | next |
-| 05 | Reporter | 3–4 | |
+| 04 | Scorer | 5–7 | **built — awaiting labels** |
+| 05 | Reporter | 3–4 | next |
 | 06 | Gate | 2 | |
 | 07 | Dogfood + writeup | 4–5 | |
 
@@ -141,18 +141,36 @@ dropped capabilities, timeout enforced. It is opt-in per tool, because the demo
 agent's tools are pure in-process functions and containerising one would be
 theatre. It exists for the shape phase 07's open-source agent is likely to have.
 
-## Phase 04 — Scorer — next
+## Phase 04 — Scorer — **machinery built, calibration awaiting labels**
 
 **Exit criterion:** κ ≥ 0.6 on 200 labelled examples; judging under 15% of run cost.
 
-- [ ] Tier 1 deterministic assertions, with early exit on hard failure
-- [ ] Tier 2 pairwise judge, candidate order randomised against position bias
-- [ ] Tier 3 calibration harness over a held-out human-labelled set
-- [ ] Cohen's κ computed and attached to every verdict as `trust`
-- [ ] Report degrades honestly when κ is low
-- [ ] **Blocked on 200 human labels — Nandith's task, not delegable**
+- [x] Tier 1 deterministic assertions, with early exit on hard failure
+- [x] Tier 2 pairwise judge, presentation order fixed by hash against position bias
+- [x] Tier 3 calibration harness over the human-labelled set
+- [x] Cohen's κ with a bootstrap interval, attached to every judged verdict as `trust`
+- [x] Verdicts degrade honestly — an uncalibrated judge is untrusted by default
+- [x] Blind labelling CLI, incremental save, committed label store
+- [x] 137 tests passing, `tsc --noEmit` clean
+- [ ] **The labels themselves — Nandith's task, not delegable**
 
-## Phase 05 — Reporter
+**Why the last box cannot be ticked by the harness.** If the calibration set is
+labelled by a model, the judge has been graded by a model, which is precisely
+the failure tier 3 exists to detect. The labels have to come from a person.
+
+**What is ready.** `fr pool` builds blind comparison pairs from stored matrix
+attempts; `fr label` presents them one at a time and saves after every keypress;
+`fr calibrate` runs the judge across them and writes κ, its interval, the
+confusion matrix, the unreadable-reply rate and optionally the position-flip
+rate to a committed file the report can cite.
+
+**A flaky test, found and fixed.** One phase-4 test passed or failed depending on
+a random trace id, because it used the same trace as both baseline and candidate
+and the judge's A/B slot is derived from that id. A non-deterministic test in a
+project arguing for trustworthy measurement is the wrong kind of irony. Rewritten
+to assert what its name claims; five consecutive clean runs.
+
+## Phase 05 — Reporter — next
 
 **Exit criterion:** the report refuses to call a two-case delta significant at n=40.
 

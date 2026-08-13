@@ -416,3 +416,72 @@ suite is unrunnable on its own — you would have to guess what it was testing.
 
 This is the seam phase 07 uses: pointing the harness at an open-source agent is
 a registration, not a rewrite.
+
+---
+
+### D-026 · Pairwise, not absolute, and the presentation order is fixed by hash
+
+Asking a model "is B better than A" is far more stable than asking it to score
+one answer out of ten, and it maps directly onto the question a regression
+report asks: did this change make things worse?
+
+Position bias is large enough to invent a winner on its own, so which answer is
+shown as A is decided by a hash of the item id. That is unbiased across the set
+and identical every time the same item is judged — a verdict that changes on
+re-run is not a measurement. `measurePositionBias` runs both orders and reports
+the flip rate, so the bias can be quantified rather than assumed away.
+
+An unreadable judge reply becomes a **tie, flagged `unparsed`**. Guessing a
+winner out of noise would put fabricated signal into the report, and the
+calibration run needs to see how often the judge fails to answer at all.
+
+---
+
+### D-027 · A tie is a pass
+
+The harness asks whether a change made things worse, not which answer is best.
+A judged tie means the candidate did not regress, so it passes with a score of
+0.5; only the baseline winning is a failure.
+
+---
+
+### D-028 · Deterministic verdicts carry no trust caveat; judged ones cannot be trusted by default
+
+A tier-1 verdict is not an opinion — an assertion either held or it did not — so
+its `trust` is `null` and the report presents it as fact.
+
+A judged verdict carries the judge's kappa from the most recent calibration.
+**An uncalibrated judge is untrusted**, not assumed good: `trust: null` on a
+judged verdict fails the trust check. The default has to fall that way, because
+the failure mode this tier exists to prevent is exactly a confident number
+nobody measured.
+
+---
+
+### D-029 · Labelling is blind, and labels are committed
+
+The labeller sees "Answer 1" and "Answer 2" with the order fixed per item and
+recorded. Knowing which was the baseline would anchor them, and the ground truth
+the judge is measured against would then carry the same bias the judge is
+suspected of.
+
+Labels live in `flightrecorder/labels/`, in git, beside the suites. They are the
+most expensive data in the project — a person read two answers and decided — and
+the only part nobody can generate. The labelling command saves after every
+single label, because a crash must never cost someone's afternoon.
+
+Identical pairs are never queued: they carry no information either way, and
+spending a human's attention on them is the fastest way to make them stop.
+
+---
+
+### D-030 · Calibration refuses to report kappa below n=30
+
+Kappa on a handful of pairs has an interval wide enough to span "worse than
+chance" to "substantial", and a number like that invites exactly the
+over-claiming this project exists to argue against. Below 30 labels
+`calibrate()` throws rather than returning something quotable.
+
+Above it, kappa always ships with a bootstrap interval. The threshold to act on
+is 0.6; below that the report marks judged verdicts untrusted rather than
+presenting them as fact.
