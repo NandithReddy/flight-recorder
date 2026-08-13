@@ -770,6 +770,23 @@ async function main(argv: string[]): Promise<number> {
       });
 
       console.log(bold(headline(report)));
+
+      // A fresh clone has the baselines but has never run anything, so there is
+      // nothing to compare. Say what to do rather than printing a row of NaN.
+      if (report.n === 0) {
+        console.log(
+          dim(
+            `\n  ${suite.cases.length} cases are loaded, but neither config has been run here yet.\n` +
+              `  Produce the candidate runs first:\n`,
+          ),
+        );
+        console.log(
+          `    npm run fr -- matrix --suite ${suite.name} ` +
+            `--models ${flags.get("candidate")} --modes live\n`,
+        );
+        return 0;
+      }
+
       console.log();
       console.log(
         `  pass rate    ${report.passRateBefore.toFixed(1)}% → ${report.passRateAfter.toFixed(1)}%` +
@@ -930,8 +947,24 @@ async function main(argv: string[]): Promise<number> {
       console.log(
         `  traces present   ${check.runnable ? green("all") : red(`${check.missing.length} missing`)}`,
       );
+
+      const attempts = suite.cases.reduce(
+        (total, testCase) => total + store.listAttempts(testCase.id).length,
+        0,
+      );
+      console.log(
+        `  runs recorded    ${attempts === 0 ? dim("none yet") : `${attempts} attempts`}`,
+      );
+
       if (!check.runnable) {
-        console.log(dim(`\n  Run: npm run fr -- import --suite ${name}`));
+        console.log(dim(`\n  Load the baselines:  npm run fr -- import --suite ${name}`));
+      } else if (attempts === 0) {
+        console.log(
+          dim(
+            `\n  Baselines are here, but nothing has been run against them yet.\n` +
+              `  Next:  npm run fr -- matrix --suite ${name} --models <model>`,
+          ),
+        );
       }
       return check.runnable ? 0 : 1;
     }
