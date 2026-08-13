@@ -122,6 +122,9 @@ docs/           spec, phase checklist, decision log
 - [docs/PHASES.md](docs/PHASES.md) — what is done, what is next, exit criteria
 - [docs/DECISIONS.md](docs/DECISIONS.md) — every design call and what would reverse it
 
-Two decisions are still open and both are flagged in the decision log: which
-model provider to adopt (needed before phase 4), and the 200 human labels the
-judge calibration depends on.
+One thing is still open, and it is not delegable: the ~200 human labels the
+judge calibration depends on in phase 4. Without them the judge is an LLM
+graded by an LLM, which is exactly the failure that tier exists to catch.
+
+The gateway adapter also has not yet made a real API call — no key is
+configured. First task of phase 3.
