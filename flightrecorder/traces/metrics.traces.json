@@ -1,8 +1,8 @@
 {
   "version": 1,
   "suite": "metrics",
-  "commit": null,
-  "createdAt": 1786649998870,
+  "commit": "85b7bcd01f1346bbb8f2230cc9e37aa92189b485",
+  "createdAt": 1786650009028,
   "traces": [
     {
       "id": "trace_acebf6616f5b41c09e61",

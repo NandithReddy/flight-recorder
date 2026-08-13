@@ -1,6 +1,6 @@
 {
   "name": "metrics",
-  "baselineCommit": null,
+  "baselineCommit": "85b7bcd01f1346bbb8f2230cc9e37aa92189b485",
   "cases": [
     {
       "id": "case_4f5d525733b44b17add0",
