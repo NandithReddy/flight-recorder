@@ -18,13 +18,23 @@ wrong 8% of the time. Nothing throws. You find out from a customer.
 
 Full rationale, architecture and build plan: [docs/spec.html](docs/spec.html).
 
+**It caught nine defects, and none of them crashed.** Every one was a number
+that was quietly wrong — including one in this repository's own judge, which
+measured *worse than chance* against human labels, and one the gate caught in a
+commit of mine that a full green test suite had waved through. The decision log
+([docs/DECISIONS.md](docs/DECISIONS.md)) records each with its evidence.
+
+A worked example is [PR #2](https://github.com/NandithReddy/flight-recorder/pull/2):
+an innocuous-looking prompt cleanup where all 174 tests pass, typecheck is
+clean, and the gate blocks it anyway.
+
 ## Quickstart
 
 Requires Node 22.6+ (25 recommended — it runs TypeScript directly).
 
 ```bash
 npm install
-npm test          # 173 tests
+npm test          # 174 tests
 npm run typecheck
 ```
 

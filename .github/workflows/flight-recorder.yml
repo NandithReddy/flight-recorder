@@ -77,10 +77,17 @@ jobs:
           npm run fr -- matrix --suite demo --provider mock \
             --models demo-model --prompts v1,v0 --modes live --concurrency 4
 
+      # Compared against the COMMITTED baseline, not against a fresh v1 run.
+      # A fresh comparison is only meaningful while v1 and v0 actually differ,
+      # so a change to v1 would flatten the contrast and this job would fail for
+      # a reason that has nothing to do with the gate. Pinning the baseline to
+      # the recordings in git makes the self-test independent of every prompt a
+      # pull request might touch.
       - name: the gate must fail on the degraded prompt
         run: |
           if npm run fr --silent -- gate --suite demo --provider mock \
-               --baseline "demo-model#v1" --candidate "demo-model#v0" --no-judge; then
+               --baseline "demo-model#v1" --candidate "demo-model#v0" \
+               --baseline-committed --no-judge; then
             echo "::error::The gate passed a known regression. That is the bug this repo exists to prevent."
             exit 1
           fi
