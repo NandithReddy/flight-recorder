@@ -4,11 +4,11 @@ An evaluation and regression harness for LLM agents. It records real agent
 runs, freezes them into replayable test cases, and blocks any change that
 quietly makes the agent worse.
 
-> **Status: phases 0–3 complete, phase 4 built.** Record → freeze → run the
-> matrix → **score**. The three-tier scorer, pairwise judge and calibration
-> harness are done and tested; the judge's trust score is waiting on human
-> labels, which is the one thing the harness must not generate for itself.
-> No report or CI gate yet. See [docs/PHASES.md](docs/PHASES.md).
+> **Status: phases 0–3 and 5 complete, phase 4 built.** Record → freeze → run
+> the matrix → score → **report**, with confidence intervals and a step diff
+> that names the diverging decision. The judge's trust score is waiting on human
+> labels — the one thing the harness must not generate for itself. CI gate next.
+> See [docs/PHASES.md](docs/PHASES.md).
 
 ## Why
 
@@ -24,7 +24,7 @@ Requires Node 22.6+ (25 recommended — it runs TypeScript directly).
 
 ```bash
 npm install
-npm test          # 137 tests
+npm test          # 154 tests
 npm run typecheck
 ```
 
@@ -90,6 +90,7 @@ reviewed in a pull request like any other test). See
 | `fr pool --set <name>` | Build blind judge-vs-human comparison pairs |
 | `fr label --set <name>` | Label pairs blind — `1` / `2` / `t` / `s` / `q` |
 | `fr calibrate --set <name>` | Measure the judge against those labels, write κ |
+| `fr report` | Compare two configs with intervals → self-contained HTML |
 | `fr models` | List locally available Ollama models |
 | `fr price [YYYY-MM-DD]` | Cost table, with promotional rates resolved |
 | `fr stats` | Store size and dedupe savings |
@@ -192,6 +193,46 @@ Labels live in `flightrecorder/labels/`, committed. They are the most expensive
 data here and the only part nobody can generate — if a model labels the
 calibration set, the judge has been graded by a model, which is the exact
 failure this tier exists to detect.
+
+## The report
+
+```bash
+npm run fr -- report --suite metrics \
+  --baseline qwen2.5:7b --candidate llama3.2:3b --out report.html
+```
+
+```
+Pass rate fell 95.5% (-100.0% to -86.4%, 95% CI, n=22).
+
+  pass rate    100.0% → 4.5%
+  cost/task    $0.000000 → $0.000000
+  latency p95  10642ms → 21676ms
+  21 regressions
+```
+
+Three things it will not do:
+
+**It will not name a direction it cannot support.** Two flipped cases out of
+forty produces *"No detectable change in pass rate: +5.0% (−2.5% to +12.5%),
+not significant at n=40"* — and the test for that phase asserts the headline
+contains neither "rose" nor "fell". Raise it to thirty flips and it does say
+"rose"; the refusal is calibrated, not blanket.
+
+**It will not report cost without quality.** Both sit in one table with their
+intervals, because this project's own evidence is that resource metrics prefer
+the broken agent.
+
+**It will not present an uncalibrated judgement as fact.** Judged verdicts below
+κ = 0.6 are marked untrusted, in the HTML, with a banner saying why.
+
+The step diff explains regressions without anyone opening a trace:
+
+> The runs diverge immediately: the baseline asked for search, the candidate
+> asked for calculate.
+
+That is llama3.2:3b's whole failure mode, stated automatically, across 20 of 25
+diffs. Output is one self-contained HTML file — no script tag, no external
+reference, attachable to a pull request.
 
 ## Observability
 

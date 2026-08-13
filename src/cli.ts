@@ -28,6 +28,11 @@ import { runMatrix } from "./replay/matrix.ts";
 import { listAgents } from "./replay/registry.ts";
 import "../examples/register.ts";
 import { createInterface } from "node:readline/promises";
+import { mkdir, writeFile } from "node:fs/promises";
+import { dirname } from "node:path";
+import { buildReport, headline } from "./report/build.ts";
+import { renderReportHtml } from "./report/html.ts";
+import { describeInterval } from "./stats/bootstrap.ts";
 import { createJudge } from "./score/judge.ts";
 import { calibrate, MIN_LABELS } from "./score/calibration.ts";
 import {
@@ -681,6 +686,94 @@ async function main(argv: string[]): Promise<number> {
       return trusted ? 0 : 1;
     }
 
+    case "report": {
+      const { flags } = parseFlags(rest);
+      const suite = await suites.read(flags.get("suite") ?? "default");
+      if (suite.cases.length === 0) throw new Error(`Suite "${suite.name}" has no cases.`);
+
+      const provider = flags.get("provider") ?? "ollama";
+      const parseTarget = (spec: string) => {
+        const [model, temp] = spec.split("@");
+        return configFor({
+          provider,
+          model: model!,
+          quality: "good",
+          temperature: temp === undefined ? 0 : Number(temp),
+        });
+      };
+
+      const baselineSpec = flags.get("baseline");
+      const candidateSpec = flags.get("candidate");
+      if (!baselineSpec || !candidateSpec) {
+        throw new Error(
+          "usage: fr report --baseline <model[@temp]> --candidate <model[@temp]> [--suite name]",
+        );
+      }
+
+      // A calibrated judge is opt-in: without --set the report is tier 1 only,
+      // which is honest rather than silently unjudged.
+      const labelSetName = flags.get("set");
+      const calibration = labelSetName ? await labels.readCalibration(labelSetName) : null;
+      const judgeModel = flags.get("judge") ?? calibration?.judgeModel ?? null;
+      const useJudge = flags.get("no-judge") !== "true" && judgeModel !== null;
+
+      if (useJudge && !(await isOllamaRunning())) {
+        throw new OllamaUnavailableError(DEFAULT_OLLAMA_HOST);
+      }
+
+      const report = await buildReport({
+        suite,
+        store,
+        baselineConfig: parseTarget(baselineSpec),
+        candidateConfig: parseTarget(candidateSpec),
+        mode: (flags.get("mode") ?? "live") as ReplayMode,
+        judge: useJudge
+          ? createJudge({ client: createOllamaClient(), model: judgeModel! })
+          : null,
+        judgeModel: judgeModel ?? undefined,
+        trust: calibration?.kappa ?? null,
+      });
+
+      console.log(bold(headline(report)));
+      console.log();
+      console.log(
+        `  pass rate    ${report.passRateBefore.toFixed(1)}% → ${report.passRateAfter.toFixed(1)}%` +
+          `   ${describeInterval(report.passRateDelta, "%")}`,
+      );
+      console.log(
+        `  cost/task    $${report.costPerTaskBefore.toFixed(6)} → $${report.costPerTaskAfter.toFixed(6)}`,
+      );
+      console.log(
+        `  latency p95  ${Math.round(report.latencyP95Before)}ms → ${Math.round(report.latencyP95After)}ms`,
+      );
+
+      if (report.regressions.length > 0) {
+        console.log();
+        console.log(red(`  ${report.regressions.length} regressions`));
+        for (const outcome of report.regressions) {
+          console.log(`    · ${outcome.task}`);
+        }
+      }
+      if (report.fixes.length > 0) {
+        console.log(green(`  ${report.fixes.length} newly passing`));
+      }
+      if (report.untrustedVerdicts > 0) {
+        console.log(
+          yellow(
+            `\n  ${report.untrustedVerdicts} verdicts marked untrusted — the judge is not ` +
+              `calibrated well enough to gate on.`,
+          ),
+        );
+      }
+
+      const outPath = flags.get("out") ?? "flightrecorder/report.html";
+      await mkdir(dirname(outPath), { recursive: true });
+      await writeFile(outPath, await renderReportHtml({ report, store }), "utf8");
+      console.log(dim(`\nwritten to ${outPath}`));
+
+      return report.regressions.length > 0 ? 1 : 0;
+    }
+
     case "agents": {
       for (const agent of listAgents()) {
         console.log(`  ${agent.ref.name}@${agent.ref.version}`);
@@ -756,6 +849,14 @@ async function main(argv: string[]): Promise<number> {
       --concurrency 2             cells in flight
       --no-resume                 re-run cells that already have attempts
   agents                        list registered agents
+
+  report                        compare two configs, with intervals
+      --baseline <model[@temp]>   the side to compare against
+      --candidate <model[@temp]>  the side under test
+      --suite <name> --mode live  which cases, which replay mode
+      --set <name>                use that label set's calibrated judge
+      --no-judge                  deterministic assertions only
+      --out <path>                default flightrecorder/report.html
 
   pool --set <name>             build judge-vs-human pairs from stored attempts
   label --set <name>            label pairs blind (1 / 2 / t / s / q)

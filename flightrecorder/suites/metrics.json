@@ -1,0 +1,1569 @@
+{
+  "name": "metrics",
+  "baselineCommit": null,
+  "cases": [
+    {
+      "id": "case_4f5d525733b44b17add0",
+      "agent": {
+        "name": "metrics-analyst",
+        "version": "0.1.0"
+      },
+      "sourceTraceId": "trace_acebf6616f5b41c09e61",
+      "baselineTraceId": "trace_acebf6616f5b41c09e61",
+      "tags": [],
+      "createdAt": 1786640669984,
+      "input": "How much did active users grow last quarter, in percent?",
+      "rubric": null,
+      "assertions": [
+        {
+          "id": "assert_3b6bc15a878146c5847d",
+          "kind": "no_error",
+          "value": 1,
+          "hard": true,
+          "note": "the baseline run completed without error"
+        },
+        {
+          "id": "assert_0d0322b844bc4cd59931",
+          "kind": "tool_called",
+          "value": "search",
+          "hard": true,
+          "note": "the baseline called search"
+        },
+        {
+          "id": "assert_3848a567c88e4ebe827d",
+          "kind": "tool_called",
+          "value": "calculate",
+          "hard": true,
+          "note": "the baseline called calculate"
+        },
+        {
+          "id": "assert_f7f724dedba14ccf830b",
+          "kind": "output_contains",
+          "value": "18.33",
+          "hard": true,
+          "note": "\"18.33\" was produced by calculate and appears in the answer"
+        },
+        {
+          "id": "assert_88765e7bc6cd410f8322",
+          "kind": "max_steps",
+          "value": 7,
+          "hard": true,
+          "note": "the baseline took 5 steps"
+        },
+        {
+          "id": "assert_0d2f81b19c7c40fd8a5a",
+          "kind": "max_wall_ms",
+          "value": 32565,
+          "hard": false,
+          "note": "the baseline took 10855ms"
+        }
+      ]
+    },
+    {
+      "id": "case_77386134079241b4b258",
+      "agent": {
+        "name": "metrics-analyst",
+        "version": "0.1.0"
+      },
+      "sourceTraceId": "trace_817e91f9dea14909ac78",
+      "baselineTraceId": "trace_817e91f9dea14909ac78",
+      "tags": [],
+      "createdAt": 1786640673244,
+      "input": "What was the year-over-year ARR growth rate, in percent?",
+      "rubric": null,
+      "assertions": [
+        {
+          "id": "assert_82e5d81f1760469ebffb",
+          "kind": "no_error",
+          "value": 1,
+          "hard": true,
+          "note": "the baseline run completed without error"
+        },
+        {
+          "id": "assert_9b995c9525444456bd63",
+          "kind": "tool_called",
+          "value": "search",
+          "hard": true,
+          "note": "the baseline called search"
+        },
+        {
+          "id": "assert_7b40e95bf6d248e9a93e",
+          "kind": "max_steps",
+          "value": 4,
+          "hard": true,
+          "note": "the baseline took 3 steps"
+        },
+        {
+          "id": "assert_64bf193cc133446b8f45",
+          "kind": "max_wall_ms",
+          "value": 9753,
+          "hard": false,
+          "note": "the baseline took 3251ms"
+        }
+      ]
+    },
+    {
+      "id": "case_dc24c15c3a924624b6dc",
+      "agent": {
+        "name": "metrics-analyst",
+        "version": "0.1.0"
+      },
+      "sourceTraceId": "trace_5919cb86b3d247f6a9c6",
+      "baselineTraceId": "trace_5919cb86b3d247f6a9c6",
+      "tags": [],
+      "createdAt": 1786640677549,
+      "input": "What was the customer churn rate in Q4, in percent?",
+      "rubric": null,
+      "assertions": [
+        {
+          "id": "assert_1370453bd2d646df83fa",
+          "kind": "no_error",
+          "value": 1,
+          "hard": true,
+          "note": "the baseline run completed without error"
+        },
+        {
+          "id": "assert_7b3ab253343c42eb82b1",
+          "kind": "tool_called",
+          "value": "search",
+          "hard": true,
+          "note": "the baseline called search"
+        },
+        {
+          "id": "assert_31cbb5a5246e47af9b78",
+          "kind": "tool_called",
+          "value": "calculate",
+          "hard": true,
+          "note": "the baseline called calculate"
+        },
+        {
+          "id": "assert_d1239ddb6c424f56bbb0",
+          "kind": "output_contains",
+          "value": "4.00",
+          "hard": true,
+          "note": "\"4.00\" was produced by calculate and appears in the answer"
+        },
+        {
+          "id": "assert_c7ee3e1e291543ad8e1c",
+          "kind": "max_steps",
+          "value": 7,
+          "hard": true,
+          "note": "the baseline took 5 steps"
+        },
+        {
+          "id": "assert_c2f83621dddf4102b697",
+          "kind": "max_wall_ms",
+          "value": 12900,
+          "hard": false,
+          "note": "the baseline took 4300ms"
+        }
+      ]
+    },
+    {
+      "id": "case_a6caedab8a04410082db",
+      "agent": {
+        "name": "metrics-analyst",
+        "version": "0.1.0"
+      },
+      "sourceTraceId": "trace_05c367f6ad9148568f34",
+      "baselineTraceId": "trace_05c367f6ad9148568f34",
+      "tags": [],
+      "createdAt": 1786640683705,
+      "input": "By what percentage did support ticket volume change from October to November?",
+      "rubric": null,
+      "assertions": [
+        {
+          "id": "assert_bb556bcd33604f369c58",
+          "kind": "no_error",
+          "value": 1,
+          "hard": true,
+          "note": "the baseline run completed without error"
+        },
+        {
+          "id": "assert_6bc62350c29b4eefa216",
+          "kind": "tool_called",
+          "value": "search",
+          "hard": true,
+          "note": "the baseline called search"
+        },
+        {
+          "id": "assert_6fe0d8067c75491eafdb",
+          "kind": "tool_called",
+          "value": "calculate",
+          "hard": true,
+          "note": "the baseline called calculate"
+        },
+        {
+          "id": "assert_9499834f67704796b106",
+          "kind": "max_steps",
+          "value": 8,
+          "hard": true,
+          "note": "the baseline took 6 steps"
+        },
+        {
+          "id": "assert_875c594b9adf4af4a42d",
+          "kind": "max_wall_ms",
+          "value": 18462,
+          "hard": false,
+          "note": "the baseline took 6154ms"
+        }
+      ]
+    },
+    {
+      "id": "case_620c5d337738486fae83",
+      "agent": {
+        "name": "metrics-analyst",
+        "version": "0.1.0"
+      },
+      "sourceTraceId": "trace_f12fe6d95cc047b48b1c",
+      "baselineTraceId": "trace_f12fe6d95cc047b48b1c",
+      "tags": [],
+      "createdAt": 1786640688820,
+      "input": "What was the FY24 gross margin, in percent?",
+      "rubric": null,
+      "assertions": [
+        {
+          "id": "assert_c641b9280e4f4b93af45",
+          "kind": "no_error",
+          "value": 1,
+          "hard": true,
+          "note": "the baseline run completed without error"
+        },
+        {
+          "id": "assert_ef88a5957b864f6bb74b",
+          "kind": "tool_called",
+          "value": "search",
+          "hard": true,
+          "note": "the baseline called search"
+        },
+        {
+          "id": "assert_465b7ea1e140408ba276",
+          "kind": "tool_called",
+          "value": "calculate",
+          "hard": true,
+          "note": "the baseline called calculate"
+        },
+        {
+          "id": "assert_a972060b2e1f436ab837",
+          "kind": "max_steps",
+          "value": 7,
+          "hard": true,
+          "note": "the baseline took 5 steps"
+        },
+        {
+          "id": "assert_3fedf89359f8413b9a3c",
+          "kind": "max_wall_ms",
+          "value": 15339,
+          "hard": false,
+          "note": "the baseline took 5113ms"
+        }
+      ]
+    },
+    {
+      "id": "case_8c42d27cc64044418b03",
+      "agent": {
+        "name": "metrics-analyst",
+        "version": "0.1.0"
+      },
+      "sourceTraceId": "trace_542c2afab9a847cda01b",
+      "baselineTraceId": "trace_542c2afab9a847cda01b",
+      "tags": [],
+      "createdAt": 1786640693543,
+      "input": "What was the trial-to-paid conversion rate in Q4, in percent?",
+      "rubric": null,
+      "assertions": [
+        {
+          "id": "assert_5a778cf15bc141e6a53e",
+          "kind": "no_error",
+          "value": 1,
+          "hard": true,
+          "note": "the baseline run completed without error"
+        },
+        {
+          "id": "assert_8791a532b4274ee0b76d",
+          "kind": "tool_called",
+          "value": "search",
+          "hard": true,
+          "note": "the baseline called search"
+        },
+        {
+          "id": "assert_dfee400ece644933b50d",
+          "kind": "tool_called",
+          "value": "calculate",
+          "hard": true,
+          "note": "the baseline called calculate"
+        },
+        {
+          "id": "assert_dfe826487b084037a9f1",
+          "kind": "max_steps",
+          "value": 7,
+          "hard": true,
+          "note": "the baseline took 5 steps"
+        },
+        {
+          "id": "assert_a5cbf76bfff64268a08b",
+          "kind": "max_wall_ms",
+          "value": 14157,
+          "hard": false,
+          "note": "the baseline took 4719ms"
+        }
+      ]
+    },
+    {
+      "id": "case_d7f59c4885764daeb651",
+      "agent": {
+        "name": "metrics-analyst",
+        "version": "0.1.0"
+      },
+      "sourceTraceId": "trace_eab9d72bd1b945d784f8",
+      "baselineTraceId": "trace_eab9d72bd1b945d784f8",
+      "tags": [],
+      "createdAt": 1786640698151,
+      "input": "By what percentage did engineering headcount grow over the year?",
+      "rubric": null,
+      "assertions": [
+        {
+          "id": "assert_7aa28cc7ce914e13a56a",
+          "kind": "no_error",
+          "value": 1,
+          "hard": true,
+          "note": "the baseline run completed without error"
+        },
+        {
+          "id": "assert_d732f53be456473fafdf",
+          "kind": "tool_called",
+          "value": "search",
+          "hard": true,
+          "note": "the baseline called search"
+        },
+        {
+          "id": "assert_4d1ab4e5c4db4652bebd",
+          "kind": "tool_called",
+          "value": "calculate",
+          "hard": true,
+          "note": "the baseline called calculate"
+        },
+        {
+          "id": "assert_6c3de636a8584cbc90af",
+          "kind": "max_steps",
+          "value": 7,
+          "hard": true,
+          "note": "the baseline took 5 steps"
+        },
+        {
+          "id": "assert_13caf38fb4c645a0aa70",
+          "kind": "max_wall_ms",
+          "value": 13815,
+          "hard": false,
+          "note": "the baseline took 4605ms"
+        }
+      ]
+    },
+    {
+      "id": "case_509fb30f916d45bfa7b0",
+      "agent": {
+        "name": "metrics-analyst",
+        "version": "0.1.0"
+      },
+      "sourceTraceId": "trace_ea684d0a6a4041398ccd",
+      "baselineTraceId": "trace_ea684d0a6a4041398ccd",
+      "tags": [],
+      "createdAt": 1786640704671,
+      "input": "How much did infrastructure spend increase last quarter, in percent?",
+      "rubric": null,
+      "assertions": [
+        {
+          "id": "assert_b148075d16124b1fba23",
+          "kind": "no_error",
+          "value": 1,
+          "hard": true,
+          "note": "the baseline run completed without error"
+        },
+        {
+          "id": "assert_e30d4990a3f94d298e62",
+          "kind": "tool_called",
+          "value": "search",
+          "hard": true,
+          "note": "the baseline called search"
+        },
+        {
+          "id": "assert_546f1a67fc26447ea5d1",
+          "kind": "tool_called",
+          "value": "calculate",
+          "hard": true,
+          "note": "the baseline called calculate"
+        },
+        {
+          "id": "assert_5a9779c85e9d4fd4b66f",
+          "kind": "max_steps",
+          "value": 9,
+          "hard": true,
+          "note": "the baseline took 7 steps"
+        },
+        {
+          "id": "assert_88fa20d1660a40d980d7",
+          "kind": "max_wall_ms",
+          "value": 19542,
+          "hard": false,
+          "note": "the baseline took 6514ms"
+        }
+      ]
+    },
+    {
+      "id": "case_a3e3eaae36f34cf6b073",
+      "agent": {
+        "name": "metrics-analyst",
+        "version": "0.1.0"
+      },
+      "sourceTraceId": "trace_2146d5e8a86e4c72b6bf",
+      "baselineTraceId": "trace_2146d5e8a86e4c72b6bf",
+      "tags": [],
+      "createdAt": 1786640709691,
+      "input": "What was the average deal size in Q4?",
+      "rubric": null,
+      "assertions": [
+        {
+          "id": "assert_cefdbd587bc341d8814f",
+          "kind": "no_error",
+          "value": 1,
+          "hard": true,
+          "note": "the baseline run completed without error"
+        },
+        {
+          "id": "assert_b9790430241b4e478433",
+          "kind": "tool_called",
+          "value": "search",
+          "hard": true,
+          "note": "the baseline called search"
+        },
+        {
+          "id": "assert_b4e3441e71674401b6dc",
+          "kind": "tool_called",
+          "value": "calculate",
+          "hard": true,
+          "note": "the baseline called calculate"
+        },
+        {
+          "id": "assert_3cd7948298954c1081fe",
+          "kind": "output_contains",
+          "value": "320",
+          "hard": true,
+          "note": "\"320\" was produced by search and appears in the answer"
+        },
+        {
+          "id": "assert_0f1a24a91eb64a15a2c4",
+          "kind": "max_steps",
+          "value": 7,
+          "hard": true,
+          "note": "the baseline took 5 steps"
+        },
+        {
+          "id": "assert_c6abbf58aeac4ad89a49",
+          "kind": "max_wall_ms",
+          "value": 15048,
+          "hard": false,
+          "note": "the baseline took 5016ms"
+        }
+      ]
+    },
+    {
+      "id": "case_f15e11b3b65d49cb949d",
+      "agent": {
+        "name": "metrics-analyst",
+        "version": "0.1.0"
+      },
+      "sourceTraceId": "trace_d9b029b8b82f47d5918f",
+      "baselineTraceId": "trace_d9b029b8b82f47d5918f",
+      "tags": [],
+      "createdAt": 1786640715086,
+      "input": "What was net revenue retention over the year, in percent?",
+      "rubric": null,
+      "assertions": [
+        {
+          "id": "assert_170526f5b12a4eb9be54",
+          "kind": "no_error",
+          "value": 1,
+          "hard": true,
+          "note": "the baseline run completed without error"
+        },
+        {
+          "id": "assert_679a8bed9b8248a78d22",
+          "kind": "tool_called",
+          "value": "search",
+          "hard": true,
+          "note": "the baseline called search"
+        },
+        {
+          "id": "assert_2c7448a477b74626a4a5",
+          "kind": "tool_called",
+          "value": "calculate",
+          "hard": true,
+          "note": "the baseline called calculate"
+        },
+        {
+          "id": "assert_ff7a8e7c9e6b422c80b5",
+          "kind": "max_steps",
+          "value": 7,
+          "hard": true,
+          "note": "the baseline took 5 steps"
+        },
+        {
+          "id": "assert_c52af82ef67a48f196a4",
+          "kind": "max_wall_ms",
+          "value": 16167,
+          "hard": false,
+          "note": "the baseline took 5389ms"
+        }
+      ]
+    },
+    {
+      "id": "case_9f23721803484342b1b5",
+      "agent": {
+        "name": "metrics-analyst",
+        "version": "0.1.0"
+      },
+      "sourceTraceId": "trace_51bf4fe9151e41f78d2a",
+      "baselineTraceId": "trace_51bf4fe9151e41f78d2a",
+      "tags": [],
+      "createdAt": 1786640721679,
+      "input": "By what percentage did p95 page load latency improve between January and June?",
+      "rubric": null,
+      "assertions": [
+        {
+          "id": "assert_10f78e93b5c44bce92db",
+          "kind": "no_error",
+          "value": 1,
+          "hard": true,
+          "note": "the baseline run completed without error"
+        },
+        {
+          "id": "assert_09e335ede8cb4941b580",
+          "kind": "tool_called",
+          "value": "search",
+          "hard": true,
+          "note": "the baseline called search"
+        },
+        {
+          "id": "assert_a66fea4d8e674bb9ba1e",
+          "kind": "tool_called",
+          "value": "calculate",
+          "hard": true,
+          "note": "the baseline called calculate"
+        },
+        {
+          "id": "assert_e6649bcb7d9a4e188177",
+          "kind": "max_steps",
+          "value": 8,
+          "hard": true,
+          "note": "the baseline took 6 steps"
+        },
+        {
+          "id": "assert_47b819c402994edf82b8",
+          "kind": "max_wall_ms",
+          "value": 19767,
+          "hard": false,
+          "note": "the baseline took 6589ms"
+        }
+      ]
+    },
+    {
+      "id": "case_26929165bcf14e9aa2a4",
+      "agent": {
+        "name": "metrics-analyst",
+        "version": "0.1.0"
+      },
+      "sourceTraceId": "trace_2cf9077c6bf545998d10",
+      "baselineTraceId": "trace_2cf9077c6bf545998d10",
+      "tags": [],
+      "createdAt": 1786640726530,
+      "input": "What share of Q4 sessions came from mobile, in percent?",
+      "rubric": null,
+      "assertions": [
+        {
+          "id": "assert_ca5c1377208141808af2",
+          "kind": "no_error",
+          "value": 1,
+          "hard": true,
+          "note": "the baseline run completed without error"
+        },
+        {
+          "id": "assert_186e743cf42849dd9c72",
+          "kind": "tool_called",
+          "value": "search",
+          "hard": true,
+          "note": "the baseline called search"
+        },
+        {
+          "id": "assert_acf80509a3184deb8373",
+          "kind": "tool_called",
+          "value": "calculate",
+          "hard": true,
+          "note": "the baseline called calculate"
+        },
+        {
+          "id": "assert_6e5bc66cad914962bb5d",
+          "kind": "max_steps",
+          "value": 7,
+          "hard": true,
+          "note": "the baseline took 5 steps"
+        },
+        {
+          "id": "assert_d88bacc46ad6447cad29",
+          "kind": "max_wall_ms",
+          "value": 14541,
+          "hard": false,
+          "note": "the baseline took 4847ms"
+        }
+      ]
+    },
+    {
+      "id": "case_71b3e6e6da8d42899748",
+      "agent": {
+        "name": "metrics-analyst",
+        "version": "0.1.0"
+      },
+      "sourceTraceId": "trace_2f0e4c372872462cadaa",
+      "baselineTraceId": "trace_2f0e4c372872462cadaa",
+      "tags": [],
+      "createdAt": 1786640731073,
+      "input": "What percentage of the enterprise pipeline closed in Q1?",
+      "rubric": null,
+      "assertions": [
+        {
+          "id": "assert_cb5c1a25fd74459888f3",
+          "kind": "no_error",
+          "value": 1,
+          "hard": true,
+          "note": "the baseline run completed without error"
+        },
+        {
+          "id": "assert_5215266397ce4c17a281",
+          "kind": "tool_called",
+          "value": "search",
+          "hard": true,
+          "note": "the baseline called search"
+        },
+        {
+          "id": "assert_253b39da42f04354ac8f",
+          "kind": "tool_called",
+          "value": "calculate",
+          "hard": true,
+          "note": "the baseline called calculate"
+        },
+        {
+          "id": "assert_a01b19e4e6984fedb97e",
+          "kind": "max_steps",
+          "value": 7,
+          "hard": true,
+          "note": "the baseline took 5 steps"
+        },
+        {
+          "id": "assert_12f72e478a0146f4b4f3",
+          "kind": "max_wall_ms",
+          "value": 13617,
+          "hard": false,
+          "note": "the baseline took 4539ms"
+        }
+      ]
+    },
+    {
+      "id": "case_3184cc6ba3cf4d5db749",
+      "agent": {
+        "name": "metrics-analyst",
+        "version": "0.1.0"
+      },
+      "sourceTraceId": "trace_73cb40058b6845259f54",
+      "baselineTraceId": "trace_73cb40058b6845259f54",
+      "tags": [],
+      "createdAt": 1786640735510,
+      "input": "What was the onboarding completion rate in Q4, in percent?",
+      "rubric": null,
+      "assertions": [
+        {
+          "id": "assert_5472f30a169740e3891b",
+          "kind": "no_error",
+          "value": 1,
+          "hard": true,
+          "note": "the baseline run completed without error"
+        },
+        {
+          "id": "assert_84acc1c87d8c440c9e36",
+          "kind": "tool_called",
+          "value": "search",
+          "hard": true,
+          "note": "the baseline called search"
+        },
+        {
+          "id": "assert_c52cc995d5b342ff90a3",
+          "kind": "tool_called",
+          "value": "calculate",
+          "hard": true,
+          "note": "the baseline called calculate"
+        },
+        {
+          "id": "assert_4a9a41c17ffd44c0952d",
+          "kind": "max_steps",
+          "value": 7,
+          "hard": true,
+          "note": "the baseline took 5 steps"
+        },
+        {
+          "id": "assert_f7bd088a2d8e420d8b7d",
+          "kind": "max_wall_ms",
+          "value": 13296,
+          "hard": false,
+          "note": "the baseline took 4432ms"
+        }
+      ]
+    },
+    {
+      "id": "case_9ec233dee651428881e8",
+      "agent": {
+        "name": "metrics-analyst",
+        "version": "0.1.0"
+      },
+      "sourceTraceId": "trace_5265798f9e7b41d9983c",
+      "baselineTraceId": "trace_5265798f9e7b41d9983c",
+      "tags": [],
+      "createdAt": 1786640740685,
+      "input": "What was the API 5xx error rate in December, in percent?",
+      "rubric": null,
+      "assertions": [
+        {
+          "id": "assert_b85b543ee505417ea36e",
+          "kind": "no_error",
+          "value": 1,
+          "hard": true,
+          "note": "the baseline run completed without error"
+        },
+        {
+          "id": "assert_03ce36aabb4946a4b5d1",
+          "kind": "tool_called",
+          "value": "search",
+          "hard": true,
+          "note": "the baseline called search"
+        },
+        {
+          "id": "assert_3f574bbe88834ff89c6e",
+          "kind": "tool_called",
+          "value": "calculate",
+          "hard": true,
+          "note": "the baseline called calculate"
+        },
+        {
+          "id": "assert_ac57a1f6b88c46ca9198",
+          "kind": "output_contains",
+          "value": "0.15",
+          "hard": true,
+          "note": "\"0.15\" was produced by calculate and appears in the answer"
+        },
+        {
+          "id": "assert_0395cbed65cf47b3a51a",
+          "kind": "max_steps",
+          "value": 7,
+          "hard": true,
+          "note": "the baseline took 5 steps"
+        },
+        {
+          "id": "assert_afd95c143e6f4ad480b9",
+          "kind": "max_wall_ms",
+          "value": 15510,
+          "hard": false,
+          "note": "the baseline took 5170ms"
+        }
+      ]
+    },
+    {
+      "id": "case_dfb4855234e04c2b86ae",
+      "agent": {
+        "name": "metrics-analyst",
+        "version": "0.1.0"
+      },
+      "sourceTraceId": "trace_0ba971a0f32a4542a012",
+      "baselineTraceId": "trace_0ba971a0f32a4542a012",
+      "tags": [],
+      "createdAt": 1786640746236,
+      "input": "By what percentage did seat expansion grow from FY23 to FY24?",
+      "rubric": null,
+      "assertions": [
+        {
+          "id": "assert_a5f07fb9c53f4e64aa04",
+          "kind": "no_error",
+          "value": 1,
+          "hard": true,
+          "note": "the baseline run completed without error"
+        },
+        {
+          "id": "assert_f55b4fb0c76f410e9fc2",
+          "kind": "tool_called",
+          "value": "search",
+          "hard": true,
+          "note": "the baseline called search"
+        },
+        {
+          "id": "assert_271462aea4fc41c5a383",
+          "kind": "tool_called",
+          "value": "calculate",
+          "hard": true,
+          "note": "the baseline called calculate"
+        },
+        {
+          "id": "assert_2033c19514704cf98b07",
+          "kind": "output_contains",
+          "value": "38.00",
+          "hard": true,
+          "note": "\"38.00\" was produced by calculate and appears in the answer"
+        },
+        {
+          "id": "assert_0549c67d686941b6ad1b",
+          "kind": "max_steps",
+          "value": 7,
+          "hard": true,
+          "note": "the baseline took 5 steps"
+        },
+        {
+          "id": "assert_0ff67a5cff9d44e8b313",
+          "kind": "max_wall_ms",
+          "value": 16638,
+          "hard": false,
+          "note": "the baseline took 5546ms"
+        }
+      ]
+    },
+    {
+      "id": "case_9b8944f488da4437bb39",
+      "agent": {
+        "name": "metrics-analyst",
+        "version": "0.1.0"
+      },
+      "sourceTraceId": "trace_2b02f010e9f9496db7cd",
+      "baselineTraceId": "trace_2b02f010e9f9496db7cd",
+      "tags": [],
+      "createdAt": 1786640752442,
+      "input": "What was the return on marketing spend in Q4, as a ratio?",
+      "rubric": null,
+      "assertions": [
+        {
+          "id": "assert_736a0bb599ad4c99b9f4",
+          "kind": "no_error",
+          "value": 1,
+          "hard": true,
+          "note": "the baseline run completed without error"
+        },
+        {
+          "id": "assert_110b4cc1718749e593de",
+          "kind": "tool_called",
+          "value": "search",
+          "hard": true,
+          "note": "the baseline called search"
+        },
+        {
+          "id": "assert_d52fb7d0ce014d5fbb12",
+          "kind": "tool_called",
+          "value": "calculate",
+          "hard": true,
+          "note": "the baseline called calculate"
+        },
+        {
+          "id": "assert_09ae2514b35b412b8746",
+          "kind": "output_contains",
+          "value": "1.60",
+          "hard": true,
+          "note": "\"1.60\" was produced by calculate and appears in the answer"
+        },
+        {
+          "id": "assert_8e41783b4d2f47bfa294",
+          "kind": "max_steps",
+          "value": 7,
+          "hard": true,
+          "note": "the baseline took 5 steps"
+        },
+        {
+          "id": "assert_bdef8a2558ab40d08a90",
+          "kind": "max_wall_ms",
+          "value": 18600,
+          "hard": false,
+          "note": "the baseline took 6200ms"
+        }
+      ]
+    },
+    {
+      "id": "case_6150bf65d6374b4a88c8",
+      "agent": {
+        "name": "metrics-analyst",
+        "version": "0.1.0"
+      },
+      "sourceTraceId": "trace_b5a553f818f74778b13b",
+      "baselineTraceId": "trace_b5a553f818f74778b13b",
+      "tags": [],
+      "createdAt": 1786640757103,
+      "input": "By what percentage did the storage footprint grow last quarter?",
+      "rubric": null,
+      "assertions": [
+        {
+          "id": "assert_44774f8e264a4119a265",
+          "kind": "no_error",
+          "value": 1,
+          "hard": true,
+          "note": "the baseline run completed without error"
+        },
+        {
+          "id": "assert_c7b6eb58ff9e418c8eb4",
+          "kind": "tool_called",
+          "value": "search",
+          "hard": true,
+          "note": "the baseline called search"
+        },
+        {
+          "id": "assert_0accde086f434aeb9325",
+          "kind": "tool_called",
+          "value": "calculate",
+          "hard": true,
+          "note": "the baseline called calculate"
+        },
+        {
+          "id": "assert_6b4da08cde2d4ddba7cd",
+          "kind": "max_steps",
+          "value": 7,
+          "hard": true,
+          "note": "the baseline took 5 steps"
+        },
+        {
+          "id": "assert_c821ed4ca8814613b73f",
+          "kind": "max_wall_ms",
+          "value": 13971,
+          "hard": false,
+          "note": "the baseline took 4657ms"
+        }
+      ]
+    },
+    {
+      "id": "case_ba8ab80200c7450aab43",
+      "agent": {
+        "name": "metrics-analyst",
+        "version": "0.1.0"
+      },
+      "sourceTraceId": "trace_3f696e94cc8246b7a29b",
+      "baselineTraceId": "trace_3f696e94cc8246b7a29b",
+      "tags": [],
+      "createdAt": 1786640793767,
+      "input": "By what percentage did on-call page volume fall from Q3 to Q4?",
+      "rubric": null,
+      "assertions": [
+        {
+          "id": "assert_f298cc88edad482580c3",
+          "kind": "no_error",
+          "value": 1,
+          "hard": true,
+          "note": "the baseline run completed without error"
+        },
+        {
+          "id": "assert_cf81b027dd094498af0e",
+          "kind": "tool_called",
+          "value": "search",
+          "hard": true,
+          "note": "the baseline called search"
+        },
+        {
+          "id": "assert_858afafe7c204a7f8d18",
+          "kind": "tool_called",
+          "value": "calculate",
+          "hard": true,
+          "note": "the baseline called calculate"
+        },
+        {
+          "id": "assert_f8700eb662b54ed8ad29",
+          "kind": "max_steps",
+          "value": 23,
+          "hard": true,
+          "note": "the baseline took 18 steps"
+        },
+        {
+          "id": "assert_313ffab6ad014c8d900a",
+          "kind": "max_wall_ms",
+          "value": 109965,
+          "hard": false,
+          "note": "the baseline took 36655ms"
+        }
+      ]
+    },
+    {
+      "id": "case_1121845abf394d4886ef",
+      "agent": {
+        "name": "metrics-analyst",
+        "version": "0.1.0"
+      },
+      "sourceTraceId": "trace_00ef79a577b14b05b7f8",
+      "baselineTraceId": "trace_00ef79a577b14b05b7f8",
+      "tags": [],
+      "createdAt": 1786640798355,
+      "input": "What share of public API endpoints have reference documentation, in percent?",
+      "rubric": null,
+      "assertions": [
+        {
+          "id": "assert_490d8f8391ee4ea0800f",
+          "kind": "no_error",
+          "value": 1,
+          "hard": true,
+          "note": "the baseline run completed without error"
+        },
+        {
+          "id": "assert_9e83196c416d48319ff3",
+          "kind": "tool_called",
+          "value": "search",
+          "hard": true,
+          "note": "the baseline called search"
+        },
+        {
+          "id": "assert_680dd440497842188ee3",
+          "kind": "tool_called",
+          "value": "calculate",
+          "hard": true,
+          "note": "the baseline called calculate"
+        },
+        {
+          "id": "assert_65b69768b9aa46cc99aa",
+          "kind": "max_steps",
+          "value": 7,
+          "hard": true,
+          "note": "the baseline took 5 steps"
+        },
+        {
+          "id": "assert_4e931465d41341ea94ef",
+          "kind": "max_wall_ms",
+          "value": 13752,
+          "hard": false,
+          "note": "the baseline took 4584ms"
+        }
+      ]
+    },
+    {
+      "id": "case_d1d2eda066cc4ab4b2aa",
+      "agent": {
+        "name": "metrics-analyst",
+        "version": "0.1.0"
+      },
+      "sourceTraceId": "trace_021b2c7fc963492bb193",
+      "baselineTraceId": "trace_021b2c7fc963492bb193",
+      "tags": [],
+      "createdAt": 1786640803120,
+      "input": "What was the contract renewal rate in FY24, in percent?",
+      "rubric": null,
+      "assertions": [
+        {
+          "id": "assert_b21b179230e14318ac0e",
+          "kind": "no_error",
+          "value": 1,
+          "hard": true,
+          "note": "the baseline run completed without error"
+        },
+        {
+          "id": "assert_2c1872e75dc647818d58",
+          "kind": "tool_called",
+          "value": "search",
+          "hard": true,
+          "note": "the baseline called search"
+        },
+        {
+          "id": "assert_67ee618e9ecc4f2298e7",
+          "kind": "tool_called",
+          "value": "calculate",
+          "hard": true,
+          "note": "the baseline called calculate"
+        },
+        {
+          "id": "assert_7b040b81ef324488a331",
+          "kind": "output_contains",
+          "value": "88.98",
+          "hard": true,
+          "note": "\"88.98\" was produced by calculate and appears in the answer"
+        },
+        {
+          "id": "assert_4da1cf38bc6d4a36ab40",
+          "kind": "max_steps",
+          "value": 7,
+          "hard": true,
+          "note": "the baseline took 5 steps"
+        },
+        {
+          "id": "assert_bbaa6cbe3d9142ae9dce",
+          "kind": "max_wall_ms",
+          "value": 14280,
+          "hard": false,
+          "note": "the baseline took 4760ms"
+        }
+      ]
+    },
+    {
+      "id": "case_883b34806c87497fbc18",
+      "agent": {
+        "name": "metrics-analyst",
+        "version": "0.1.0"
+      },
+      "sourceTraceId": "trace_781cd5f25a2143f7935b",
+      "baselineTraceId": "trace_781cd5f25a2143f7935b",
+      "tags": [],
+      "createdAt": 1786640807862,
+      "input": "By what percentage did the CI suite get faster between March and September?",
+      "rubric": null,
+      "assertions": [
+        {
+          "id": "assert_25e76793eb774af68438",
+          "kind": "no_error",
+          "value": 1,
+          "hard": true,
+          "note": "the baseline run completed without error"
+        },
+        {
+          "id": "assert_97e17011468946a6b733",
+          "kind": "tool_called",
+          "value": "search",
+          "hard": true,
+          "note": "the baseline called search"
+        },
+        {
+          "id": "assert_6f585dcae0af4093930c",
+          "kind": "tool_called",
+          "value": "calculate",
+          "hard": true,
+          "note": "the baseline called calculate"
+        },
+        {
+          "id": "assert_5376a7a30ba446009357",
+          "kind": "output_contains",
+          "value": "40.43",
+          "hard": true,
+          "note": "\"40.43\" was produced by calculate and appears in the answer"
+        },
+        {
+          "id": "assert_f3b1d5736f2c47de998d",
+          "kind": "max_steps",
+          "value": 7,
+          "hard": true,
+          "note": "the baseline took 5 steps"
+        },
+        {
+          "id": "assert_6ef245d6751b4e9fbf8b",
+          "kind": "max_wall_ms",
+          "value": 14211,
+          "hard": false,
+          "note": "the baseline took 4737ms"
+        }
+      ]
+    },
+    {
+      "id": "case_ad7baec8fae3417c8de4",
+      "agent": {
+        "name": "metrics-analyst",
+        "version": "0.1.0"
+      },
+      "sourceTraceId": "trace_a3281d38cb184da0b342",
+      "baselineTraceId": "trace_a3281d38cb184da0b342",
+      "tags": [],
+      "createdAt": 1786640813710,
+      "input": "What share of FY24 new ARR was sourced by partners, in percent?",
+      "rubric": null,
+      "assertions": [
+        {
+          "id": "assert_f0c2a3c99f584606bb8e",
+          "kind": "no_error",
+          "value": 1,
+          "hard": true,
+          "note": "the baseline run completed without error"
+        },
+        {
+          "id": "assert_00e91c7e99ec4950a374",
+          "kind": "tool_called",
+          "value": "search",
+          "hard": true,
+          "note": "the baseline called search"
+        },
+        {
+          "id": "assert_3576f7d3cfcf41eab0f2",
+          "kind": "tool_called",
+          "value": "calculate",
+          "hard": true,
+          "note": "the baseline called calculate"
+        },
+        {
+          "id": "assert_7918381e5a8b409c97f3",
+          "kind": "max_steps",
+          "value": 7,
+          "hard": true,
+          "note": "the baseline took 5 steps"
+        },
+        {
+          "id": "assert_85423876df534bed9611",
+          "kind": "max_wall_ms",
+          "value": 17529,
+          "hard": false,
+          "note": "the baseline took 5843ms"
+        }
+      ]
+    },
+    {
+      "id": "case_6ad69dad04c344fd8fbe",
+      "agent": {
+        "name": "metrics-analyst",
+        "version": "0.1.0"
+      },
+      "sourceTraceId": "trace_a2af1445b017441da0bb",
+      "baselineTraceId": "trace_a2af1445b017441da0bb",
+      "tags": [],
+      "createdAt": 1786640821678,
+      "input": "What percentage of registered accounts are on the free tier?",
+      "rubric": null,
+      "assertions": [
+        {
+          "id": "assert_67a02893a2984e74b849",
+          "kind": "no_error",
+          "value": 1,
+          "hard": true,
+          "note": "the baseline run completed without error"
+        },
+        {
+          "id": "assert_63adf11d2431404eb389",
+          "kind": "tool_called",
+          "value": "search",
+          "hard": true,
+          "note": "the baseline called search"
+        },
+        {
+          "id": "assert_8fc32153699f454e9cae",
+          "kind": "tool_called",
+          "value": "calculate",
+          "hard": true,
+          "note": "the baseline called calculate"
+        },
+        {
+          "id": "assert_7074ac10549349e98f70",
+          "kind": "max_steps",
+          "value": 12,
+          "hard": true,
+          "note": "the baseline took 9 steps"
+        },
+        {
+          "id": "assert_471c324a5b674883953b",
+          "kind": "max_wall_ms",
+          "value": 23883,
+          "hard": false,
+          "note": "the baseline took 7961ms"
+        }
+      ]
+    },
+    {
+      "id": "case_98d3d9efb46f4b53a213",
+      "agent": {
+        "name": "metrics-analyst",
+        "version": "0.1.0"
+      },
+      "sourceTraceId": "trace_9be9194566a84521aba6",
+      "baselineTraceId": "trace_9be9194566a84521aba6",
+      "tags": [],
+      "createdAt": 1786640828634,
+      "input": "By what percentage did mean time to recovery improve from H1 to H2?",
+      "rubric": null,
+      "assertions": [
+        {
+          "id": "assert_4a7ad0c965b84d9b8382",
+          "kind": "no_error",
+          "value": 1,
+          "hard": true,
+          "note": "the baseline run completed without error"
+        },
+        {
+          "id": "assert_5ad99af1ebec4c7f85f4",
+          "kind": "tool_called",
+          "value": "search",
+          "hard": true,
+          "note": "the baseline called search"
+        },
+        {
+          "id": "assert_ac3d3865f5314b03a691",
+          "kind": "tool_called",
+          "value": "calculate",
+          "hard": true,
+          "note": "the baseline called calculate"
+        },
+        {
+          "id": "assert_dd517ef64b654605a845",
+          "kind": "output_contains",
+          "value": "43.75",
+          "hard": true,
+          "note": "\"43.75\" was produced by calculate and appears in the answer"
+        },
+        {
+          "id": "assert_aaacab3fc5094346b4a2",
+          "kind": "max_steps",
+          "value": 8,
+          "hard": true,
+          "note": "the baseline took 6 steps"
+        },
+        {
+          "id": "assert_7d2b5b4bf0a4486fa22d",
+          "kind": "max_wall_ms",
+          "value": 20859,
+          "hard": false,
+          "note": "the baseline took 6953ms"
+        }
+      ]
+    },
+    {
+      "id": "case_0637954be1f24da29465",
+      "agent": {
+        "name": "metrics-analyst",
+        "version": "0.1.0"
+      },
+      "sourceTraceId": "trace_defbc76ae3304f4c9b4a",
+      "baselineTraceId": "trace_defbc76ae3304f4c9b4a",
+      "tags": [],
+      "createdAt": 1786640836472,
+      "input": "By what percentage did the sales cycle shorten from FY23 to FY24?",
+      "rubric": null,
+      "assertions": [
+        {
+          "id": "assert_e0184cda5437412082d6",
+          "kind": "no_error",
+          "value": 1,
+          "hard": true,
+          "note": "the baseline run completed without error"
+        },
+        {
+          "id": "assert_13414014c3e9428b974d",
+          "kind": "tool_called",
+          "value": "search",
+          "hard": true,
+          "note": "the baseline called search"
+        },
+        {
+          "id": "assert_1bc8a3a0c4f847f5a7ef",
+          "kind": "tool_called",
+          "value": "calculate",
+          "hard": true,
+          "note": "the baseline called calculate"
+        },
+        {
+          "id": "assert_e9cd8b6631a045e69c95",
+          "kind": "max_steps",
+          "value": 7,
+          "hard": true,
+          "note": "the baseline took 5 steps"
+        },
+        {
+          "id": "assert_62170323d1ea4fb6a760",
+          "kind": "max_wall_ms",
+          "value": 23499,
+          "hard": false,
+          "note": "the baseline took 7833ms"
+        }
+      ]
+    },
+    {
+      "id": "case_8aa1380ab9fa4f68a5e4",
+      "agent": {
+        "name": "metrics-analyst",
+        "version": "0.1.0"
+      },
+      "sourceTraceId": "trace_4a3497284aff460fbd10",
+      "baselineTraceId": "trace_4a3497284aff460fbd10",
+      "tags": [],
+      "createdAt": 1786640841408,
+      "input": "What was the support satisfaction rate in Q4, in percent?",
+      "rubric": null,
+      "assertions": [
+        {
+          "id": "assert_27ba74ed7cdc4dac99dd",
+          "kind": "no_error",
+          "value": 1,
+          "hard": true,
+          "note": "the baseline run completed without error"
+        },
+        {
+          "id": "assert_1add1564abe74708a25f",
+          "kind": "tool_called",
+          "value": "search",
+          "hard": true,
+          "note": "the baseline called search"
+        },
+        {
+          "id": "assert_afa81a90ab234c0e99a9",
+          "kind": "tool_called",
+          "value": "calculate",
+          "hard": true,
+          "note": "the baseline called calculate"
+        },
+        {
+          "id": "assert_646af93c41604df490c8",
+          "kind": "max_steps",
+          "value": 7,
+          "hard": true,
+          "note": "the baseline took 5 steps"
+        },
+        {
+          "id": "assert_d0a2133464c24c8cba7a",
+          "kind": "max_wall_ms",
+          "value": 14790,
+          "hard": false,
+          "note": "the baseline took 4930ms"
+        }
+      ]
+    },
+    {
+      "id": "case_293885beebb04883ab19",
+      "agent": {
+        "name": "metrics-analyst",
+        "version": "0.1.0"
+      },
+      "sourceTraceId": "trace_e3409b59b65a46ccb817",
+      "baselineTraceId": "trace_e3409b59b65a46ccb817",
+      "tags": [],
+      "createdAt": 1786640846825,
+      "input": "By what percentage did the primary database grow over the year?",
+      "rubric": null,
+      "assertions": [
+        {
+          "id": "assert_b94d7221dc154b09849a",
+          "kind": "no_error",
+          "value": 1,
+          "hard": true,
+          "note": "the baseline run completed without error"
+        },
+        {
+          "id": "assert_1d239c2e94934900bc83",
+          "kind": "tool_called",
+          "value": "search",
+          "hard": true,
+          "note": "the baseline called search"
+        },
+        {
+          "id": "assert_ffa1f8434248493cb9f3",
+          "kind": "tool_called",
+          "value": "calculate",
+          "hard": true,
+          "note": "the baseline called calculate"
+        },
+        {
+          "id": "assert_d9abf2999c6741e6a1f3",
+          "kind": "max_steps",
+          "value": 7,
+          "hard": true,
+          "note": "the baseline took 5 steps"
+        },
+        {
+          "id": "assert_b88d47dedd9d49efb746",
+          "kind": "max_wall_ms",
+          "value": 16236,
+          "hard": false,
+          "note": "the baseline took 5412ms"
+        }
+      ]
+    },
+    {
+      "id": "case_af50f746c5ec4d428c45",
+      "agent": {
+        "name": "metrics-analyst",
+        "version": "0.1.0"
+      },
+      "sourceTraceId": "trace_9a67f12be9514492a231",
+      "baselineTraceId": "trace_9a67f12be9514492a231",
+      "tags": [],
+      "createdAt": 1786640851844,
+      "input": "What was the adoption rate of the new workspace feature, in percent?",
+      "rubric": null,
+      "assertions": [
+        {
+          "id": "assert_8eacfa407e27435bbffa",
+          "kind": "no_error",
+          "value": 1,
+          "hard": true,
+          "note": "the baseline run completed without error"
+        },
+        {
+          "id": "assert_1ccc0c89c6a749d69a81",
+          "kind": "tool_called",
+          "value": "search",
+          "hard": true,
+          "note": "the baseline called search"
+        },
+        {
+          "id": "assert_68bfc3f284ac42829277",
+          "kind": "tool_called",
+          "value": "calculate",
+          "hard": true,
+          "note": "the baseline called calculate"
+        },
+        {
+          "id": "assert_f87da6923fc74794b6ed",
+          "kind": "max_steps",
+          "value": 7,
+          "hard": true,
+          "note": "the baseline took 5 steps"
+        },
+        {
+          "id": "assert_a97cb404fd6741a0b8c6",
+          "kind": "max_wall_ms",
+          "value": 15042,
+          "hard": false,
+          "note": "the baseline took 5014ms"
+        }
+      ]
+    },
+    {
+      "id": "case_84531b826d384c0c8487",
+      "agent": {
+        "name": "metrics-analyst",
+        "version": "0.1.0"
+      },
+      "sourceTraceId": "trace_afce12b4429b4252b1e8",
+      "baselineTraceId": "trace_afce12b4429b4252b1e8",
+      "tags": [],
+      "createdAt": 1786640857263,
+      "input": "What share of engineering staff are contractors, in percent?",
+      "rubric": null,
+      "assertions": [
+        {
+          "id": "assert_406dd4e0d36e419bbfed",
+          "kind": "no_error",
+          "value": 1,
+          "hard": true,
+          "note": "the baseline run completed without error"
+        },
+        {
+          "id": "assert_0cd6a641b9a74bbbaa0a",
+          "kind": "tool_called",
+          "value": "search",
+          "hard": true,
+          "note": "the baseline called search"
+        },
+        {
+          "id": "assert_f572e4a9a1d8402ba390",
+          "kind": "tool_called",
+          "value": "calculate",
+          "hard": true,
+          "note": "the baseline called calculate"
+        },
+        {
+          "id": "assert_ac91dd1c82c44c3b87d3",
+          "kind": "output_contains",
+          "value": "20.20",
+          "hard": true,
+          "note": "\"20.20\" was produced by calculate and appears in the answer"
+        },
+        {
+          "id": "assert_bc8681ccf03547e2b406",
+          "kind": "max_steps",
+          "value": 7,
+          "hard": true,
+          "note": "the baseline took 5 steps"
+        },
+        {
+          "id": "assert_e812b5ce594c45e6a6e8",
+          "kind": "max_wall_ms",
+          "value": 16248,
+          "hard": false,
+          "note": "the baseline took 5416ms"
+        }
+      ]
+    }
+  ]
+}

@@ -485,3 +485,59 @@ over-claiming this project exists to argue against. Below 30 labels
 Above it, kappa always ships with a bootstrap interval. The threshold to act on
 is 0.6; below that the report marks judged verdicts untrusted rather than
 presenting them as fact.
+
+---
+
+### D-031 · The comparison is paired, so cases are the unit of resampling
+
+Every case runs under both configs, so the bootstrap resamples *cases*, not
+observations. Treating 40 baseline results and 40 candidate results as two
+independent samples throws the pairing away and widens every interval for
+nothing — and on a suite where some tasks are simply harder than others, that
+pairing carries most of the signal.
+
+---
+
+### D-032 · The headline refuses to name a direction it cannot support
+
+When the interval spans zero the report says *"no detectable change: +5%
+(−4% to +13%), not significant at n=40"* and stops. It does not say "improved".
+
+Those are different claims and only one of them is supported by two flipped
+cases. The exit criterion for this phase is a test asserting exactly this, and
+it also asserts the headline contains neither "rose" nor "fell".
+
+---
+
+### D-033 · Quality, cost and latency are reported side by side, never separately
+
+This project's own evidence is that resource metrics prefer the broken agent:
+the degraded mock is 33% cheaper, and a 3B model that fabricates its figures is
+4.6× faster than the one that looks them up. A report that led with cost would
+recommend the wrong thing every time.
+
+So the metrics table puts all three in one view with their intervals, and the
+headline is always the quality number.
+
+---
+
+### D-034 · The step diff compares decisions, not identities
+
+A model span is compared by *what it asked for* — which tools it requested —
+never by the model's name or its prose.
+
+The first version compared span names, and on a cross-model report every step
+differed for the trivial reason that the model **is** the change: the diff said
+"the baseline called qwen2.5:7b, the candidate called llama3.2:3b" twenty-five
+times and explained nothing. Comparing prose is no better, since two correct
+answers rarely share wording and both answers are already shown above the diff.
+
+What remains is the path the agent took, which is the part that explains a
+regression. On real data it now reports, unprompted:
+
+> The runs diverge immediately: the baseline asked for search, the candidate
+> asked for calculate.
+
+That is llama3.2:3b's entire failure mode — skip the lookup, do arithmetic on
+invented numbers — stated in one sentence across 20 of 25 cases, with nobody
+reading a trace.

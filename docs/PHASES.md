@@ -10,8 +10,8 @@ Full rationale for each phase lives in [spec.html](./spec.html).
 | 02 | Store + freezer | 2–3 | **done** |
 | 03 | Replayer | 4–6 | **done** |
 | 04 | Scorer | 5–7 | **built — awaiting labels** |
-| 05 | Reporter | 3–4 | next |
-| 06 | Gate | 2 | |
+| 05 | Reporter | 3–4 | **done** |
+| 06 | Gate | 2 | next |
 | 07 | Dogfood + writeup | 4–5 | |
 
 ---
@@ -170,15 +170,44 @@ and the judge's A/B slot is derived from that id. A non-deterministic test in a
 project arguing for trustworthy measurement is the wrong kind of irony. Rewritten
 to assert what its name claims; five consecutive clean runs.
 
-## Phase 05 — Reporter — next
+## Phase 05 — Reporter — **done**
 
 **Exit criterion:** the report refuses to call a two-case delta significant at n=40.
 
-- [ ] Bootstrap resampling (~10k iterations), no t-tests on binary outcomes
-- [ ] Pass-rate delta with interval, plus cost and p95 latency deltas
-- [ ] Per-case regression list
-- [ ] Side-by-side trace diff showing the exact diverging step
-- [ ] Self-contained static HTML output
+- [x] Percentile bootstrap over 10k resamples; cases resampled as pairs (D-031)
+- [x] Pass-rate, cost-per-task and p95 latency deltas, each with an interval
+- [x] Per-case regression list, with newly-passing cases counted separately
+- [x] Step diff naming the exact diverging decision (D-034)
+- [x] Self-contained static HTML — no script, no external reference of any kind
+- [x] 154 tests passing, `tsc --noEmit` clean
+
+**Evidence — the exit criterion is a test.** A suite of 40 cases where 2 flip
+from fail to pass produces `+5.0%`, and the report says:
+
+> No detectable change in pass rate: +5.0% (−2.5% to +12.5%), not significant at n=40.
+
+The test also asserts the headline contains neither "rose" nor "fell". Raise the
+flips to 30 of 40 and it does say "rose" — the refusal is calibrated, not blanket.
+
+**Evidence — on live data.** qwen2.5:7b vs llama3.2:3b over 22 real cases:
+
+```
+Pass rate fell 95.5% (-100.0% to -86.4%, 95% CI, n=22).
+  pass rate    100.0% → 4.5%
+  latency p95  10642ms → 21676ms
+  21 regressions
+```
+
+And the step diff explains why, without anyone reading a trace:
+
+> The runs diverge immediately: the baseline asked for search, the candidate
+> asked for calculate.
+
+That single sentence covers 20 of 25 diffs and is llama's whole failure mode.
+
+**A flaw found by running it on real data.** The first diff compared span names,
+so on a cross-model report every step "differed" — the model *is* the change.
+Rewritten to compare decisions rather than identities (D-034).
 
 ## Phase 06 — Gate
 
