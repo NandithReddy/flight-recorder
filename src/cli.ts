@@ -124,7 +124,12 @@ function configFor(target: Target) {
 function clientFor(target: Target) {
   if (target.provider === "ollama") return createOllamaClient();
   if (target.provider === "gateway") return createGatewayClient();
-  return createMockClient({ quality: target.quality });
+  // The mock's "degraded" variant *is* its v2-degraded prompt, so selecting a
+  // prompt in the matrix has to select it. Without this the mock could only
+  // ever run its good path and could not demonstrate a regression at all.
+  const quality: MockQuality =
+    target.promptVersion === "v2-degraded" ? "degraded" : target.quality;
+  return createMockClient({ quality });
 }
 
 const usd = (n: number) => `$${n.toFixed(6)}`;

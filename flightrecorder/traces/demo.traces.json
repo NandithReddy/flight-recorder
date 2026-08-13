@@ -1,0 +1,4184 @@
+{
+  "version": 1,
+  "suite": "demo",
+  "commit": null,
+  "createdAt": 1786650323586,
+  "traces": [
+    {
+      "id": "trace_bb6bd270de2b40328285",
+      "schemaVersion": 1,
+      "agent": {
+        "name": "metrics-analyst",
+        "version": "0.1.0"
+      },
+      "config": {
+        "provider": "mock",
+        "model": "demo-model",
+        "promptVersion": "v1",
+        "toolset": [
+          "search",
+          "calculate"
+        ],
+        "temperature": 0,
+        "id": "cfg_5d0273e3c182adc5"
+      },
+      "input": "How much did active users grow last quarter, in percent?",
+      "output": "Active users grew 18.33% quarter over quarter, from 1,200,000 to 1,420,000.",
+      "spans": [
+        {
+          "id": "span_207c5c9154de40ee92ad",
+          "parentId": null,
+          "kind": "model",
+          "name": "demo-model",
+          "startedAt": 1786650261821,
+          "endedAt": 1786650261827,
+          "input": {
+            "messages": [
+              {
+                "content": "You are a metrics analyst.\n\nWorkflow, in order:\n1. Call `search` to retrieve the figures you need. Never answer from memory.\n2. Call `calculate` to derive any percentage or change, passing an expression\n   built only from the literal numbers `search` returned. Expressions must\n   contain digits and operators only — never variable names or placeholders.\n3. State the answer, quoting the figures you retrieved.",
+                "role": "system"
+              },
+              {
+                "content": "How much did active users grow last quarter, in percent?",
+                "role": "user"
+              }
+            ],
+            "model": "demo-model",
+            "temperature": 0,
+            "tools": [
+              {
+                "description": "Look up a metric in the company knowledge base.",
+                "inputSchema": {
+                  "properties": {
+                    "query": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "query"
+                  ],
+                  "type": "object"
+                },
+                "name": "search"
+              },
+              {
+                "description": "Evaluate an arithmetic expression.",
+                "inputSchema": {
+                  "properties": {
+                    "expression": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "expression"
+                  ],
+                  "type": "object"
+                },
+                "name": "calculate"
+              }
+            ]
+          },
+          "output": {
+            "text": "I need the current figures before I can answer.",
+            "toolCalls": [
+              {
+                "id": "call_search_1",
+                "name": "search",
+                "input": {
+                  "query": "quarterly active users"
+                }
+              }
+            ],
+            "usage": {
+              "inputTokens": 117,
+              "outputTokens": 12,
+              "costUsd": 0.000531
+            },
+            "finishReason": "tool_use"
+          },
+          "usage": {
+            "inputTokens": 117,
+            "outputTokens": 12,
+            "costUsd": 0.000531
+          },
+          "error": null
+        },
+        {
+          "id": "span_b6e23397a17b4682bc52",
+          "parentId": null,
+          "kind": "tool",
+          "name": "search",
+          "startedAt": 1786650261828,
+          "endedAt": 1786650261828,
+          "input": {
+            "query": "quarterly active users"
+          },
+          "output": "Q3 monthly active users: 1,200,000. Q4 monthly active users: 1,420,000.",
+          "usage": null,
+          "error": null
+        },
+        {
+          "id": "span_c50a57f011b5437c8b85",
+          "parentId": null,
+          "kind": "model",
+          "name": "demo-model",
+          "startedAt": 1786650261828,
+          "endedAt": 1786650261833,
+          "input": {
+            "model": "demo-model",
+            "messages": [
+              {
+                "content": "You are a metrics analyst.\n\nWorkflow, in order:\n1. Call `search` to retrieve the figures you need. Never answer from memory.\n2. Call `calculate` to derive any percentage or change, passing an expression\n   built only from the literal numbers `search` returned. Expressions must\n   contain digits and operators only — never variable names or placeholders.\n3. State the answer, quoting the figures you retrieved.",
+                "role": "system"
+              },
+              {
+                "content": "How much did active users grow last quarter, in percent?",
+                "role": "user"
+              },
+              {
+                "content": "I need the current figures before I can answer.",
+                "role": "assistant",
+                "toolCalls": [
+                  {
+                    "id": "call_search_1",
+                    "input": {
+                      "query": "quarterly active users"
+                    },
+                    "name": "search"
+                  }
+                ]
+              },
+              {
+                "content": "Q3 monthly active users: 1,200,000. Q4 monthly active users: 1,420,000.",
+                "role": "tool",
+                "toolCallId": "call_search_1",
+                "toolName": "search"
+              }
+            ],
+            "tools": [
+              {
+                "description": "Look up a metric in the company knowledge base.",
+                "inputSchema": {
+                  "properties": {
+                    "query": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "query"
+                  ],
+                  "type": "object"
+                },
+                "name": "search"
+              },
+              {
+                "description": "Evaluate an arithmetic expression.",
+                "inputSchema": {
+                  "properties": {
+                    "expression": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "expression"
+                  ],
+                  "type": "object"
+                },
+                "name": "calculate"
+              }
+            ],
+            "temperature": 0
+          },
+          "output": {
+            "finishReason": "tool_use",
+            "text": "Now I will compute the exact growth rate.",
+            "toolCalls": [
+              {
+                "id": "call_calc_1",
+                "input": {
+                  "expression": "(1420000 - 1200000) / 1200000 * 100"
+                },
+                "name": "calculate"
+              }
+            ],
+            "usage": {
+              "costUsd": 0.000606,
+              "inputTokens": 147,
+              "outputTokens": 11
+            }
+          },
+          "usage": {
+            "inputTokens": 147,
+            "outputTokens": 11,
+            "costUsd": 0.000606
+          },
+          "error": null
+        },
+        {
+          "id": "span_f7b43fb5434748e8abc0",
+          "parentId": null,
+          "kind": "tool",
+          "name": "calculate",
+          "startedAt": 1786650261833,
+          "endedAt": 1786650261834,
+          "input": {
+            "expression": "(1420000 - 1200000) / 1200000 * 100"
+          },
+          "output": "18.33",
+          "usage": null,
+          "error": null
+        },
+        {
+          "id": "span_d9cf82e74e1c4e4e84cb",
+          "parentId": null,
+          "kind": "model",
+          "name": "demo-model",
+          "startedAt": 1786650261834,
+          "endedAt": 1786650261839,
+          "input": {
+            "model": "demo-model",
+            "messages": [
+              {
+                "content": "You are a metrics analyst.\n\nWorkflow, in order:\n1. Call `search` to retrieve the figures you need. Never answer from memory.\n2. Call `calculate` to derive any percentage or change, passing an expression\n   built only from the literal numbers `search` returned. Expressions must\n   contain digits and operators only — never variable names or placeholders.\n3. State the answer, quoting the figures you retrieved.",
+                "role": "system"
+              },
+              {
+                "content": "How much did active users grow last quarter, in percent?",
+                "role": "user"
+              },
+              {
+                "content": "I need the current figures before I can answer.",
+                "role": "assistant",
+                "toolCalls": [
+                  {
+                    "id": "call_search_1",
+                    "input": {
+                      "query": "quarterly active users"
+                    },
+                    "name": "search"
+                  }
+                ]
+              },
+              {
+                "content": "Q3 monthly active users: 1,200,000. Q4 monthly active users: 1,420,000.",
+                "role": "tool",
+                "toolCallId": "call_search_1",
+                "toolName": "search"
+              },
+              {
+                "content": "Now I will compute the exact growth rate.",
+                "role": "assistant",
+                "toolCalls": [
+                  {
+                    "id": "call_calc_1",
+                    "input": {
+                      "expression": "(1420000 - 1200000) / 1200000 * 100"
+                    },
+                    "name": "calculate"
+                  }
+                ]
+              },
+              {
+                "content": "18.33",
+                "role": "tool",
+                "toolCallId": "call_calc_1",
+                "toolName": "calculate"
+              }
+            ],
+            "tools": [
+              {
+                "description": "Look up a metric in the company knowledge base.",
+                "inputSchema": {
+                  "properties": {
+                    "query": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "query"
+                  ],
+                  "type": "object"
+                },
+                "name": "search"
+              },
+              {
+                "description": "Evaluate an arithmetic expression.",
+                "inputSchema": {
+                  "properties": {
+                    "expression": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "expression"
+                  ],
+                  "type": "object"
+                },
+                "name": "calculate"
+              }
+            ],
+            "temperature": 0
+          },
+          "output": {
+            "text": "Active users grew 18.33% quarter over quarter, from 1,200,000 to 1,420,000.",
+            "toolCalls": [],
+            "usage": {
+              "inputTokens": 160,
+              "outputTokens": 19,
+              "costUsd": 0.0007650000000000001
+            },
+            "finishReason": "stop"
+          },
+          "usage": {
+            "inputTokens": 160,
+            "outputTokens": 19,
+            "costUsd": 0.0007650000000000001
+          },
+          "error": null
+        }
+      ],
+      "startedAt": 1786650261820,
+      "endedAt": 1786650261839,
+      "totals": {
+        "inputTokens": 424,
+        "outputTokens": 42,
+        "costUsd": 0.001902,
+        "wallMs": 19,
+        "steps": 5
+      },
+      "error": null,
+      "replayOf": null,
+      "tags": [
+        "seed"
+      ]
+    },
+    {
+      "id": "trace_a636efad856f44529004",
+      "schemaVersion": 1,
+      "agent": {
+        "name": "metrics-analyst",
+        "version": "0.1.0"
+      },
+      "config": {
+        "provider": "mock",
+        "model": "demo-model",
+        "promptVersion": "v1",
+        "toolset": [
+          "search",
+          "calculate"
+        ],
+        "temperature": 0,
+        "id": "cfg_5d0273e3c182adc5"
+      },
+      "input": "What was the year-over-year ARR growth rate, in percent?",
+      "output": "Active users grew 18.33% quarter over quarter, from 1,200,000 to 1,420,000.",
+      "spans": [
+        {
+          "id": "span_490f1c609a5a4116b4ff",
+          "parentId": null,
+          "kind": "model",
+          "name": "demo-model",
+          "startedAt": 1786650261844,
+          "endedAt": 1786650261850,
+          "input": {
+            "messages": [
+              {
+                "content": "You are a metrics analyst.\n\nWorkflow, in order:\n1. Call `search` to retrieve the figures you need. Never answer from memory.\n2. Call `calculate` to derive any percentage or change, passing an expression\n   built only from the literal numbers `search` returned. Expressions must\n   contain digits and operators only — never variable names or placeholders.\n3. State the answer, quoting the figures you retrieved.",
+                "role": "system"
+              },
+              {
+                "content": "What was the year-over-year ARR growth rate, in percent?",
+                "role": "user"
+              }
+            ],
+            "model": "demo-model",
+            "temperature": 0,
+            "tools": [
+              {
+                "description": "Look up a metric in the company knowledge base.",
+                "inputSchema": {
+                  "properties": {
+                    "query": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "query"
+                  ],
+                  "type": "object"
+                },
+                "name": "search"
+              },
+              {
+                "description": "Evaluate an arithmetic expression.",
+                "inputSchema": {
+                  "properties": {
+                    "expression": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "expression"
+                  ],
+                  "type": "object"
+                },
+                "name": "calculate"
+              }
+            ]
+          },
+          "output": {
+            "text": "I need the current figures before I can answer.",
+            "toolCalls": [
+              {
+                "id": "call_search_1",
+                "name": "search",
+                "input": {
+                  "query": "quarterly active users"
+                }
+              }
+            ],
+            "usage": {
+              "inputTokens": 117,
+              "outputTokens": 12,
+              "costUsd": 0.000531
+            },
+            "finishReason": "tool_use"
+          },
+          "usage": {
+            "inputTokens": 117,
+            "outputTokens": 12,
+            "costUsd": 0.000531
+          },
+          "error": null
+        },
+        {
+          "id": "span_c7ad98d82d9e41b2b303",
+          "parentId": null,
+          "kind": "tool",
+          "name": "search",
+          "startedAt": 1786650261850,
+          "endedAt": 1786650261850,
+          "input": {
+            "query": "quarterly active users"
+          },
+          "output": "Q3 monthly active users: 1,200,000. Q4 monthly active users: 1,420,000.",
+          "usage": null,
+          "error": null
+        },
+        {
+          "id": "span_5a479ed21ebd4ea08c2d",
+          "parentId": null,
+          "kind": "model",
+          "name": "demo-model",
+          "startedAt": 1786650261850,
+          "endedAt": 1786650261856,
+          "input": {
+            "model": "demo-model",
+            "messages": [
+              {
+                "content": "You are a metrics analyst.\n\nWorkflow, in order:\n1. Call `search` to retrieve the figures you need. Never answer from memory.\n2. Call `calculate` to derive any percentage or change, passing an expression\n   built only from the literal numbers `search` returned. Expressions must\n   contain digits and operators only — never variable names or placeholders.\n3. State the answer, quoting the figures you retrieved.",
+                "role": "system"
+              },
+              {
+                "content": "What was the year-over-year ARR growth rate, in percent?",
+                "role": "user"
+              },
+              {
+                "content": "I need the current figures before I can answer.",
+                "role": "assistant",
+                "toolCalls": [
+                  {
+                    "id": "call_search_1",
+                    "input": {
+                      "query": "quarterly active users"
+                    },
+                    "name": "search"
+                  }
+                ]
+              },
+              {
+                "content": "Q3 monthly active users: 1,200,000. Q4 monthly active users: 1,420,000.",
+                "role": "tool",
+                "toolCallId": "call_search_1",
+                "toolName": "search"
+              }
+            ],
+            "tools": [
+              {
+                "description": "Look up a metric in the company knowledge base.",
+                "inputSchema": {
+                  "properties": {
+                    "query": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "query"
+                  ],
+                  "type": "object"
+                },
+                "name": "search"
+              },
+              {
+                "description": "Evaluate an arithmetic expression.",
+                "inputSchema": {
+                  "properties": {
+                    "expression": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "expression"
+                  ],
+                  "type": "object"
+                },
+                "name": "calculate"
+              }
+            ],
+            "temperature": 0
+          },
+          "output": {
+            "finishReason": "tool_use",
+            "text": "Now I will compute the exact growth rate.",
+            "toolCalls": [
+              {
+                "id": "call_calc_1",
+                "input": {
+                  "expression": "(1420000 - 1200000) / 1200000 * 100"
+                },
+                "name": "calculate"
+              }
+            ],
+            "usage": {
+              "costUsd": 0.000606,
+              "inputTokens": 147,
+              "outputTokens": 11
+            }
+          },
+          "usage": {
+            "inputTokens": 147,
+            "outputTokens": 11,
+            "costUsd": 0.000606
+          },
+          "error": null
+        },
+        {
+          "id": "span_40d8ad73bb474c808bf9",
+          "parentId": null,
+          "kind": "tool",
+          "name": "calculate",
+          "startedAt": 1786650261856,
+          "endedAt": 1786650261856,
+          "input": {
+            "expression": "(1420000 - 1200000) / 1200000 * 100"
+          },
+          "output": "18.33",
+          "usage": null,
+          "error": null
+        },
+        {
+          "id": "span_fe7cfc652239432a860b",
+          "parentId": null,
+          "kind": "model",
+          "name": "demo-model",
+          "startedAt": 1786650261856,
+          "endedAt": 1786650261862,
+          "input": {
+            "model": "demo-model",
+            "messages": [
+              {
+                "content": "You are a metrics analyst.\n\nWorkflow, in order:\n1. Call `search` to retrieve the figures you need. Never answer from memory.\n2. Call `calculate` to derive any percentage or change, passing an expression\n   built only from the literal numbers `search` returned. Expressions must\n   contain digits and operators only — never variable names or placeholders.\n3. State the answer, quoting the figures you retrieved.",
+                "role": "system"
+              },
+              {
+                "content": "What was the year-over-year ARR growth rate, in percent?",
+                "role": "user"
+              },
+              {
+                "content": "I need the current figures before I can answer.",
+                "role": "assistant",
+                "toolCalls": [
+                  {
+                    "id": "call_search_1",
+                    "input": {
+                      "query": "quarterly active users"
+                    },
+                    "name": "search"
+                  }
+                ]
+              },
+              {
+                "content": "Q3 monthly active users: 1,200,000. Q4 monthly active users: 1,420,000.",
+                "role": "tool",
+                "toolCallId": "call_search_1",
+                "toolName": "search"
+              },
+              {
+                "content": "Now I will compute the exact growth rate.",
+                "role": "assistant",
+                "toolCalls": [
+                  {
+                    "id": "call_calc_1",
+                    "input": {
+                      "expression": "(1420000 - 1200000) / 1200000 * 100"
+                    },
+                    "name": "calculate"
+                  }
+                ]
+              },
+              {
+                "content": "18.33",
+                "role": "tool",
+                "toolCallId": "call_calc_1",
+                "toolName": "calculate"
+              }
+            ],
+            "tools": [
+              {
+                "description": "Look up a metric in the company knowledge base.",
+                "inputSchema": {
+                  "properties": {
+                    "query": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "query"
+                  ],
+                  "type": "object"
+                },
+                "name": "search"
+              },
+              {
+                "description": "Evaluate an arithmetic expression.",
+                "inputSchema": {
+                  "properties": {
+                    "expression": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "expression"
+                  ],
+                  "type": "object"
+                },
+                "name": "calculate"
+              }
+            ],
+            "temperature": 0
+          },
+          "output": {
+            "text": "Active users grew 18.33% quarter over quarter, from 1,200,000 to 1,420,000.",
+            "toolCalls": [],
+            "usage": {
+              "inputTokens": 160,
+              "outputTokens": 19,
+              "costUsd": 0.0007650000000000001
+            },
+            "finishReason": "stop"
+          },
+          "usage": {
+            "inputTokens": 160,
+            "outputTokens": 19,
+            "costUsd": 0.0007650000000000001
+          },
+          "error": null
+        }
+      ],
+      "startedAt": 1786650261844,
+      "endedAt": 1786650261862,
+      "totals": {
+        "inputTokens": 424,
+        "outputTokens": 42,
+        "costUsd": 0.001902,
+        "wallMs": 18,
+        "steps": 5
+      },
+      "error": null,
+      "replayOf": null,
+      "tags": [
+        "seed"
+      ]
+    },
+    {
+      "id": "trace_e3fe9ad6f966470290c7",
+      "schemaVersion": 1,
+      "agent": {
+        "name": "metrics-analyst",
+        "version": "0.1.0"
+      },
+      "config": {
+        "provider": "mock",
+        "model": "demo-model",
+        "promptVersion": "v1",
+        "toolset": [
+          "search",
+          "calculate"
+        ],
+        "temperature": 0,
+        "id": "cfg_5d0273e3c182adc5"
+      },
+      "input": "What was the customer churn rate in Q4, in percent?",
+      "output": "Active users grew 18.33% quarter over quarter, from 1,200,000 to 1,420,000.",
+      "spans": [
+        {
+          "id": "span_59a002d8d1274540bef1",
+          "parentId": null,
+          "kind": "model",
+          "name": "demo-model",
+          "startedAt": 1786650261864,
+          "endedAt": 1786650261870,
+          "input": {
+            "messages": [
+              {
+                "content": "You are a metrics analyst.\n\nWorkflow, in order:\n1. Call `search` to retrieve the figures you need. Never answer from memory.\n2. Call `calculate` to derive any percentage or change, passing an expression\n   built only from the literal numbers `search` returned. Expressions must\n   contain digits and operators only — never variable names or placeholders.\n3. State the answer, quoting the figures you retrieved.",
+                "role": "system"
+              },
+              {
+                "content": "What was the customer churn rate in Q4, in percent?",
+                "role": "user"
+              }
+            ],
+            "model": "demo-model",
+            "temperature": 0,
+            "tools": [
+              {
+                "description": "Look up a metric in the company knowledge base.",
+                "inputSchema": {
+                  "properties": {
+                    "query": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "query"
+                  ],
+                  "type": "object"
+                },
+                "name": "search"
+              },
+              {
+                "description": "Evaluate an arithmetic expression.",
+                "inputSchema": {
+                  "properties": {
+                    "expression": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "expression"
+                  ],
+                  "type": "object"
+                },
+                "name": "calculate"
+              }
+            ]
+          },
+          "output": {
+            "text": "I need the current figures before I can answer.",
+            "toolCalls": [
+              {
+                "id": "call_search_1",
+                "name": "search",
+                "input": {
+                  "query": "quarterly active users"
+                }
+              }
+            ],
+            "usage": {
+              "inputTokens": 116,
+              "outputTokens": 12,
+              "costUsd": 0.000528
+            },
+            "finishReason": "tool_use"
+          },
+          "usage": {
+            "inputTokens": 116,
+            "outputTokens": 12,
+            "costUsd": 0.000528
+          },
+          "error": null
+        },
+        {
+          "id": "span_7a746ab6125f4e49a04d",
+          "parentId": null,
+          "kind": "tool",
+          "name": "search",
+          "startedAt": 1786650261870,
+          "endedAt": 1786650261870,
+          "input": {
+            "query": "quarterly active users"
+          },
+          "output": "Q3 monthly active users: 1,200,000. Q4 monthly active users: 1,420,000.",
+          "usage": null,
+          "error": null
+        },
+        {
+          "id": "span_017ffe33ae994467a989",
+          "parentId": null,
+          "kind": "model",
+          "name": "demo-model",
+          "startedAt": 1786650261870,
+          "endedAt": 1786650261876,
+          "input": {
+            "model": "demo-model",
+            "messages": [
+              {
+                "content": "You are a metrics analyst.\n\nWorkflow, in order:\n1. Call `search` to retrieve the figures you need. Never answer from memory.\n2. Call `calculate` to derive any percentage or change, passing an expression\n   built only from the literal numbers `search` returned. Expressions must\n   contain digits and operators only — never variable names or placeholders.\n3. State the answer, quoting the figures you retrieved.",
+                "role": "system"
+              },
+              {
+                "content": "What was the customer churn rate in Q4, in percent?",
+                "role": "user"
+              },
+              {
+                "content": "I need the current figures before I can answer.",
+                "role": "assistant",
+                "toolCalls": [
+                  {
+                    "id": "call_search_1",
+                    "input": {
+                      "query": "quarterly active users"
+                    },
+                    "name": "search"
+                  }
+                ]
+              },
+              {
+                "content": "Q3 monthly active users: 1,200,000. Q4 monthly active users: 1,420,000.",
+                "role": "tool",
+                "toolCallId": "call_search_1",
+                "toolName": "search"
+              }
+            ],
+            "tools": [
+              {
+                "description": "Look up a metric in the company knowledge base.",
+                "inputSchema": {
+                  "properties": {
+                    "query": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "query"
+                  ],
+                  "type": "object"
+                },
+                "name": "search"
+              },
+              {
+                "description": "Evaluate an arithmetic expression.",
+                "inputSchema": {
+                  "properties": {
+                    "expression": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "expression"
+                  ],
+                  "type": "object"
+                },
+                "name": "calculate"
+              }
+            ],
+            "temperature": 0
+          },
+          "output": {
+            "finishReason": "tool_use",
+            "text": "Now I will compute the exact growth rate.",
+            "toolCalls": [
+              {
+                "id": "call_calc_1",
+                "input": {
+                  "expression": "(1420000 - 1200000) / 1200000 * 100"
+                },
+                "name": "calculate"
+              }
+            ],
+            "usage": {
+              "costUsd": 0.000603,
+              "inputTokens": 146,
+              "outputTokens": 11
+            }
+          },
+          "usage": {
+            "inputTokens": 146,
+            "outputTokens": 11,
+            "costUsd": 0.000603
+          },
+          "error": null
+        },
+        {
+          "id": "span_7a5dd9841e3e4d218944",
+          "parentId": null,
+          "kind": "tool",
+          "name": "calculate",
+          "startedAt": 1786650261876,
+          "endedAt": 1786650261876,
+          "input": {
+            "expression": "(1420000 - 1200000) / 1200000 * 100"
+          },
+          "output": "18.33",
+          "usage": null,
+          "error": null
+        },
+        {
+          "id": "span_e41ff5d605f34f4a859f",
+          "parentId": null,
+          "kind": "model",
+          "name": "demo-model",
+          "startedAt": 1786650261876,
+          "endedAt": 1786650261882,
+          "input": {
+            "model": "demo-model",
+            "messages": [
+              {
+                "content": "You are a metrics analyst.\n\nWorkflow, in order:\n1. Call `search` to retrieve the figures you need. Never answer from memory.\n2. Call `calculate` to derive any percentage or change, passing an expression\n   built only from the literal numbers `search` returned. Expressions must\n   contain digits and operators only — never variable names or placeholders.\n3. State the answer, quoting the figures you retrieved.",
+                "role": "system"
+              },
+              {
+                "content": "What was the customer churn rate in Q4, in percent?",
+                "role": "user"
+              },
+              {
+                "content": "I need the current figures before I can answer.",
+                "role": "assistant",
+                "toolCalls": [
+                  {
+                    "id": "call_search_1",
+                    "input": {
+                      "query": "quarterly active users"
+                    },
+                    "name": "search"
+                  }
+                ]
+              },
+              {
+                "content": "Q3 monthly active users: 1,200,000. Q4 monthly active users: 1,420,000.",
+                "role": "tool",
+                "toolCallId": "call_search_1",
+                "toolName": "search"
+              },
+              {
+                "content": "Now I will compute the exact growth rate.",
+                "role": "assistant",
+                "toolCalls": [
+                  {
+                    "id": "call_calc_1",
+                    "input": {
+                      "expression": "(1420000 - 1200000) / 1200000 * 100"
+                    },
+                    "name": "calculate"
+                  }
+                ]
+              },
+              {
+                "content": "18.33",
+                "role": "tool",
+                "toolCallId": "call_calc_1",
+                "toolName": "calculate"
+              }
+            ],
+            "tools": [
+              {
+                "description": "Look up a metric in the company knowledge base.",
+                "inputSchema": {
+                  "properties": {
+                    "query": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "query"
+                  ],
+                  "type": "object"
+                },
+                "name": "search"
+              },
+              {
+                "description": "Evaluate an arithmetic expression.",
+                "inputSchema": {
+                  "properties": {
+                    "expression": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "expression"
+                  ],
+                  "type": "object"
+                },
+                "name": "calculate"
+              }
+            ],
+            "temperature": 0
+          },
+          "output": {
+            "text": "Active users grew 18.33% quarter over quarter, from 1,200,000 to 1,420,000.",
+            "toolCalls": [],
+            "usage": {
+              "inputTokens": 159,
+              "outputTokens": 19,
+              "costUsd": 0.000762
+            },
+            "finishReason": "stop"
+          },
+          "usage": {
+            "inputTokens": 159,
+            "outputTokens": 19,
+            "costUsd": 0.000762
+          },
+          "error": null
+        }
+      ],
+      "startedAt": 1786650261864,
+      "endedAt": 1786650261882,
+      "totals": {
+        "inputTokens": 421,
+        "outputTokens": 42,
+        "costUsd": 0.0018930000000000002,
+        "wallMs": 18,
+        "steps": 5
+      },
+      "error": null,
+      "replayOf": null,
+      "tags": [
+        "seed"
+      ]
+    },
+    {
+      "id": "trace_d070958523bd45cfa8f3",
+      "schemaVersion": 1,
+      "agent": {
+        "name": "metrics-analyst",
+        "version": "0.1.0"
+      },
+      "config": {
+        "provider": "mock",
+        "model": "demo-model",
+        "promptVersion": "v1",
+        "toolset": [
+          "search",
+          "calculate"
+        ],
+        "temperature": 0,
+        "id": "cfg_5d0273e3c182adc5"
+      },
+      "input": "By what percentage did support ticket volume change from October to November?",
+      "output": "Active users grew 18.33% quarter over quarter, from 1,200,000 to 1,420,000.",
+      "spans": [
+        {
+          "id": "span_76217f9f8e2e460aa297",
+          "parentId": null,
+          "kind": "model",
+          "name": "demo-model",
+          "startedAt": 1786650261883,
+          "endedAt": 1786650261889,
+          "input": {
+            "messages": [
+              {
+                "content": "You are a metrics analyst.\n\nWorkflow, in order:\n1. Call `search` to retrieve the figures you need. Never answer from memory.\n2. Call `calculate` to derive any percentage or change, passing an expression\n   built only from the literal numbers `search` returned. Expressions must\n   contain digits and operators only — never variable names or placeholders.\n3. State the answer, quoting the figures you retrieved.",
+                "role": "system"
+              },
+              {
+                "content": "By what percentage did support ticket volume change from October to November?",
+                "role": "user"
+              }
+            ],
+            "model": "demo-model",
+            "temperature": 0,
+            "tools": [
+              {
+                "description": "Look up a metric in the company knowledge base.",
+                "inputSchema": {
+                  "properties": {
+                    "query": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "query"
+                  ],
+                  "type": "object"
+                },
+                "name": "search"
+              },
+              {
+                "description": "Evaluate an arithmetic expression.",
+                "inputSchema": {
+                  "properties": {
+                    "expression": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "expression"
+                  ],
+                  "type": "object"
+                },
+                "name": "calculate"
+              }
+            ]
+          },
+          "output": {
+            "text": "I need the current figures before I can answer.",
+            "toolCalls": [
+              {
+                "id": "call_search_1",
+                "name": "search",
+                "input": {
+                  "query": "quarterly active users"
+                }
+              }
+            ],
+            "usage": {
+              "inputTokens": 123,
+              "outputTokens": 12,
+              "costUsd": 0.000549
+            },
+            "finishReason": "tool_use"
+          },
+          "usage": {
+            "inputTokens": 123,
+            "outputTokens": 12,
+            "costUsd": 0.000549
+          },
+          "error": null
+        },
+        {
+          "id": "span_9fe92207ef5340a1ba22",
+          "parentId": null,
+          "kind": "tool",
+          "name": "search",
+          "startedAt": 1786650261889,
+          "endedAt": 1786650261889,
+          "input": {
+            "query": "quarterly active users"
+          },
+          "output": "Q3 monthly active users: 1,200,000. Q4 monthly active users: 1,420,000.",
+          "usage": null,
+          "error": null
+        },
+        {
+          "id": "span_f7355c6b16fd4a518d25",
+          "parentId": null,
+          "kind": "model",
+          "name": "demo-model",
+          "startedAt": 1786650261889,
+          "endedAt": 1786650261894,
+          "input": {
+            "model": "demo-model",
+            "messages": [
+              {
+                "content": "You are a metrics analyst.\n\nWorkflow, in order:\n1. Call `search` to retrieve the figures you need. Never answer from memory.\n2. Call `calculate` to derive any percentage or change, passing an expression\n   built only from the literal numbers `search` returned. Expressions must\n   contain digits and operators only — never variable names or placeholders.\n3. State the answer, quoting the figures you retrieved.",
+                "role": "system"
+              },
+              {
+                "content": "By what percentage did support ticket volume change from October to November?",
+                "role": "user"
+              },
+              {
+                "content": "I need the current figures before I can answer.",
+                "role": "assistant",
+                "toolCalls": [
+                  {
+                    "id": "call_search_1",
+                    "input": {
+                      "query": "quarterly active users"
+                    },
+                    "name": "search"
+                  }
+                ]
+              },
+              {
+                "content": "Q3 monthly active users: 1,200,000. Q4 monthly active users: 1,420,000.",
+                "role": "tool",
+                "toolCallId": "call_search_1",
+                "toolName": "search"
+              }
+            ],
+            "tools": [
+              {
+                "description": "Look up a metric in the company knowledge base.",
+                "inputSchema": {
+                  "properties": {
+                    "query": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "query"
+                  ],
+                  "type": "object"
+                },
+                "name": "search"
+              },
+              {
+                "description": "Evaluate an arithmetic expression.",
+                "inputSchema": {
+                  "properties": {
+                    "expression": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "expression"
+                  ],
+                  "type": "object"
+                },
+                "name": "calculate"
+              }
+            ],
+            "temperature": 0
+          },
+          "output": {
+            "finishReason": "tool_use",
+            "text": "Now I will compute the exact growth rate.",
+            "toolCalls": [
+              {
+                "id": "call_calc_1",
+                "input": {
+                  "expression": "(1420000 - 1200000) / 1200000 * 100"
+                },
+                "name": "calculate"
+              }
+            ],
+            "usage": {
+              "costUsd": 0.000624,
+              "inputTokens": 153,
+              "outputTokens": 11
+            }
+          },
+          "usage": {
+            "inputTokens": 153,
+            "outputTokens": 11,
+            "costUsd": 0.000624
+          },
+          "error": null
+        },
+        {
+          "id": "span_4f95292ea077408f9b4e",
+          "parentId": null,
+          "kind": "tool",
+          "name": "calculate",
+          "startedAt": 1786650261894,
+          "endedAt": 1786650261894,
+          "input": {
+            "expression": "(1420000 - 1200000) / 1200000 * 100"
+          },
+          "output": "18.33",
+          "usage": null,
+          "error": null
+        },
+        {
+          "id": "span_fa6eef2431b74a7c8b13",
+          "parentId": null,
+          "kind": "model",
+          "name": "demo-model",
+          "startedAt": 1786650261894,
+          "endedAt": 1786650261900,
+          "input": {
+            "model": "demo-model",
+            "messages": [
+              {
+                "content": "You are a metrics analyst.\n\nWorkflow, in order:\n1. Call `search` to retrieve the figures you need. Never answer from memory.\n2. Call `calculate` to derive any percentage or change, passing an expression\n   built only from the literal numbers `search` returned. Expressions must\n   contain digits and operators only — never variable names or placeholders.\n3. State the answer, quoting the figures you retrieved.",
+                "role": "system"
+              },
+              {
+                "content": "By what percentage did support ticket volume change from October to November?",
+                "role": "user"
+              },
+              {
+                "content": "I need the current figures before I can answer.",
+                "role": "assistant",
+                "toolCalls": [
+                  {
+                    "id": "call_search_1",
+                    "input": {
+                      "query": "quarterly active users"
+                    },
+                    "name": "search"
+                  }
+                ]
+              },
+              {
+                "content": "Q3 monthly active users: 1,200,000. Q4 monthly active users: 1,420,000.",
+                "role": "tool",
+                "toolCallId": "call_search_1",
+                "toolName": "search"
+              },
+              {
+                "content": "Now I will compute the exact growth rate.",
+                "role": "assistant",
+                "toolCalls": [
+                  {
+                    "id": "call_calc_1",
+                    "input": {
+                      "expression": "(1420000 - 1200000) / 1200000 * 100"
+                    },
+                    "name": "calculate"
+                  }
+                ]
+              },
+              {
+                "content": "18.33",
+                "role": "tool",
+                "toolCallId": "call_calc_1",
+                "toolName": "calculate"
+              }
+            ],
+            "tools": [
+              {
+                "description": "Look up a metric in the company knowledge base.",
+                "inputSchema": {
+                  "properties": {
+                    "query": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "query"
+                  ],
+                  "type": "object"
+                },
+                "name": "search"
+              },
+              {
+                "description": "Evaluate an arithmetic expression.",
+                "inputSchema": {
+                  "properties": {
+                    "expression": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "expression"
+                  ],
+                  "type": "object"
+                },
+                "name": "calculate"
+              }
+            ],
+            "temperature": 0
+          },
+          "output": {
+            "text": "Active users grew 18.33% quarter over quarter, from 1,200,000 to 1,420,000.",
+            "toolCalls": [],
+            "usage": {
+              "inputTokens": 166,
+              "outputTokens": 19,
+              "costUsd": 0.000783
+            },
+            "finishReason": "stop"
+          },
+          "usage": {
+            "inputTokens": 166,
+            "outputTokens": 19,
+            "costUsd": 0.000783
+          },
+          "error": null
+        }
+      ],
+      "startedAt": 1786650261883,
+      "endedAt": 1786650261900,
+      "totals": {
+        "inputTokens": 442,
+        "outputTokens": 42,
+        "costUsd": 0.001956,
+        "wallMs": 17,
+        "steps": 5
+      },
+      "error": null,
+      "replayOf": null,
+      "tags": [
+        "seed"
+      ]
+    },
+    {
+      "id": "trace_af56c10501ec4c038ef5",
+      "schemaVersion": 1,
+      "agent": {
+        "name": "metrics-analyst",
+        "version": "0.1.0"
+      },
+      "config": {
+        "provider": "mock",
+        "model": "demo-model",
+        "promptVersion": "v1",
+        "toolset": [
+          "search",
+          "calculate"
+        ],
+        "temperature": 0,
+        "id": "cfg_5d0273e3c182adc5"
+      },
+      "input": "What was the FY24 gross margin, in percent?",
+      "output": "Active users grew 18.33% quarter over quarter, from 1,200,000 to 1,420,000.",
+      "spans": [
+        {
+          "id": "span_3486beb360214f77ba5f",
+          "parentId": null,
+          "kind": "model",
+          "name": "demo-model",
+          "startedAt": 1786650261903,
+          "endedAt": 1786650261909,
+          "input": {
+            "messages": [
+              {
+                "content": "You are a metrics analyst.\n\nWorkflow, in order:\n1. Call `search` to retrieve the figures you need. Never answer from memory.\n2. Call `calculate` to derive any percentage or change, passing an expression\n   built only from the literal numbers `search` returned. Expressions must\n   contain digits and operators only — never variable names or placeholders.\n3. State the answer, quoting the figures you retrieved.",
+                "role": "system"
+              },
+              {
+                "content": "What was the FY24 gross margin, in percent?",
+                "role": "user"
+              }
+            ],
+            "model": "demo-model",
+            "temperature": 0,
+            "tools": [
+              {
+                "description": "Look up a metric in the company knowledge base.",
+                "inputSchema": {
+                  "properties": {
+                    "query": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "query"
+                  ],
+                  "type": "object"
+                },
+                "name": "search"
+              },
+              {
+                "description": "Evaluate an arithmetic expression.",
+                "inputSchema": {
+                  "properties": {
+                    "expression": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "expression"
+                  ],
+                  "type": "object"
+                },
+                "name": "calculate"
+              }
+            ]
+          },
+          "output": {
+            "text": "I need the current figures before I can answer.",
+            "toolCalls": [
+              {
+                "id": "call_search_1",
+                "name": "search",
+                "input": {
+                  "query": "quarterly active users"
+                }
+              }
+            ],
+            "usage": {
+              "inputTokens": 114,
+              "outputTokens": 12,
+              "costUsd": 0.000522
+            },
+            "finishReason": "tool_use"
+          },
+          "usage": {
+            "inputTokens": 114,
+            "outputTokens": 12,
+            "costUsd": 0.000522
+          },
+          "error": null
+        },
+        {
+          "id": "span_cd13b018a92e4b72aa47",
+          "parentId": null,
+          "kind": "tool",
+          "name": "search",
+          "startedAt": 1786650261909,
+          "endedAt": 1786650261909,
+          "input": {
+            "query": "quarterly active users"
+          },
+          "output": "Q3 monthly active users: 1,200,000. Q4 monthly active users: 1,420,000.",
+          "usage": null,
+          "error": null
+        },
+        {
+          "id": "span_03e42ec77518451dae00",
+          "parentId": null,
+          "kind": "model",
+          "name": "demo-model",
+          "startedAt": 1786650261909,
+          "endedAt": 1786650261915,
+          "input": {
+            "model": "demo-model",
+            "messages": [
+              {
+                "content": "You are a metrics analyst.\n\nWorkflow, in order:\n1. Call `search` to retrieve the figures you need. Never answer from memory.\n2. Call `calculate` to derive any percentage or change, passing an expression\n   built only from the literal numbers `search` returned. Expressions must\n   contain digits and operators only — never variable names or placeholders.\n3. State the answer, quoting the figures you retrieved.",
+                "role": "system"
+              },
+              {
+                "content": "What was the FY24 gross margin, in percent?",
+                "role": "user"
+              },
+              {
+                "content": "I need the current figures before I can answer.",
+                "role": "assistant",
+                "toolCalls": [
+                  {
+                    "id": "call_search_1",
+                    "input": {
+                      "query": "quarterly active users"
+                    },
+                    "name": "search"
+                  }
+                ]
+              },
+              {
+                "content": "Q3 monthly active users: 1,200,000. Q4 monthly active users: 1,420,000.",
+                "role": "tool",
+                "toolCallId": "call_search_1",
+                "toolName": "search"
+              }
+            ],
+            "tools": [
+              {
+                "description": "Look up a metric in the company knowledge base.",
+                "inputSchema": {
+                  "properties": {
+                    "query": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "query"
+                  ],
+                  "type": "object"
+                },
+                "name": "search"
+              },
+              {
+                "description": "Evaluate an arithmetic expression.",
+                "inputSchema": {
+                  "properties": {
+                    "expression": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "expression"
+                  ],
+                  "type": "object"
+                },
+                "name": "calculate"
+              }
+            ],
+            "temperature": 0
+          },
+          "output": {
+            "finishReason": "tool_use",
+            "text": "Now I will compute the exact growth rate.",
+            "toolCalls": [
+              {
+                "id": "call_calc_1",
+                "input": {
+                  "expression": "(1420000 - 1200000) / 1200000 * 100"
+                },
+                "name": "calculate"
+              }
+            ],
+            "usage": {
+              "costUsd": 0.000597,
+              "inputTokens": 144,
+              "outputTokens": 11
+            }
+          },
+          "usage": {
+            "inputTokens": 144,
+            "outputTokens": 11,
+            "costUsd": 0.000597
+          },
+          "error": null
+        },
+        {
+          "id": "span_f4e6ef571e9c4743ad9c",
+          "parentId": null,
+          "kind": "tool",
+          "name": "calculate",
+          "startedAt": 1786650261915,
+          "endedAt": 1786650261915,
+          "input": {
+            "expression": "(1420000 - 1200000) / 1200000 * 100"
+          },
+          "output": "18.33",
+          "usage": null,
+          "error": null
+        },
+        {
+          "id": "span_120640f1890f4f338697",
+          "parentId": null,
+          "kind": "model",
+          "name": "demo-model",
+          "startedAt": 1786650261915,
+          "endedAt": 1786650261920,
+          "input": {
+            "model": "demo-model",
+            "messages": [
+              {
+                "content": "You are a metrics analyst.\n\nWorkflow, in order:\n1. Call `search` to retrieve the figures you need. Never answer from memory.\n2. Call `calculate` to derive any percentage or change, passing an expression\n   built only from the literal numbers `search` returned. Expressions must\n   contain digits and operators only — never variable names or placeholders.\n3. State the answer, quoting the figures you retrieved.",
+                "role": "system"
+              },
+              {
+                "content": "What was the FY24 gross margin, in percent?",
+                "role": "user"
+              },
+              {
+                "content": "I need the current figures before I can answer.",
+                "role": "assistant",
+                "toolCalls": [
+                  {
+                    "id": "call_search_1",
+                    "input": {
+                      "query": "quarterly active users"
+                    },
+                    "name": "search"
+                  }
+                ]
+              },
+              {
+                "content": "Q3 monthly active users: 1,200,000. Q4 monthly active users: 1,420,000.",
+                "role": "tool",
+                "toolCallId": "call_search_1",
+                "toolName": "search"
+              },
+              {
+                "content": "Now I will compute the exact growth rate.",
+                "role": "assistant",
+                "toolCalls": [
+                  {
+                    "id": "call_calc_1",
+                    "input": {
+                      "expression": "(1420000 - 1200000) / 1200000 * 100"
+                    },
+                    "name": "calculate"
+                  }
+                ]
+              },
+              {
+                "content": "18.33",
+                "role": "tool",
+                "toolCallId": "call_calc_1",
+                "toolName": "calculate"
+              }
+            ],
+            "tools": [
+              {
+                "description": "Look up a metric in the company knowledge base.",
+                "inputSchema": {
+                  "properties": {
+                    "query": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "query"
+                  ],
+                  "type": "object"
+                },
+                "name": "search"
+              },
+              {
+                "description": "Evaluate an arithmetic expression.",
+                "inputSchema": {
+                  "properties": {
+                    "expression": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "expression"
+                  ],
+                  "type": "object"
+                },
+                "name": "calculate"
+              }
+            ],
+            "temperature": 0
+          },
+          "output": {
+            "text": "Active users grew 18.33% quarter over quarter, from 1,200,000 to 1,420,000.",
+            "toolCalls": [],
+            "usage": {
+              "inputTokens": 157,
+              "outputTokens": 19,
+              "costUsd": 0.0007559999999999999
+            },
+            "finishReason": "stop"
+          },
+          "usage": {
+            "inputTokens": 157,
+            "outputTokens": 19,
+            "costUsd": 0.0007559999999999999
+          },
+          "error": null
+        }
+      ],
+      "startedAt": 1786650261903,
+      "endedAt": 1786650261920,
+      "totals": {
+        "inputTokens": 415,
+        "outputTokens": 42,
+        "costUsd": 0.001875,
+        "wallMs": 17,
+        "steps": 5
+      },
+      "error": null,
+      "replayOf": null,
+      "tags": [
+        "seed"
+      ]
+    },
+    {
+      "id": "trace_c935108652974f38a963",
+      "schemaVersion": 1,
+      "agent": {
+        "name": "metrics-analyst",
+        "version": "0.1.0"
+      },
+      "config": {
+        "provider": "mock",
+        "model": "demo-model",
+        "promptVersion": "v1",
+        "toolset": [
+          "search",
+          "calculate"
+        ],
+        "temperature": 0,
+        "id": "cfg_5d0273e3c182adc5"
+      },
+      "input": "What was the trial-to-paid conversion rate in Q4, in percent?",
+      "output": "Active users grew 18.33% quarter over quarter, from 1,200,000 to 1,420,000.",
+      "spans": [
+        {
+          "id": "span_88672887252d4cf48d64",
+          "parentId": null,
+          "kind": "model",
+          "name": "demo-model",
+          "startedAt": 1786650261921,
+          "endedAt": 1786650261927,
+          "input": {
+            "messages": [
+              {
+                "content": "You are a metrics analyst.\n\nWorkflow, in order:\n1. Call `search` to retrieve the figures you need. Never answer from memory.\n2. Call `calculate` to derive any percentage or change, passing an expression\n   built only from the literal numbers `search` returned. Expressions must\n   contain digits and operators only — never variable names or placeholders.\n3. State the answer, quoting the figures you retrieved.",
+                "role": "system"
+              },
+              {
+                "content": "What was the trial-to-paid conversion rate in Q4, in percent?",
+                "role": "user"
+              }
+            ],
+            "model": "demo-model",
+            "temperature": 0,
+            "tools": [
+              {
+                "description": "Look up a metric in the company knowledge base.",
+                "inputSchema": {
+                  "properties": {
+                    "query": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "query"
+                  ],
+                  "type": "object"
+                },
+                "name": "search"
+              },
+              {
+                "description": "Evaluate an arithmetic expression.",
+                "inputSchema": {
+                  "properties": {
+                    "expression": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "expression"
+                  ],
+                  "type": "object"
+                },
+                "name": "calculate"
+              }
+            ]
+          },
+          "output": {
+            "text": "I need the current figures before I can answer.",
+            "toolCalls": [
+              {
+                "id": "call_search_1",
+                "name": "search",
+                "input": {
+                  "query": "quarterly active users"
+                }
+              }
+            ],
+            "usage": {
+              "inputTokens": 119,
+              "outputTokens": 12,
+              "costUsd": 0.000537
+            },
+            "finishReason": "tool_use"
+          },
+          "usage": {
+            "inputTokens": 119,
+            "outputTokens": 12,
+            "costUsd": 0.000537
+          },
+          "error": null
+        },
+        {
+          "id": "span_5a922fd55a3b42fd8421",
+          "parentId": null,
+          "kind": "tool",
+          "name": "search",
+          "startedAt": 1786650261927,
+          "endedAt": 1786650261927,
+          "input": {
+            "query": "quarterly active users"
+          },
+          "output": "Q3 monthly active users: 1,200,000. Q4 monthly active users: 1,420,000.",
+          "usage": null,
+          "error": null
+        },
+        {
+          "id": "span_c5638b8a4496465f8f70",
+          "parentId": null,
+          "kind": "model",
+          "name": "demo-model",
+          "startedAt": 1786650261927,
+          "endedAt": 1786650261933,
+          "input": {
+            "model": "demo-model",
+            "messages": [
+              {
+                "content": "You are a metrics analyst.\n\nWorkflow, in order:\n1. Call `search` to retrieve the figures you need. Never answer from memory.\n2. Call `calculate` to derive any percentage or change, passing an expression\n   built only from the literal numbers `search` returned. Expressions must\n   contain digits and operators only — never variable names or placeholders.\n3. State the answer, quoting the figures you retrieved.",
+                "role": "system"
+              },
+              {
+                "content": "What was the trial-to-paid conversion rate in Q4, in percent?",
+                "role": "user"
+              },
+              {
+                "content": "I need the current figures before I can answer.",
+                "role": "assistant",
+                "toolCalls": [
+                  {
+                    "id": "call_search_1",
+                    "input": {
+                      "query": "quarterly active users"
+                    },
+                    "name": "search"
+                  }
+                ]
+              },
+              {
+                "content": "Q3 monthly active users: 1,200,000. Q4 monthly active users: 1,420,000.",
+                "role": "tool",
+                "toolCallId": "call_search_1",
+                "toolName": "search"
+              }
+            ],
+            "tools": [
+              {
+                "description": "Look up a metric in the company knowledge base.",
+                "inputSchema": {
+                  "properties": {
+                    "query": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "query"
+                  ],
+                  "type": "object"
+                },
+                "name": "search"
+              },
+              {
+                "description": "Evaluate an arithmetic expression.",
+                "inputSchema": {
+                  "properties": {
+                    "expression": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "expression"
+                  ],
+                  "type": "object"
+                },
+                "name": "calculate"
+              }
+            ],
+            "temperature": 0
+          },
+          "output": {
+            "finishReason": "tool_use",
+            "text": "Now I will compute the exact growth rate.",
+            "toolCalls": [
+              {
+                "id": "call_calc_1",
+                "input": {
+                  "expression": "(1420000 - 1200000) / 1200000 * 100"
+                },
+                "name": "calculate"
+              }
+            ],
+            "usage": {
+              "costUsd": 0.0006119999999999999,
+              "inputTokens": 149,
+              "outputTokens": 11
+            }
+          },
+          "usage": {
+            "inputTokens": 149,
+            "outputTokens": 11,
+            "costUsd": 0.0006119999999999999
+          },
+          "error": null
+        },
+        {
+          "id": "span_5ca0191ec7a2439e9467",
+          "parentId": null,
+          "kind": "tool",
+          "name": "calculate",
+          "startedAt": 1786650261933,
+          "endedAt": 1786650261933,
+          "input": {
+            "expression": "(1420000 - 1200000) / 1200000 * 100"
+          },
+          "output": "18.33",
+          "usage": null,
+          "error": null
+        },
+        {
+          "id": "span_fc7223b356054157b2f6",
+          "parentId": null,
+          "kind": "model",
+          "name": "demo-model",
+          "startedAt": 1786650261933,
+          "endedAt": 1786650261939,
+          "input": {
+            "model": "demo-model",
+            "messages": [
+              {
+                "content": "You are a metrics analyst.\n\nWorkflow, in order:\n1. Call `search` to retrieve the figures you need. Never answer from memory.\n2. Call `calculate` to derive any percentage or change, passing an expression\n   built only from the literal numbers `search` returned. Expressions must\n   contain digits and operators only — never variable names or placeholders.\n3. State the answer, quoting the figures you retrieved.",
+                "role": "system"
+              },
+              {
+                "content": "What was the trial-to-paid conversion rate in Q4, in percent?",
+                "role": "user"
+              },
+              {
+                "content": "I need the current figures before I can answer.",
+                "role": "assistant",
+                "toolCalls": [
+                  {
+                    "id": "call_search_1",
+                    "input": {
+                      "query": "quarterly active users"
+                    },
+                    "name": "search"
+                  }
+                ]
+              },
+              {
+                "content": "Q3 monthly active users: 1,200,000. Q4 monthly active users: 1,420,000.",
+                "role": "tool",
+                "toolCallId": "call_search_1",
+                "toolName": "search"
+              },
+              {
+                "content": "Now I will compute the exact growth rate.",
+                "role": "assistant",
+                "toolCalls": [
+                  {
+                    "id": "call_calc_1",
+                    "input": {
+                      "expression": "(1420000 - 1200000) / 1200000 * 100"
+                    },
+                    "name": "calculate"
+                  }
+                ]
+              },
+              {
+                "content": "18.33",
+                "role": "tool",
+                "toolCallId": "call_calc_1",
+                "toolName": "calculate"
+              }
+            ],
+            "tools": [
+              {
+                "description": "Look up a metric in the company knowledge base.",
+                "inputSchema": {
+                  "properties": {
+                    "query": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "query"
+                  ],
+                  "type": "object"
+                },
+                "name": "search"
+              },
+              {
+                "description": "Evaluate an arithmetic expression.",
+                "inputSchema": {
+                  "properties": {
+                    "expression": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "expression"
+                  ],
+                  "type": "object"
+                },
+                "name": "calculate"
+              }
+            ],
+            "temperature": 0
+          },
+          "output": {
+            "text": "Active users grew 18.33% quarter over quarter, from 1,200,000 to 1,420,000.",
+            "toolCalls": [],
+            "usage": {
+              "inputTokens": 162,
+              "outputTokens": 19,
+              "costUsd": 0.000771
+            },
+            "finishReason": "stop"
+          },
+          "usage": {
+            "inputTokens": 162,
+            "outputTokens": 19,
+            "costUsd": 0.000771
+          },
+          "error": null
+        }
+      ],
+      "startedAt": 1786650261921,
+      "endedAt": 1786650261939,
+      "totals": {
+        "inputTokens": 430,
+        "outputTokens": 42,
+        "costUsd": 0.0019199999999999998,
+        "wallMs": 18,
+        "steps": 5
+      },
+      "error": null,
+      "replayOf": null,
+      "tags": [
+        "seed"
+      ]
+    },
+    {
+      "id": "trace_014931d13797443f88de",
+      "schemaVersion": 1,
+      "agent": {
+        "name": "metrics-analyst",
+        "version": "0.1.0"
+      },
+      "config": {
+        "provider": "mock",
+        "model": "demo-model",
+        "promptVersion": "v1",
+        "toolset": [
+          "search",
+          "calculate"
+        ],
+        "temperature": 0,
+        "id": "cfg_5d0273e3c182adc5"
+      },
+      "input": "By what percentage did engineering headcount grow over the year?",
+      "output": "Active users grew 18.33% quarter over quarter, from 1,200,000 to 1,420,000.",
+      "spans": [
+        {
+          "id": "span_f1dee20de73f4709b2c8",
+          "parentId": null,
+          "kind": "model",
+          "name": "demo-model",
+          "startedAt": 1786650261940,
+          "endedAt": 1786650261946,
+          "input": {
+            "messages": [
+              {
+                "content": "You are a metrics analyst.\n\nWorkflow, in order:\n1. Call `search` to retrieve the figures you need. Never answer from memory.\n2. Call `calculate` to derive any percentage or change, passing an expression\n   built only from the literal numbers `search` returned. Expressions must\n   contain digits and operators only — never variable names or placeholders.\n3. State the answer, quoting the figures you retrieved.",
+                "role": "system"
+              },
+              {
+                "content": "By what percentage did engineering headcount grow over the year?",
+                "role": "user"
+              }
+            ],
+            "model": "demo-model",
+            "temperature": 0,
+            "tools": [
+              {
+                "description": "Look up a metric in the company knowledge base.",
+                "inputSchema": {
+                  "properties": {
+                    "query": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "query"
+                  ],
+                  "type": "object"
+                },
+                "name": "search"
+              },
+              {
+                "description": "Evaluate an arithmetic expression.",
+                "inputSchema": {
+                  "properties": {
+                    "expression": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "expression"
+                  ],
+                  "type": "object"
+                },
+                "name": "calculate"
+              }
+            ]
+          },
+          "output": {
+            "text": "I need the current figures before I can answer.",
+            "toolCalls": [
+              {
+                "id": "call_search_1",
+                "name": "search",
+                "input": {
+                  "query": "quarterly active users"
+                }
+              }
+            ],
+            "usage": {
+              "inputTokens": 119,
+              "outputTokens": 12,
+              "costUsd": 0.000537
+            },
+            "finishReason": "tool_use"
+          },
+          "usage": {
+            "inputTokens": 119,
+            "outputTokens": 12,
+            "costUsd": 0.000537
+          },
+          "error": null
+        },
+        {
+          "id": "span_ad632cf7fe6841ba982f",
+          "parentId": null,
+          "kind": "tool",
+          "name": "search",
+          "startedAt": 1786650261946,
+          "endedAt": 1786650261946,
+          "input": {
+            "query": "quarterly active users"
+          },
+          "output": "Q3 monthly active users: 1,200,000. Q4 monthly active users: 1,420,000.",
+          "usage": null,
+          "error": null
+        },
+        {
+          "id": "span_c69391f621a54332ae56",
+          "parentId": null,
+          "kind": "model",
+          "name": "demo-model",
+          "startedAt": 1786650261946,
+          "endedAt": 1786650261952,
+          "input": {
+            "model": "demo-model",
+            "messages": [
+              {
+                "content": "You are a metrics analyst.\n\nWorkflow, in order:\n1. Call `search` to retrieve the figures you need. Never answer from memory.\n2. Call `calculate` to derive any percentage or change, passing an expression\n   built only from the literal numbers `search` returned. Expressions must\n   contain digits and operators only — never variable names or placeholders.\n3. State the answer, quoting the figures you retrieved.",
+                "role": "system"
+              },
+              {
+                "content": "By what percentage did engineering headcount grow over the year?",
+                "role": "user"
+              },
+              {
+                "content": "I need the current figures before I can answer.",
+                "role": "assistant",
+                "toolCalls": [
+                  {
+                    "id": "call_search_1",
+                    "input": {
+                      "query": "quarterly active users"
+                    },
+                    "name": "search"
+                  }
+                ]
+              },
+              {
+                "content": "Q3 monthly active users: 1,200,000. Q4 monthly active users: 1,420,000.",
+                "role": "tool",
+                "toolCallId": "call_search_1",
+                "toolName": "search"
+              }
+            ],
+            "tools": [
+              {
+                "description": "Look up a metric in the company knowledge base.",
+                "inputSchema": {
+                  "properties": {
+                    "query": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "query"
+                  ],
+                  "type": "object"
+                },
+                "name": "search"
+              },
+              {
+                "description": "Evaluate an arithmetic expression.",
+                "inputSchema": {
+                  "properties": {
+                    "expression": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "expression"
+                  ],
+                  "type": "object"
+                },
+                "name": "calculate"
+              }
+            ],
+            "temperature": 0
+          },
+          "output": {
+            "finishReason": "tool_use",
+            "text": "Now I will compute the exact growth rate.",
+            "toolCalls": [
+              {
+                "id": "call_calc_1",
+                "input": {
+                  "expression": "(1420000 - 1200000) / 1200000 * 100"
+                },
+                "name": "calculate"
+              }
+            ],
+            "usage": {
+              "costUsd": 0.0006119999999999999,
+              "inputTokens": 149,
+              "outputTokens": 11
+            }
+          },
+          "usage": {
+            "inputTokens": 149,
+            "outputTokens": 11,
+            "costUsd": 0.0006119999999999999
+          },
+          "error": null
+        },
+        {
+          "id": "span_d47a85630953437987e6",
+          "parentId": null,
+          "kind": "tool",
+          "name": "calculate",
+          "startedAt": 1786650261952,
+          "endedAt": 1786650261952,
+          "input": {
+            "expression": "(1420000 - 1200000) / 1200000 * 100"
+          },
+          "output": "18.33",
+          "usage": null,
+          "error": null
+        },
+        {
+          "id": "span_fb0ebb5184d3443397f5",
+          "parentId": null,
+          "kind": "model",
+          "name": "demo-model",
+          "startedAt": 1786650261952,
+          "endedAt": 1786650261957,
+          "input": {
+            "model": "demo-model",
+            "messages": [
+              {
+                "content": "You are a metrics analyst.\n\nWorkflow, in order:\n1. Call `search` to retrieve the figures you need. Never answer from memory.\n2. Call `calculate` to derive any percentage or change, passing an expression\n   built only from the literal numbers `search` returned. Expressions must\n   contain digits and operators only — never variable names or placeholders.\n3. State the answer, quoting the figures you retrieved.",
+                "role": "system"
+              },
+              {
+                "content": "By what percentage did engineering headcount grow over the year?",
+                "role": "user"
+              },
+              {
+                "content": "I need the current figures before I can answer.",
+                "role": "assistant",
+                "toolCalls": [
+                  {
+                    "id": "call_search_1",
+                    "input": {
+                      "query": "quarterly active users"
+                    },
+                    "name": "search"
+                  }
+                ]
+              },
+              {
+                "content": "Q3 monthly active users: 1,200,000. Q4 monthly active users: 1,420,000.",
+                "role": "tool",
+                "toolCallId": "call_search_1",
+                "toolName": "search"
+              },
+              {
+                "content": "Now I will compute the exact growth rate.",
+                "role": "assistant",
+                "toolCalls": [
+                  {
+                    "id": "call_calc_1",
+                    "input": {
+                      "expression": "(1420000 - 1200000) / 1200000 * 100"
+                    },
+                    "name": "calculate"
+                  }
+                ]
+              },
+              {
+                "content": "18.33",
+                "role": "tool",
+                "toolCallId": "call_calc_1",
+                "toolName": "calculate"
+              }
+            ],
+            "tools": [
+              {
+                "description": "Look up a metric in the company knowledge base.",
+                "inputSchema": {
+                  "properties": {
+                    "query": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "query"
+                  ],
+                  "type": "object"
+                },
+                "name": "search"
+              },
+              {
+                "description": "Evaluate an arithmetic expression.",
+                "inputSchema": {
+                  "properties": {
+                    "expression": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "expression"
+                  ],
+                  "type": "object"
+                },
+                "name": "calculate"
+              }
+            ],
+            "temperature": 0
+          },
+          "output": {
+            "text": "Active users grew 18.33% quarter over quarter, from 1,200,000 to 1,420,000.",
+            "toolCalls": [],
+            "usage": {
+              "inputTokens": 162,
+              "outputTokens": 19,
+              "costUsd": 0.000771
+            },
+            "finishReason": "stop"
+          },
+          "usage": {
+            "inputTokens": 162,
+            "outputTokens": 19,
+            "costUsd": 0.000771
+          },
+          "error": null
+        }
+      ],
+      "startedAt": 1786650261940,
+      "endedAt": 1786650261957,
+      "totals": {
+        "inputTokens": 430,
+        "outputTokens": 42,
+        "costUsd": 0.0019199999999999998,
+        "wallMs": 17,
+        "steps": 5
+      },
+      "error": null,
+      "replayOf": null,
+      "tags": [
+        "seed"
+      ]
+    },
+    {
+      "id": "trace_99180f011e2b43168d7a",
+      "schemaVersion": 1,
+      "agent": {
+        "name": "metrics-analyst",
+        "version": "0.1.0"
+      },
+      "config": {
+        "provider": "mock",
+        "model": "demo-model",
+        "promptVersion": "v1",
+        "toolset": [
+          "search",
+          "calculate"
+        ],
+        "temperature": 0,
+        "id": "cfg_5d0273e3c182adc5"
+      },
+      "input": "How much did infrastructure spend increase last quarter, in percent?",
+      "output": "Active users grew 18.33% quarter over quarter, from 1,200,000 to 1,420,000.",
+      "spans": [
+        {
+          "id": "span_57a7ea5532d744b795c9",
+          "parentId": null,
+          "kind": "model",
+          "name": "demo-model",
+          "startedAt": 1786650261959,
+          "endedAt": 1786650261965,
+          "input": {
+            "messages": [
+              {
+                "content": "You are a metrics analyst.\n\nWorkflow, in order:\n1. Call `search` to retrieve the figures you need. Never answer from memory.\n2. Call `calculate` to derive any percentage or change, passing an expression\n   built only from the literal numbers `search` returned. Expressions must\n   contain digits and operators only — never variable names or placeholders.\n3. State the answer, quoting the figures you retrieved.",
+                "role": "system"
+              },
+              {
+                "content": "How much did infrastructure spend increase last quarter, in percent?",
+                "role": "user"
+              }
+            ],
+            "model": "demo-model",
+            "temperature": 0,
+            "tools": [
+              {
+                "description": "Look up a metric in the company knowledge base.",
+                "inputSchema": {
+                  "properties": {
+                    "query": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "query"
+                  ],
+                  "type": "object"
+                },
+                "name": "search"
+              },
+              {
+                "description": "Evaluate an arithmetic expression.",
+                "inputSchema": {
+                  "properties": {
+                    "expression": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "expression"
+                  ],
+                  "type": "object"
+                },
+                "name": "calculate"
+              }
+            ]
+          },
+          "output": {
+            "text": "I need the current figures before I can answer.",
+            "toolCalls": [
+              {
+                "id": "call_search_1",
+                "name": "search",
+                "input": {
+                  "query": "quarterly active users"
+                }
+              }
+            ],
+            "usage": {
+              "inputTokens": 120,
+              "outputTokens": 12,
+              "costUsd": 0.00054
+            },
+            "finishReason": "tool_use"
+          },
+          "usage": {
+            "inputTokens": 120,
+            "outputTokens": 12,
+            "costUsd": 0.00054
+          },
+          "error": null
+        },
+        {
+          "id": "span_0fc1fa6529f04f4bbdb6",
+          "parentId": null,
+          "kind": "tool",
+          "name": "search",
+          "startedAt": 1786650261965,
+          "endedAt": 1786650261965,
+          "input": {
+            "query": "quarterly active users"
+          },
+          "output": "Q3 monthly active users: 1,200,000. Q4 monthly active users: 1,420,000.",
+          "usage": null,
+          "error": null
+        },
+        {
+          "id": "span_69849e0720ec4a89a1bf",
+          "parentId": null,
+          "kind": "model",
+          "name": "demo-model",
+          "startedAt": 1786650261965,
+          "endedAt": 1786650261970,
+          "input": {
+            "model": "demo-model",
+            "messages": [
+              {
+                "content": "You are a metrics analyst.\n\nWorkflow, in order:\n1. Call `search` to retrieve the figures you need. Never answer from memory.\n2. Call `calculate` to derive any percentage or change, passing an expression\n   built only from the literal numbers `search` returned. Expressions must\n   contain digits and operators only — never variable names or placeholders.\n3. State the answer, quoting the figures you retrieved.",
+                "role": "system"
+              },
+              {
+                "content": "How much did infrastructure spend increase last quarter, in percent?",
+                "role": "user"
+              },
+              {
+                "content": "I need the current figures before I can answer.",
+                "role": "assistant",
+                "toolCalls": [
+                  {
+                    "id": "call_search_1",
+                    "input": {
+                      "query": "quarterly active users"
+                    },
+                    "name": "search"
+                  }
+                ]
+              },
+              {
+                "content": "Q3 monthly active users: 1,200,000. Q4 monthly active users: 1,420,000.",
+                "role": "tool",
+                "toolCallId": "call_search_1",
+                "toolName": "search"
+              }
+            ],
+            "tools": [
+              {
+                "description": "Look up a metric in the company knowledge base.",
+                "inputSchema": {
+                  "properties": {
+                    "query": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "query"
+                  ],
+                  "type": "object"
+                },
+                "name": "search"
+              },
+              {
+                "description": "Evaluate an arithmetic expression.",
+                "inputSchema": {
+                  "properties": {
+                    "expression": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "expression"
+                  ],
+                  "type": "object"
+                },
+                "name": "calculate"
+              }
+            ],
+            "temperature": 0
+          },
+          "output": {
+            "finishReason": "tool_use",
+            "text": "Now I will compute the exact growth rate.",
+            "toolCalls": [
+              {
+                "id": "call_calc_1",
+                "input": {
+                  "expression": "(1420000 - 1200000) / 1200000 * 100"
+                },
+                "name": "calculate"
+              }
+            ],
+            "usage": {
+              "costUsd": 0.000615,
+              "inputTokens": 150,
+              "outputTokens": 11
+            }
+          },
+          "usage": {
+            "inputTokens": 150,
+            "outputTokens": 11,
+            "costUsd": 0.000615
+          },
+          "error": null
+        },
+        {
+          "id": "span_35a884bfae55463dad21",
+          "parentId": null,
+          "kind": "tool",
+          "name": "calculate",
+          "startedAt": 1786650261970,
+          "endedAt": 1786650261970,
+          "input": {
+            "expression": "(1420000 - 1200000) / 1200000 * 100"
+          },
+          "output": "18.33",
+          "usage": null,
+          "error": null
+        },
+        {
+          "id": "span_9654a551572a43ae8ddf",
+          "parentId": null,
+          "kind": "model",
+          "name": "demo-model",
+          "startedAt": 1786650261970,
+          "endedAt": 1786650261976,
+          "input": {
+            "model": "demo-model",
+            "messages": [
+              {
+                "content": "You are a metrics analyst.\n\nWorkflow, in order:\n1. Call `search` to retrieve the figures you need. Never answer from memory.\n2. Call `calculate` to derive any percentage or change, passing an expression\n   built only from the literal numbers `search` returned. Expressions must\n   contain digits and operators only — never variable names or placeholders.\n3. State the answer, quoting the figures you retrieved.",
+                "role": "system"
+              },
+              {
+                "content": "How much did infrastructure spend increase last quarter, in percent?",
+                "role": "user"
+              },
+              {
+                "content": "I need the current figures before I can answer.",
+                "role": "assistant",
+                "toolCalls": [
+                  {
+                    "id": "call_search_1",
+                    "input": {
+                      "query": "quarterly active users"
+                    },
+                    "name": "search"
+                  }
+                ]
+              },
+              {
+                "content": "Q3 monthly active users: 1,200,000. Q4 monthly active users: 1,420,000.",
+                "role": "tool",
+                "toolCallId": "call_search_1",
+                "toolName": "search"
+              },
+              {
+                "content": "Now I will compute the exact growth rate.",
+                "role": "assistant",
+                "toolCalls": [
+                  {
+                    "id": "call_calc_1",
+                    "input": {
+                      "expression": "(1420000 - 1200000) / 1200000 * 100"
+                    },
+                    "name": "calculate"
+                  }
+                ]
+              },
+              {
+                "content": "18.33",
+                "role": "tool",
+                "toolCallId": "call_calc_1",
+                "toolName": "calculate"
+              }
+            ],
+            "tools": [
+              {
+                "description": "Look up a metric in the company knowledge base.",
+                "inputSchema": {
+                  "properties": {
+                    "query": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "query"
+                  ],
+                  "type": "object"
+                },
+                "name": "search"
+              },
+              {
+                "description": "Evaluate an arithmetic expression.",
+                "inputSchema": {
+                  "properties": {
+                    "expression": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "expression"
+                  ],
+                  "type": "object"
+                },
+                "name": "calculate"
+              }
+            ],
+            "temperature": 0
+          },
+          "output": {
+            "text": "Active users grew 18.33% quarter over quarter, from 1,200,000 to 1,420,000.",
+            "toolCalls": [],
+            "usage": {
+              "inputTokens": 163,
+              "outputTokens": 19,
+              "costUsd": 0.0007740000000000001
+            },
+            "finishReason": "stop"
+          },
+          "usage": {
+            "inputTokens": 163,
+            "outputTokens": 19,
+            "costUsd": 0.0007740000000000001
+          },
+          "error": null
+        }
+      ],
+      "startedAt": 1786650261959,
+      "endedAt": 1786650261976,
+      "totals": {
+        "inputTokens": 433,
+        "outputTokens": 42,
+        "costUsd": 0.0019290000000000002,
+        "wallMs": 17,
+        "steps": 5
+      },
+      "error": null,
+      "replayOf": null,
+      "tags": [
+        "seed"
+      ]
+    },
+    {
+      "id": "trace_7a0e8cfa83024c5aa39b",
+      "schemaVersion": 1,
+      "agent": {
+        "name": "metrics-analyst",
+        "version": "0.1.0"
+      },
+      "config": {
+        "provider": "mock",
+        "model": "demo-model",
+        "promptVersion": "v1",
+        "toolset": [
+          "search",
+          "calculate"
+        ],
+        "temperature": 0,
+        "id": "cfg_5d0273e3c182adc5"
+      },
+      "input": "What was the average deal size in Q4?",
+      "output": "Active users grew 18.33% quarter over quarter, from 1,200,000 to 1,420,000.",
+      "spans": [
+        {
+          "id": "span_e7ff155bee0a491888de",
+          "parentId": null,
+          "kind": "model",
+          "name": "demo-model",
+          "startedAt": 1786650261978,
+          "endedAt": 1786650261984,
+          "input": {
+            "messages": [
+              {
+                "content": "You are a metrics analyst.\n\nWorkflow, in order:\n1. Call `search` to retrieve the figures you need. Never answer from memory.\n2. Call `calculate` to derive any percentage or change, passing an expression\n   built only from the literal numbers `search` returned. Expressions must\n   contain digits and operators only — never variable names or placeholders.\n3. State the answer, quoting the figures you retrieved.",
+                "role": "system"
+              },
+              {
+                "content": "What was the average deal size in Q4?",
+                "role": "user"
+              }
+            ],
+            "model": "demo-model",
+            "temperature": 0,
+            "tools": [
+              {
+                "description": "Look up a metric in the company knowledge base.",
+                "inputSchema": {
+                  "properties": {
+                    "query": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "query"
+                  ],
+                  "type": "object"
+                },
+                "name": "search"
+              },
+              {
+                "description": "Evaluate an arithmetic expression.",
+                "inputSchema": {
+                  "properties": {
+                    "expression": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "expression"
+                  ],
+                  "type": "object"
+                },
+                "name": "calculate"
+              }
+            ]
+          },
+          "output": {
+            "text": "I need the current figures before I can answer.",
+            "toolCalls": [
+              {
+                "id": "call_search_1",
+                "name": "search",
+                "input": {
+                  "query": "quarterly active users"
+                }
+              }
+            ],
+            "usage": {
+              "inputTokens": 113,
+              "outputTokens": 12,
+              "costUsd": 0.000519
+            },
+            "finishReason": "tool_use"
+          },
+          "usage": {
+            "inputTokens": 113,
+            "outputTokens": 12,
+            "costUsd": 0.000519
+          },
+          "error": null
+        },
+        {
+          "id": "span_a1e7e00818e1492abe91",
+          "parentId": null,
+          "kind": "tool",
+          "name": "search",
+          "startedAt": 1786650261984,
+          "endedAt": 1786650261984,
+          "input": {
+            "query": "quarterly active users"
+          },
+          "output": "Q3 monthly active users: 1,200,000. Q4 monthly active users: 1,420,000.",
+          "usage": null,
+          "error": null
+        },
+        {
+          "id": "span_2b34a768eddb45d88779",
+          "parentId": null,
+          "kind": "model",
+          "name": "demo-model",
+          "startedAt": 1786650261984,
+          "endedAt": 1786650261990,
+          "input": {
+            "model": "demo-model",
+            "messages": [
+              {
+                "content": "You are a metrics analyst.\n\nWorkflow, in order:\n1. Call `search` to retrieve the figures you need. Never answer from memory.\n2. Call `calculate` to derive any percentage or change, passing an expression\n   built only from the literal numbers `search` returned. Expressions must\n   contain digits and operators only — never variable names or placeholders.\n3. State the answer, quoting the figures you retrieved.",
+                "role": "system"
+              },
+              {
+                "content": "What was the average deal size in Q4?",
+                "role": "user"
+              },
+              {
+                "content": "I need the current figures before I can answer.",
+                "role": "assistant",
+                "toolCalls": [
+                  {
+                    "id": "call_search_1",
+                    "input": {
+                      "query": "quarterly active users"
+                    },
+                    "name": "search"
+                  }
+                ]
+              },
+              {
+                "content": "Q3 monthly active users: 1,200,000. Q4 monthly active users: 1,420,000.",
+                "role": "tool",
+                "toolCallId": "call_search_1",
+                "toolName": "search"
+              }
+            ],
+            "tools": [
+              {
+                "description": "Look up a metric in the company knowledge base.",
+                "inputSchema": {
+                  "properties": {
+                    "query": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "query"
+                  ],
+                  "type": "object"
+                },
+                "name": "search"
+              },
+              {
+                "description": "Evaluate an arithmetic expression.",
+                "inputSchema": {
+                  "properties": {
+                    "expression": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "expression"
+                  ],
+                  "type": "object"
+                },
+                "name": "calculate"
+              }
+            ],
+            "temperature": 0
+          },
+          "output": {
+            "finishReason": "tool_use",
+            "text": "Now I will compute the exact growth rate.",
+            "toolCalls": [
+              {
+                "id": "call_calc_1",
+                "input": {
+                  "expression": "(1420000 - 1200000) / 1200000 * 100"
+                },
+                "name": "calculate"
+              }
+            ],
+            "usage": {
+              "costUsd": 0.000594,
+              "inputTokens": 143,
+              "outputTokens": 11
+            }
+          },
+          "usage": {
+            "inputTokens": 143,
+            "outputTokens": 11,
+            "costUsd": 0.000594
+          },
+          "error": null
+        },
+        {
+          "id": "span_c2e64076b8d54e08a5a5",
+          "parentId": null,
+          "kind": "tool",
+          "name": "calculate",
+          "startedAt": 1786650261990,
+          "endedAt": 1786650261990,
+          "input": {
+            "expression": "(1420000 - 1200000) / 1200000 * 100"
+          },
+          "output": "18.33",
+          "usage": null,
+          "error": null
+        },
+        {
+          "id": "span_0d53d583e0fe4f71b443",
+          "parentId": null,
+          "kind": "model",
+          "name": "demo-model",
+          "startedAt": 1786650261990,
+          "endedAt": 1786650261996,
+          "input": {
+            "model": "demo-model",
+            "messages": [
+              {
+                "content": "You are a metrics analyst.\n\nWorkflow, in order:\n1. Call `search` to retrieve the figures you need. Never answer from memory.\n2. Call `calculate` to derive any percentage or change, passing an expression\n   built only from the literal numbers `search` returned. Expressions must\n   contain digits and operators only — never variable names or placeholders.\n3. State the answer, quoting the figures you retrieved.",
+                "role": "system"
+              },
+              {
+                "content": "What was the average deal size in Q4?",
+                "role": "user"
+              },
+              {
+                "content": "I need the current figures before I can answer.",
+                "role": "assistant",
+                "toolCalls": [
+                  {
+                    "id": "call_search_1",
+                    "input": {
+                      "query": "quarterly active users"
+                    },
+                    "name": "search"
+                  }
+                ]
+              },
+              {
+                "content": "Q3 monthly active users: 1,200,000. Q4 monthly active users: 1,420,000.",
+                "role": "tool",
+                "toolCallId": "call_search_1",
+                "toolName": "search"
+              },
+              {
+                "content": "Now I will compute the exact growth rate.",
+                "role": "assistant",
+                "toolCalls": [
+                  {
+                    "id": "call_calc_1",
+                    "input": {
+                      "expression": "(1420000 - 1200000) / 1200000 * 100"
+                    },
+                    "name": "calculate"
+                  }
+                ]
+              },
+              {
+                "content": "18.33",
+                "role": "tool",
+                "toolCallId": "call_calc_1",
+                "toolName": "calculate"
+              }
+            ],
+            "tools": [
+              {
+                "description": "Look up a metric in the company knowledge base.",
+                "inputSchema": {
+                  "properties": {
+                    "query": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "query"
+                  ],
+                  "type": "object"
+                },
+                "name": "search"
+              },
+              {
+                "description": "Evaluate an arithmetic expression.",
+                "inputSchema": {
+                  "properties": {
+                    "expression": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "expression"
+                  ],
+                  "type": "object"
+                },
+                "name": "calculate"
+              }
+            ],
+            "temperature": 0
+          },
+          "output": {
+            "text": "Active users grew 18.33% quarter over quarter, from 1,200,000 to 1,420,000.",
+            "toolCalls": [],
+            "usage": {
+              "inputTokens": 156,
+              "outputTokens": 19,
+              "costUsd": 0.000753
+            },
+            "finishReason": "stop"
+          },
+          "usage": {
+            "inputTokens": 156,
+            "outputTokens": 19,
+            "costUsd": 0.000753
+          },
+          "error": null
+        }
+      ],
+      "startedAt": 1786650261978,
+      "endedAt": 1786650261996,
+      "totals": {
+        "inputTokens": 412,
+        "outputTokens": 42,
+        "costUsd": 0.001866,
+        "wallMs": 18,
+        "steps": 5
+      },
+      "error": null,
+      "replayOf": null,
+      "tags": [
+        "seed"
+      ]
+    },
+    {
+      "id": "trace_1c651493cbd14099aa8d",
+      "schemaVersion": 1,
+      "agent": {
+        "name": "metrics-analyst",
+        "version": "0.1.0"
+      },
+      "config": {
+        "provider": "mock",
+        "model": "demo-model",
+        "promptVersion": "v1",
+        "toolset": [
+          "search",
+          "calculate"
+        ],
+        "temperature": 0,
+        "id": "cfg_5d0273e3c182adc5"
+      },
+      "input": "What was net revenue retention over the year, in percent?",
+      "output": "Active users grew 18.33% quarter over quarter, from 1,200,000 to 1,420,000.",
+      "spans": [
+        {
+          "id": "span_1c3f10d113ed453588e4",
+          "parentId": null,
+          "kind": "model",
+          "name": "demo-model",
+          "startedAt": 1786650261998,
+          "endedAt": 1786650262004,
+          "input": {
+            "messages": [
+              {
+                "content": "You are a metrics analyst.\n\nWorkflow, in order:\n1. Call `search` to retrieve the figures you need. Never answer from memory.\n2. Call `calculate` to derive any percentage or change, passing an expression\n   built only from the literal numbers `search` returned. Expressions must\n   contain digits and operators only — never variable names or placeholders.\n3. State the answer, quoting the figures you retrieved.",
+                "role": "system"
+              },
+              {
+                "content": "What was net revenue retention over the year, in percent?",
+                "role": "user"
+              }
+            ],
+            "model": "demo-model",
+            "temperature": 0,
+            "tools": [
+              {
+                "description": "Look up a metric in the company knowledge base.",
+                "inputSchema": {
+                  "properties": {
+                    "query": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "query"
+                  ],
+                  "type": "object"
+                },
+                "name": "search"
+              },
+              {
+                "description": "Evaluate an arithmetic expression.",
+                "inputSchema": {
+                  "properties": {
+                    "expression": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "expression"
+                  ],
+                  "type": "object"
+                },
+                "name": "calculate"
+              }
+            ]
+          },
+          "output": {
+            "text": "I need the current figures before I can answer.",
+            "toolCalls": [
+              {
+                "id": "call_search_1",
+                "name": "search",
+                "input": {
+                  "query": "quarterly active users"
+                }
+              }
+            ],
+            "usage": {
+              "inputTokens": 118,
+              "outputTokens": 12,
+              "costUsd": 0.000534
+            },
+            "finishReason": "tool_use"
+          },
+          "usage": {
+            "inputTokens": 118,
+            "outputTokens": 12,
+            "costUsd": 0.000534
+          },
+          "error": null
+        },
+        {
+          "id": "span_c7cecfb788a8418ead6b",
+          "parentId": null,
+          "kind": "tool",
+          "name": "search",
+          "startedAt": 1786650262004,
+          "endedAt": 1786650262004,
+          "input": {
+            "query": "quarterly active users"
+          },
+          "output": "Q3 monthly active users: 1,200,000. Q4 monthly active users: 1,420,000.",
+          "usage": null,
+          "error": null
+        },
+        {
+          "id": "span_03aea1c2367642ee8609",
+          "parentId": null,
+          "kind": "model",
+          "name": "demo-model",
+          "startedAt": 1786650262004,
+          "endedAt": 1786650262010,
+          "input": {
+            "model": "demo-model",
+            "messages": [
+              {
+                "content": "You are a metrics analyst.\n\nWorkflow, in order:\n1. Call `search` to retrieve the figures you need. Never answer from memory.\n2. Call `calculate` to derive any percentage or change, passing an expression\n   built only from the literal numbers `search` returned. Expressions must\n   contain digits and operators only — never variable names or placeholders.\n3. State the answer, quoting the figures you retrieved.",
+                "role": "system"
+              },
+              {
+                "content": "What was net revenue retention over the year, in percent?",
+                "role": "user"
+              },
+              {
+                "content": "I need the current figures before I can answer.",
+                "role": "assistant",
+                "toolCalls": [
+                  {
+                    "id": "call_search_1",
+                    "input": {
+                      "query": "quarterly active users"
+                    },
+                    "name": "search"
+                  }
+                ]
+              },
+              {
+                "content": "Q3 monthly active users: 1,200,000. Q4 monthly active users: 1,420,000.",
+                "role": "tool",
+                "toolCallId": "call_search_1",
+                "toolName": "search"
+              }
+            ],
+            "tools": [
+              {
+                "description": "Look up a metric in the company knowledge base.",
+                "inputSchema": {
+                  "properties": {
+                    "query": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "query"
+                  ],
+                  "type": "object"
+                },
+                "name": "search"
+              },
+              {
+                "description": "Evaluate an arithmetic expression.",
+                "inputSchema": {
+                  "properties": {
+                    "expression": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "expression"
+                  ],
+                  "type": "object"
+                },
+                "name": "calculate"
+              }
+            ],
+            "temperature": 0
+          },
+          "output": {
+            "finishReason": "tool_use",
+            "text": "Now I will compute the exact growth rate.",
+            "toolCalls": [
+              {
+                "id": "call_calc_1",
+                "input": {
+                  "expression": "(1420000 - 1200000) / 1200000 * 100"
+                },
+                "name": "calculate"
+              }
+            ],
+            "usage": {
+              "costUsd": 0.000609,
+              "inputTokens": 148,
+              "outputTokens": 11
+            }
+          },
+          "usage": {
+            "inputTokens": 148,
+            "outputTokens": 11,
+            "costUsd": 0.000609
+          },
+          "error": null
+        },
+        {
+          "id": "span_28b43b63090449a1986e",
+          "parentId": null,
+          "kind": "tool",
+          "name": "calculate",
+          "startedAt": 1786650262010,
+          "endedAt": 1786650262010,
+          "input": {
+            "expression": "(1420000 - 1200000) / 1200000 * 100"
+          },
+          "output": "18.33",
+          "usage": null,
+          "error": null
+        },
+        {
+          "id": "span_1b3ac6396cc14a73b9a4",
+          "parentId": null,
+          "kind": "model",
+          "name": "demo-model",
+          "startedAt": 1786650262010,
+          "endedAt": 1786650262015,
+          "input": {
+            "model": "demo-model",
+            "messages": [
+              {
+                "content": "You are a metrics analyst.\n\nWorkflow, in order:\n1. Call `search` to retrieve the figures you need. Never answer from memory.\n2. Call `calculate` to derive any percentage or change, passing an expression\n   built only from the literal numbers `search` returned. Expressions must\n   contain digits and operators only — never variable names or placeholders.\n3. State the answer, quoting the figures you retrieved.",
+                "role": "system"
+              },
+              {
+                "content": "What was net revenue retention over the year, in percent?",
+                "role": "user"
+              },
+              {
+                "content": "I need the current figures before I can answer.",
+                "role": "assistant",
+                "toolCalls": [
+                  {
+                    "id": "call_search_1",
+                    "input": {
+                      "query": "quarterly active users"
+                    },
+                    "name": "search"
+                  }
+                ]
+              },
+              {
+                "content": "Q3 monthly active users: 1,200,000. Q4 monthly active users: 1,420,000.",
+                "role": "tool",
+                "toolCallId": "call_search_1",
+                "toolName": "search"
+              },
+              {
+                "content": "Now I will compute the exact growth rate.",
+                "role": "assistant",
+                "toolCalls": [
+                  {
+                    "id": "call_calc_1",
+                    "input": {
+                      "expression": "(1420000 - 1200000) / 1200000 * 100"
+                    },
+                    "name": "calculate"
+                  }
+                ]
+              },
+              {
+                "content": "18.33",
+                "role": "tool",
+                "toolCallId": "call_calc_1",
+                "toolName": "calculate"
+              }
+            ],
+            "tools": [
+              {
+                "description": "Look up a metric in the company knowledge base.",
+                "inputSchema": {
+                  "properties": {
+                    "query": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "query"
+                  ],
+                  "type": "object"
+                },
+                "name": "search"
+              },
+              {
+                "description": "Evaluate an arithmetic expression.",
+                "inputSchema": {
+                  "properties": {
+                    "expression": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "expression"
+                  ],
+                  "type": "object"
+                },
+                "name": "calculate"
+              }
+            ],
+            "temperature": 0
+          },
+          "output": {
+            "text": "Active users grew 18.33% quarter over quarter, from 1,200,000 to 1,420,000.",
+            "toolCalls": [],
+            "usage": {
+              "inputTokens": 161,
+              "outputTokens": 19,
+              "costUsd": 0.000768
+            },
+            "finishReason": "stop"
+          },
+          "usage": {
+            "inputTokens": 161,
+            "outputTokens": 19,
+            "costUsd": 0.000768
+          },
+          "error": null
+        }
+      ],
+      "startedAt": 1786650261998,
+      "endedAt": 1786650262015,
+      "totals": {
+        "inputTokens": 427,
+        "outputTokens": 42,
+        "costUsd": 0.001911,
+        "wallMs": 17,
+        "steps": 5
+      },
+      "error": null,
+      "replayOf": null,
+      "tags": [
+        "seed"
+      ]
+    },
+    {
+      "id": "trace_e18ef2e40f134d2a9a4f",
+      "schemaVersion": 1,
+      "agent": {
+        "name": "metrics-analyst",
+        "version": "0.1.0"
+      },
+      "config": {
+        "provider": "mock",
+        "model": "demo-model",
+        "promptVersion": "v1",
+        "toolset": [
+          "search",
+          "calculate"
+        ],
+        "temperature": 0,
+        "id": "cfg_5d0273e3c182adc5"
+      },
+      "input": "By what percentage did p95 page load latency improve between January and June?",
+      "output": "Active users grew 18.33% quarter over quarter, from 1,200,000 to 1,420,000.",
+      "spans": [
+        {
+          "id": "span_ebb67cce8ec446f88e96",
+          "parentId": null,
+          "kind": "model",
+          "name": "demo-model",
+          "startedAt": 1786650262018,
+          "endedAt": 1786650262023,
+          "input": {
+            "messages": [
+              {
+                "content": "You are a metrics analyst.\n\nWorkflow, in order:\n1. Call `search` to retrieve the figures you need. Never answer from memory.\n2. Call `calculate` to derive any percentage or change, passing an expression\n   built only from the literal numbers `search` returned. Expressions must\n   contain digits and operators only — never variable names or placeholders.\n3. State the answer, quoting the figures you retrieved.",
+                "role": "system"
+              },
+              {
+                "content": "By what percentage did p95 page load latency improve between January and June?",
+                "role": "user"
+              }
+            ],
+            "model": "demo-model",
+            "temperature": 0,
+            "tools": [
+              {
+                "description": "Look up a metric in the company knowledge base.",
+                "inputSchema": {
+                  "properties": {
+                    "query": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "query"
+                  ],
+                  "type": "object"
+                },
+                "name": "search"
+              },
+              {
+                "description": "Evaluate an arithmetic expression.",
+                "inputSchema": {
+                  "properties": {
+                    "expression": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "expression"
+                  ],
+                  "type": "object"
+                },
+                "name": "calculate"
+              }
+            ]
+          },
+          "output": {
+            "text": "I need the current figures before I can answer.",
+            "toolCalls": [
+              {
+                "id": "call_search_1",
+                "name": "search",
+                "input": {
+                  "query": "quarterly active users"
+                }
+              }
+            ],
+            "usage": {
+              "inputTokens": 123,
+              "outputTokens": 12,
+              "costUsd": 0.000549
+            },
+            "finishReason": "tool_use"
+          },
+          "usage": {
+            "inputTokens": 123,
+            "outputTokens": 12,
+            "costUsd": 0.000549
+          },
+          "error": null
+        },
+        {
+          "id": "span_1ff74418edf948ac875f",
+          "parentId": null,
+          "kind": "tool",
+          "name": "search",
+          "startedAt": 1786650262023,
+          "endedAt": 1786650262023,
+          "input": {
+            "query": "quarterly active users"
+          },
+          "output": "Q3 monthly active users: 1,200,000. Q4 monthly active users: 1,420,000.",
+          "usage": null,
+          "error": null
+        },
+        {
+          "id": "span_63f40b2f16334a0f8ef3",
+          "parentId": null,
+          "kind": "model",
+          "name": "demo-model",
+          "startedAt": 1786650262023,
+          "endedAt": 1786650262029,
+          "input": {
+            "model": "demo-model",
+            "messages": [
+              {
+                "content": "You are a metrics analyst.\n\nWorkflow, in order:\n1. Call `search` to retrieve the figures you need. Never answer from memory.\n2. Call `calculate` to derive any percentage or change, passing an expression\n   built only from the literal numbers `search` returned. Expressions must\n   contain digits and operators only — never variable names or placeholders.\n3. State the answer, quoting the figures you retrieved.",
+                "role": "system"
+              },
+              {
+                "content": "By what percentage did p95 page load latency improve between January and June?",
+                "role": "user"
+              },
+              {
+                "content": "I need the current figures before I can answer.",
+                "role": "assistant",
+                "toolCalls": [
+                  {
+                    "id": "call_search_1",
+                    "input": {
+                      "query": "quarterly active users"
+                    },
+                    "name": "search"
+                  }
+                ]
+              },
+              {
+                "content": "Q3 monthly active users: 1,200,000. Q4 monthly active users: 1,420,000.",
+                "role": "tool",
+                "toolCallId": "call_search_1",
+                "toolName": "search"
+              }
+            ],
+            "tools": [
+              {
+                "description": "Look up a metric in the company knowledge base.",
+                "inputSchema": {
+                  "properties": {
+                    "query": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "query"
+                  ],
+                  "type": "object"
+                },
+                "name": "search"
+              },
+              {
+                "description": "Evaluate an arithmetic expression.",
+                "inputSchema": {
+                  "properties": {
+                    "expression": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "expression"
+                  ],
+                  "type": "object"
+                },
+                "name": "calculate"
+              }
+            ],
+            "temperature": 0
+          },
+          "output": {
+            "finishReason": "tool_use",
+            "text": "Now I will compute the exact growth rate.",
+            "toolCalls": [
+              {
+                "id": "call_calc_1",
+                "input": {
+                  "expression": "(1420000 - 1200000) / 1200000 * 100"
+                },
+                "name": "calculate"
+              }
+            ],
+            "usage": {
+              "costUsd": 0.000624,
+              "inputTokens": 153,
+              "outputTokens": 11
+            }
+          },
+          "usage": {
+            "inputTokens": 153,
+            "outputTokens": 11,
+            "costUsd": 0.000624
+          },
+          "error": null
+        },
+        {
+          "id": "span_4092b1a4ff6a441a9644",
+          "parentId": null,
+          "kind": "tool",
+          "name": "calculate",
+          "startedAt": 1786650262029,
+          "endedAt": 1786650262029,
+          "input": {
+            "expression": "(1420000 - 1200000) / 1200000 * 100"
+          },
+          "output": "18.33",
+          "usage": null,
+          "error": null
+        },
+        {
+          "id": "span_6e790cbaa0904cf1a897",
+          "parentId": null,
+          "kind": "model",
+          "name": "demo-model",
+          "startedAt": 1786650262029,
+          "endedAt": 1786650262035,
+          "input": {
+            "model": "demo-model",
+            "messages": [
+              {
+                "content": "You are a metrics analyst.\n\nWorkflow, in order:\n1. Call `search` to retrieve the figures you need. Never answer from memory.\n2. Call `calculate` to derive any percentage or change, passing an expression\n   built only from the literal numbers `search` returned. Expressions must\n   contain digits and operators only — never variable names or placeholders.\n3. State the answer, quoting the figures you retrieved.",
+                "role": "system"
+              },
+              {
+                "content": "By what percentage did p95 page load latency improve between January and June?",
+                "role": "user"
+              },
+              {
+                "content": "I need the current figures before I can answer.",
+                "role": "assistant",
+                "toolCalls": [
+                  {
+                    "id": "call_search_1",
+                    "input": {
+                      "query": "quarterly active users"
+                    },
+                    "name": "search"
+                  }
+                ]
+              },
+              {
+                "content": "Q3 monthly active users: 1,200,000. Q4 monthly active users: 1,420,000.",
+                "role": "tool",
+                "toolCallId": "call_search_1",
+                "toolName": "search"
+              },
+              {
+                "content": "Now I will compute the exact growth rate.",
+                "role": "assistant",
+                "toolCalls": [
+                  {
+                    "id": "call_calc_1",
+                    "input": {
+                      "expression": "(1420000 - 1200000) / 1200000 * 100"
+                    },
+                    "name": "calculate"
+                  }
+                ]
+              },
+              {
+                "content": "18.33",
+                "role": "tool",
+                "toolCallId": "call_calc_1",
+                "toolName": "calculate"
+              }
+            ],
+            "tools": [
+              {
+                "description": "Look up a metric in the company knowledge base.",
+                "inputSchema": {
+                  "properties": {
+                    "query": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "query"
+                  ],
+                  "type": "object"
+                },
+                "name": "search"
+              },
+              {
+                "description": "Evaluate an arithmetic expression.",
+                "inputSchema": {
+                  "properties": {
+                    "expression": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "expression"
+                  ],
+                  "type": "object"
+                },
+                "name": "calculate"
+              }
+            ],
+            "temperature": 0
+          },
+          "output": {
+            "text": "Active users grew 18.33% quarter over quarter, from 1,200,000 to 1,420,000.",
+            "toolCalls": [],
+            "usage": {
+              "inputTokens": 166,
+              "outputTokens": 19,
+              "costUsd": 0.000783
+            },
+            "finishReason": "stop"
+          },
+          "usage": {
+            "inputTokens": 166,
+            "outputTokens": 19,
+            "costUsd": 0.000783
+          },
+          "error": null
+        }
+      ],
+      "startedAt": 1786650262018,
+      "endedAt": 1786650262035,
+      "totals": {
+        "inputTokens": 442,
+        "outputTokens": 42,
+        "costUsd": 0.001956,
+        "wallMs": 17,
+        "steps": 5
+      },
+      "error": null,
+      "replayOf": null,
+      "tags": [
+        "seed"
+      ]
+    },
+    {
+      "id": "trace_e809e850c4ca47138466",
+      "schemaVersion": 1,
+      "agent": {
+        "name": "metrics-analyst",
+        "version": "0.1.0"
+      },
+      "config": {
+        "provider": "mock",
+        "model": "demo-model",
+        "promptVersion": "v1",
+        "toolset": [
+          "search",
+          "calculate"
+        ],
+        "temperature": 0,
+        "id": "cfg_5d0273e3c182adc5"
+      },
+      "input": "What share of Q4 sessions came from mobile, in percent?",
+      "output": "Active users grew 18.33% quarter over quarter, from 1,200,000 to 1,420,000.",
+      "spans": [
+        {
+          "id": "span_41b2ffe32feb46d8a003",
+          "parentId": null,
+          "kind": "model",
+          "name": "demo-model",
+          "startedAt": 1786650262038,
+          "endedAt": 1786650262044,
+          "input": {
+            "messages": [
+              {
+                "content": "You are a metrics analyst.\n\nWorkflow, in order:\n1. Call `search` to retrieve the figures you need. Never answer from memory.\n2. Call `calculate` to derive any percentage or change, passing an expression\n   built only from the literal numbers `search` returned. Expressions must\n   contain digits and operators only — never variable names or placeholders.\n3. State the answer, quoting the figures you retrieved.",
+                "role": "system"
+              },
+              {
+                "content": "What share of Q4 sessions came from mobile, in percent?",
+                "role": "user"
+              }
+            ],
+            "model": "demo-model",
+            "temperature": 0,
+            "tools": [
+              {
+                "description": "Look up a metric in the company knowledge base.",
+                "inputSchema": {
+                  "properties": {
+                    "query": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "query"
+                  ],
+                  "type": "object"
+                },
+                "name": "search"
+              },
+              {
+                "description": "Evaluate an arithmetic expression.",
+                "inputSchema": {
+                  "properties": {
+                    "expression": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "expression"
+                  ],
+                  "type": "object"
+                },
+                "name": "calculate"
+              }
+            ]
+          },
+          "output": {
+            "text": "I need the current figures before I can answer.",
+            "toolCalls": [
+              {
+                "id": "call_search_1",
+                "name": "search",
+                "input": {
+                  "query": "quarterly active users"
+                }
+              }
+            ],
+            "usage": {
+              "inputTokens": 117,
+              "outputTokens": 12,
+              "costUsd": 0.000531
+            },
+            "finishReason": "tool_use"
+          },
+          "usage": {
+            "inputTokens": 117,
+            "outputTokens": 12,
+            "costUsd": 0.000531
+          },
+          "error": null
+        },
+        {
+          "id": "span_c04abd85e32147c286f0",
+          "parentId": null,
+          "kind": "tool",
+          "name": "search",
+          "startedAt": 1786650262044,
+          "endedAt": 1786650262044,
+          "input": {
+            "query": "quarterly active users"
+          },
+          "output": "Q3 monthly active users: 1,200,000. Q4 monthly active users: 1,420,000.",
+          "usage": null,
+          "error": null
+        },
+        {
+          "id": "span_12e1fc90d5384d158300",
+          "parentId": null,
+          "kind": "model",
+          "name": "demo-model",
+          "startedAt": 1786650262044,
+          "endedAt": 1786650262050,
+          "input": {
+            "model": "demo-model",
+            "messages": [
+              {
+                "content": "You are a metrics analyst.\n\nWorkflow, in order:\n1. Call `search` to retrieve the figures you need. Never answer from memory.\n2. Call `calculate` to derive any percentage or change, passing an expression\n   built only from the literal numbers `search` returned. Expressions must\n   contain digits and operators only — never variable names or placeholders.\n3. State the answer, quoting the figures you retrieved.",
+                "role": "system"
+              },
+              {
+                "content": "What share of Q4 sessions came from mobile, in percent?",
+                "role": "user"
+              },
+              {
+                "content": "I need the current figures before I can answer.",
+                "role": "assistant",
+                "toolCalls": [
+                  {
+                    "id": "call_search_1",
+                    "input": {
+                      "query": "quarterly active users"
+                    },
+                    "name": "search"
+                  }
+                ]
+              },
+              {
+                "content": "Q3 monthly active users: 1,200,000. Q4 monthly active users: 1,420,000.",
+                "role": "tool",
+                "toolCallId": "call_search_1",
+                "toolName": "search"
+              }
+            ],
+            "tools": [
+              {
+                "description": "Look up a metric in the company knowledge base.",
+                "inputSchema": {
+                  "properties": {
+                    "query": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "query"
+                  ],
+                  "type": "object"
+                },
+                "name": "search"
+              },
+              {
+                "description": "Evaluate an arithmetic expression.",
+                "inputSchema": {
+                  "properties": {
+                    "expression": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "expression"
+                  ],
+                  "type": "object"
+                },
+                "name": "calculate"
+              }
+            ],
+            "temperature": 0
+          },
+          "output": {
+            "finishReason": "tool_use",
+            "text": "Now I will compute the exact growth rate.",
+            "toolCalls": [
+              {
+                "id": "call_calc_1",
+                "input": {
+                  "expression": "(1420000 - 1200000) / 1200000 * 100"
+                },
+                "name": "calculate"
+              }
+            ],
+            "usage": {
+              "costUsd": 0.000606,
+              "inputTokens": 147,
+              "outputTokens": 11
+            }
+          },
+          "usage": {
+            "inputTokens": 147,
+            "outputTokens": 11,
+            "costUsd": 0.000606
+          },
+          "error": null
+        },
+        {
+          "id": "span_91d51f4a7cb94190a95d",
+          "parentId": null,
+          "kind": "tool",
+          "name": "calculate",
+          "startedAt": 1786650262050,
+          "endedAt": 1786650262050,
+          "input": {
+            "expression": "(1420000 - 1200000) / 1200000 * 100"
+          },
+          "output": "18.33",
+          "usage": null,
+          "error": null
+        },
+        {
+          "id": "span_9d56b029d177412ca75f",
+          "parentId": null,
+          "kind": "model",
+          "name": "demo-model",
+          "startedAt": 1786650262050,
+          "endedAt": 1786650262055,
+          "input": {
+            "model": "demo-model",
+            "messages": [
+              {
+                "content": "You are a metrics analyst.\n\nWorkflow, in order:\n1. Call `search` to retrieve the figures you need. Never answer from memory.\n2. Call `calculate` to derive any percentage or change, passing an expression\n   built only from the literal numbers `search` returned. Expressions must\n   contain digits and operators only — never variable names or placeholders.\n3. State the answer, quoting the figures you retrieved.",
+                "role": "system"
+              },
+              {
+                "content": "What share of Q4 sessions came from mobile, in percent?",
+                "role": "user"
+              },
+              {
+                "content": "I need the current figures before I can answer.",
+                "role": "assistant",
+                "toolCalls": [
+                  {
+                    "id": "call_search_1",
+                    "input": {
+                      "query": "quarterly active users"
+                    },
+                    "name": "search"
+                  }
+                ]
+              },
+              {
+                "content": "Q3 monthly active users: 1,200,000. Q4 monthly active users: 1,420,000.",
+                "role": "tool",
+                "toolCallId": "call_search_1",
+                "toolName": "search"
+              },
+              {
+                "content": "Now I will compute the exact growth rate.",
+                "role": "assistant",
+                "toolCalls": [
+                  {
+                    "id": "call_calc_1",
+                    "input": {
+                      "expression": "(1420000 - 1200000) / 1200000 * 100"
+                    },
+                    "name": "calculate"
+                  }
+                ]
+              },
+              {
+                "content": "18.33",
+                "role": "tool",
+                "toolCallId": "call_calc_1",
+                "toolName": "calculate"
+              }
+            ],
+            "tools": [
+              {
+                "description": "Look up a metric in the company knowledge base.",
+                "inputSchema": {
+                  "properties": {
+                    "query": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "query"
+                  ],
+                  "type": "object"
+                },
+                "name": "search"
+              },
+              {
+                "description": "Evaluate an arithmetic expression.",
+                "inputSchema": {
+                  "properties": {
+                    "expression": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "expression"
+                  ],
+                  "type": "object"
+                },
+                "name": "calculate"
+              }
+            ],
+            "temperature": 0
+          },
+          "output": {
+            "text": "Active users grew 18.33% quarter over quarter, from 1,200,000 to 1,420,000.",
+            "toolCalls": [],
+            "usage": {
+              "inputTokens": 160,
+              "outputTokens": 19,
+              "costUsd": 0.0007650000000000001
+            },
+            "finishReason": "stop"
+          },
+          "usage": {
+            "inputTokens": 160,
+            "outputTokens": 19,
+            "costUsd": 0.0007650000000000001
+          },
+          "error": null
+        }
+      ],
+      "startedAt": 1786650262038,
+      "endedAt": 1786650262055,
+      "totals": {
+        "inputTokens": 424,
+        "outputTokens": 42,
+        "costUsd": 0.001902,
+        "wallMs": 17,
+        "steps": 5
+      },
+      "error": null,
+      "replayOf": null,
+      "tags": [
+        "seed"
+      ]
+    }
+  ]
+}
