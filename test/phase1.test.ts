@@ -248,7 +248,7 @@ describe("sampling in the record path", () => {
 
     const { trace, sampling } = await record({
       agent: demoAgent,
-      client: createMockClient(),
+      client: createMockClient({ quality: "good" }),
       config,
       input: DEMO_QUESTION,
       store,
@@ -278,7 +278,7 @@ describe("sampling in the record path", () => {
 
     await record({
       agent: demoAgent,
-      client: createMockClient(),
+      client: createMockClient({ quality: "good" }),
       config,
       input: DEMO_QUESTION,
       store,
@@ -376,7 +376,7 @@ describe("otel emission", () => {
     // still record a complete Trace without throwing.
     const { trace } = await record({
       agent: demoAgent,
-      client: createMockClient(),
+      client: createMockClient({ quality: "good" }),
       config,
       input: DEMO_QUESTION,
     });
@@ -392,7 +392,7 @@ describe("span nesting", () => {
   it("nests a sub-agent's spans under the delegating span", async () => {
     const { trace } = await record({
       agent: nestedAgent,
-      client: createMockClient(),
+      client: createMockClient({ quality: "good" }),
       config,
       input: "quarterly growth",
     });
@@ -415,7 +415,7 @@ describe("span nesting", () => {
   it("parents concurrent tool calls to the root, not to each other", async () => {
     const { trace } = await record({
       agent: nestedAgent,
-      client: createMockClient(),
+      client: createMockClient({ quality: "good" }),
       config,
       input: "quarterly growth",
     });
@@ -451,7 +451,7 @@ describe("span nesting", () => {
 
   it("re-scopes an already-wrapped client instead of double-counting it", async () => {
     const recorder = new Recorder({ agent: nestedAgent.ref, config });
-    const once = recorder.wrapModel(createMockClient());
+    const once = recorder.wrapModel(createMockClient({ quality: "good" }));
     const twice = recorder.wrapModel(once);
 
     await twice.generate({ model: "demo-model", messages: [{ role: "user", content: "hi" }] });
@@ -465,7 +465,7 @@ describe("span nesting", () => {
   it("keeps every span in the trace regardless of nesting depth", async () => {
     const { trace } = await record({
       agent: nestedAgent,
-      client: createMockClient(),
+      client: createMockClient({ quality: "good" }),
       config,
       input: "quarterly growth",
     });

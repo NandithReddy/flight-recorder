@@ -267,10 +267,7 @@ const PROMPT_V1 = [
   "",
   "Workflow, in order:",
   "1. Call `search` to retrieve the figures you need. Never answer from memory.",
-  "2. Call `calculate` to derive any percentage or change, passing an expression",
-  "   built only from the literal numbers `search` returned. Expressions must",
-  "   contain digits and operators only — never variable names or placeholders.",
-  "3. State the answer, quoting the figures you retrieved.",
+  "2. State the answer, quoting the figures you retrieved.",
 ].join("\n");
 
 /**
