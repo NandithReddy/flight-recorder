@@ -11,8 +11,8 @@ Full rationale for each phase lives in [spec.html](./spec.html).
 | 03 | Replayer | 4–6 | **done** |
 | 04 | Scorer | 5–7 | **built — awaiting labels** |
 | 05 | Reporter | 3–4 | **done** |
-| 06 | Gate | 2 | next |
-| 07 | Dogfood + writeup | 4–5 | |
+| 06 | Gate | 2 | **done** |
+| 07 | Dogfood + writeup | 4–5 | next |
 
 ---
 
@@ -209,15 +209,43 @@ That single sentence covers 20 of 25 diffs and is llama's whole failure mode.
 so on a cross-model report every step "differed" — the model *is* the change.
 Rewritten to compare decisions rather than identities (D-034).
 
-## Phase 06 — Gate
+## Phase 06 — Gate — **done** (bar the public PR)
 
 **Exit criterion:** a deliberately worsened prompt fails CI on a real pull request.
 
-- [ ] CLI exit codes on: significant pass-rate drop, any `p0` case regressing,
-      cost per task over ceiling, p95 latency over ceiling
-- [ ] Baselines pinned by commit
-- [ ] GitHub Action wrapping the CLI
-- [ ] Demonstrated on a real PR in the public repo
+- [x] Exit codes on: significant pass-rate drop, any `p0` regression, cost
+      ceiling, p95 latency ceiling
+- [x] Baselines pinned by commit — and refusing to pin on a dirty tree (D-038)
+- [x] GitHub Action wrapping the CLI, report uploaded even when red
+- [x] Trace export/import, so a committed suite runs on a fresh clone
+- [x] 173 tests passing, `tsc --noEmit` clean
+- [ ] **Demonstrated on a real PR** — needs the repo pushed to GitHub
+
+**Evidence — a worsened prompt fails.** Same model, v1 → v0:
+
+```
+FAIL — qwen2.5:7b → qwen2.5:7b, 30 cases, live mode
+  ✗ pass-rate            -20.0% (-36.7% to -6.7%)
+  ✓ p0-regression        no p0 case regressed
+exit code: 1
+```
+
+**Evidence — it refuses to block on noise.** One regression in forty is real but
+not evidence, and the gate says so rather than failing: *"not significant at
+n=40 — not blocking on noise"*. A single `p0`-tagged regression fails anyway,
+because statistics are the wrong instrument for "the billing flow broke".
+
+**Evidence — portability.** A fresh store reports 30 missing traces; after
+`fr import` the suite is runnable, and re-importing is idempotent. CI runs
+`import` then `doctor` on every push, so the phase 07 criterion is checked
+continuously rather than assumed.
+
+**What running the gate caught.** The v0 prompt regression is invisible in the
+assertion average — 132/159, 83%, which reads like nothing — because a case
+passes only if *every* hard assertion holds. At case level it is a fifth of the
+suite and p95 latency goes from 9.5s to 50s. It also caught a factual error in
+this project's own decision log, where I had compared two configs that were not
+comparable and concluded there was no regression (D-036).
 
 ## Phase 07 — Dogfood + writeup
 

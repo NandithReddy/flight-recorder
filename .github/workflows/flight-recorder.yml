@@ -1,0 +1,116 @@
+name: flight-recorder
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+# One gate run per branch is enough; cancel the rest rather than queue them.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  # ---------------------------------------------------------------------------
+  # Always runs. No secrets, no models, no network beyond npm.
+  # ---------------------------------------------------------------------------
+  build:
+    name: typecheck and tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+
+      - run: npm ci
+
+      - name: typecheck
+        run: npm run typecheck
+
+      - name: tests
+        run: npm test
+
+      # The suite is committed, but its baselines live in a gitignored database.
+      # This proves the exported bundle actually makes it runnable on a machine
+      # that has never seen this project — the phase 7 criterion, checked on
+      # every push rather than assumed.
+      - name: suite is portable
+        run: |
+          npm run fr -- import --suite metrics
+          npm run fr -- doctor --suite metrics
+
+  # ---------------------------------------------------------------------------
+  # The regression gate. Needs a model, so it needs a decision about where the
+  # model comes from — see the note below.
+  # ---------------------------------------------------------------------------
+  gate:
+    name: regression gate
+    runs-on: ubuntu-latest
+    needs: build
+    # Skipped on forks, which cannot read secrets. A gate that silently passes
+    # because it could not run is worse than one that is visibly skipped.
+    if: github.event.pull_request.head.repo.full_name == github.repository
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          # The report pins baselines by commit, so it needs real history.
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+
+      - run: npm ci
+
+      - name: load committed baselines
+        run: npm run fr -- import --suite metrics
+
+      # Two ways to give CI a model, and the right one depends on the project:
+      #
+      #   Hosted (below) — fast, costs money, needs a secret. Sensible when the
+      #   agent under test already calls a hosted provider in production.
+      #
+      #   Local — `ollama serve` plus a pull. Free and secret-free, but a
+      #   multi-gigabyte download and minutes of CPU inference on every run.
+      #   Sensible for a fork-friendly repo where the gate must work for
+      #   contributors who have no credentials.
+      #
+      # This uses hosted, because a gate that takes fifteen minutes is a gate
+      # people learn to ignore.
+      - name: run the matrix
+        env:
+          AI_GATEWAY_API_KEY: ${{ secrets.AI_GATEWAY_API_KEY }}
+        run: |
+          npm run fr -- matrix \
+            --suite metrics \
+            --provider gateway \
+            --models anthropic/claude-haiku-4.5 \
+            --modes live,stubbed \
+            --concurrency 4
+
+      - name: gate
+        env:
+          AI_GATEWAY_API_KEY: ${{ secrets.AI_GATEWAY_API_KEY }}
+        run: |
+          npm run fr -- gate \
+            --suite metrics \
+            --baseline qwen2.5:7b \
+            --candidate anthropic/claude-haiku-4.5 \
+            --provider gateway \
+            --set metrics \
+            --critical-tag p0 \
+            --out report.html
+
+      # Uploaded whether or not the gate passed — the report is most useful
+      # exactly when the build is red.
+      - name: upload report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: flight-recorder-report
+          path: report.html
+          retention-days: 30

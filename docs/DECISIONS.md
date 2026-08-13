@@ -588,7 +588,62 @@ with, and it is what a real prompt looks like before someone has watched it
 fail: it never says where numbers come from, or that expressions must contain
 literals rather than variable names.
 
-**A finding from running it:** qwen2.5:7b scores 83% under v0 and 82% under v1 —
-the prompt change that made llama3.2:3b invent variable names barely touches it.
-Prompt sensitivity is model-specific, which is an argument for testing the pair
-rather than either alone.
+**A correction, and how it was caught.** This entry first claimed qwen "scores
+83% under v0 and 82% under v1, so the prompt barely touches it". That compared
+the wrong things: the 82% was qwen at *temperature 0.9* under v1, not the v1
+baseline at all. Running the gate is what surfaced it.
+
+The real comparison, v1 → v0 at the same temperature, is a **20% drop in case
+pass rate (−36.7% to −6.7%, significant at n=30)** across 6 regressed cases, and
+p95 latency going from 9.5s to 50s because the weaker prompt makes the model
+loop.
+
+Two things worth keeping from that:
+
+- **Assertion rate hid it.** 132 of 159 assertions still pass under v0 — 83%,
+  which reads like almost nothing. But a case passes only if *every* hard
+  assertion holds, and at case level it is a fifth of the suite. This is the
+  argument for reporting case pass rate rather than an assertion average, and
+  for reporting latency beside it.
+- **I made exactly the error the tool exists to catch**: quoted a flattering
+  aggregate, compared two things that were not comparable, and concluded there
+  was no regression. The harness disagreed.
+
+---
+
+### D-037 · The gate blocks on significance, not on direction
+
+A negative delta is not a reason to fail a build. A *significant* negative delta
+is. Blocking on a one-case dip in forty trains people to override the gate, and
+a gate that gets overridden by habit protects nothing.
+
+Two deliberate exceptions to statistical caution:
+
+- **A `p0` regression fails on its own**, whatever the aggregate says.
+  Statistics are the wrong instrument for "the billing flow broke" — some cases
+  are load-bearing enough that one failure is the answer.
+- **`--fail-on-any-regression`** exists for suites large enough that any
+  regression is signal, but it is off by default.
+
+**Untrusted verdicts never block.** If the judge is not calibrated well enough
+to be presented as fact, it is not calibrated well enough to fail someone's
+build. The gate counts them, reports them, and decides without them.
+
+---
+
+### D-038 · A suite that only runs on its author's laptop is not a fixture
+
+Every case points at a `baselineTraceId` living in a gitignored database, so a
+committed suite was unrunnable on a fresh clone — it failed with "trace not in
+the store". `fr export` writes the traces a suite depends on into a committed
+JSON bundle; `fr import` loads them back; `fr doctor` says whether the suite can
+run here at all.
+
+The CI workflow runs `import` then `doctor` on every push, so the portability
+claim is checked rather than assumed — that is the phase 7 criterion ("npm i to
+first report on someone else's machine") tested continuously instead of once.
+
+**Pinning refuses on a dirty tree.** `currentCommit()` returns null rather than
+a hash when `git status` is not clean, because a baseline pinned to a commit
+that does not describe the working tree looks reproducible without being so,
+which is worse than an honest absence of a pin.

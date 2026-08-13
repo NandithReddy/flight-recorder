@@ -4,11 +4,11 @@ An evaluation and regression harness for LLM agents. It records real agent
 runs, freezes them into replayable test cases, and blocks any change that
 quietly makes the agent worse.
 
-> **Status: phases 0–3 and 5 complete, phase 4 built.** Record → freeze → run
-> the matrix → score → **report**, with confidence intervals and a step diff
-> that names the diverging decision. The judge's trust score is waiting on human
-> labels — the one thing the harness must not generate for itself. CI gate next.
-> See [docs/PHASES.md](docs/PHASES.md).
+> **Status: phases 0–3, 5 and 6 complete, phase 4 built.** Record → freeze →
+> matrix → score → report → **gate**. Suites are portable, baselines pin to a
+> commit, and CI blocks a merge on a significant regression. The judge's trust
+> score is waiting on human labels — the one thing the harness must not generate
+> for itself. See [docs/PHASES.md](docs/PHASES.md).
 
 ## Why
 
@@ -24,7 +24,7 @@ Requires Node 22.6+ (25 recommended — it runs TypeScript directly).
 
 ```bash
 npm install
-npm test          # 154 tests
+npm test          # 173 tests
 npm run typecheck
 ```
 
@@ -91,6 +91,9 @@ reviewed in a pull request like any other test). See
 | `fr label --set <name>` | Label pairs blind — `1` / `2` / `t` / `s` / `q` |
 | `fr calibrate --set <name>` | Measure the judge against those labels, write κ |
 | `fr report` | Compare two configs with intervals → self-contained HTML |
+| `fr gate` | Same comparison, as a merge decision (exit 0 or 1) |
+| `fr export` / `fr import` | Make a suite runnable on another machine |
+| `fr doctor` | Can this suite run here? |
 | `fr models` | List locally available Ollama models |
 | `fr price [YYYY-MM-DD]` | Cost table, with promotional rates resolved |
 | `fr stats` | Store size and dedupe savings |
@@ -233,6 +236,45 @@ The step diff explains regressions without anyone opening a trace:
 That is llama3.2:3b's whole failure mode, stated automatically, across 20 of 25
 diffs. Output is one self-contained HTML file — no script tag, no external
 reference, attachable to a pull request.
+
+## The gate
+
+```bash
+npm run fr -- gate --suite metrics \
+  --baseline "qwen2.5:7b#v1" --candidate "qwen2.5:7b#v0" --critical-tag p0
+```
+
+```
+FAIL — qwen2.5:7b → qwen2.5:7b, 30 cases, live mode
+  ✗ pass-rate            -20.0% (-36.7% to -6.7%)
+  ✓ p0-regression        no p0 case regressed
+exit code: 1
+```
+
+It blocks on **significance, not direction**. One regression in forty is real
+but is not evidence, and the gate says *"not blocking on noise"* rather than
+failing — because a gate people override by habit protects nothing. Two
+exceptions: a `p0`-tagged regression fails on its own, and
+`--fail-on-any-regression` exists for suites large enough that any regression is
+signal.
+
+**Untrusted verdicts never block a build.** A judge not calibrated well enough
+to be presented as fact is not calibrated well enough to fail someone's merge.
+
+### Portability
+
+A committed suite points at traces in a local, gitignored database — so on a
+fresh clone it would fail with "trace not in the store". Export fixes that:
+
+```bash
+npm run fr -- export --suite metrics   # traces → git, baseline pinned to HEAD
+npm run fr -- import --suite metrics   # on any other machine
+npm run fr -- doctor --suite metrics   # can this suite run here?
+```
+
+CI runs `import` then `doctor` on every push, so the claim is tested rather than
+assumed. Pinning **refuses on a dirty tree** — a baseline pinned to a commit that
+does not describe the working tree looks reproducible without being so.
 
 ## Observability
 

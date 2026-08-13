@@ -33,6 +33,13 @@ import { dirname } from "node:path";
 import { buildReport, headline } from "./report/build.ts";
 import { renderReportHtml } from "./report/html.ts";
 import { describeInterval } from "./stats/bootstrap.ts";
+import { evaluateGate, formatGate } from "./gate/gate.ts";
+import {
+  checkSuiteRunnable,
+  currentCommit,
+  exportSuiteTraces,
+  importTraceBundle,
+} from "./store/portable.ts";
 import { createJudge } from "./score/judge.ts";
 import { calibrate, MIN_LABELS } from "./score/calibration.ts";
 import {
@@ -793,6 +800,133 @@ async function main(argv: string[]): Promise<number> {
       return report.regressions.length > 0 ? 1 : 0;
     }
 
+    case "gate": {
+      const { flags } = parseFlags(rest);
+      const suite = await suites.read(flags.get("suite") ?? "default");
+      const provider = flags.get("provider") ?? "ollama";
+
+      const parseTarget = (spec: string) => {
+        const [modelAndTemp, promptVersion] = spec.split("#");
+        const [model, temp] = modelAndTemp!.split("@");
+        return configFor({
+          provider,
+          model: model!,
+          quality: "good",
+          temperature: temp === undefined ? 0 : Number(temp),
+          ...(promptVersion ? { promptVersion } : {}),
+        });
+      };
+
+      const baselineSpec = flags.get("baseline");
+      const candidateSpec = flags.get("candidate");
+      if (!baselineSpec || !candidateSpec) {
+        throw new Error("usage: fr gate --baseline <spec> --candidate <spec> [--suite name]");
+      }
+
+      const labelSetName = flags.get("set");
+      const calibration = labelSetName ? await labels.readCalibration(labelSetName) : null;
+      const judgeModel = flags.get("judge") ?? calibration?.judgeModel ?? null;
+      const useJudge = flags.get("no-judge") !== "true" && judgeModel !== null;
+
+      const report = await buildReport({
+        suite,
+        store,
+        baselineConfig: parseTarget(baselineSpec),
+        candidateConfig: parseTarget(candidateSpec),
+        mode: (flags.get("mode") ?? "live") as ReplayMode,
+        judge: useJudge ? createJudge({ client: createOllamaClient(), model: judgeModel! }) : null,
+        judgeModel: judgeModel ?? undefined,
+        trust: calibration?.kappa ?? null,
+      });
+
+      const result = evaluateGate(report, {
+        ...(flags.has("critical-tag") ? { criticalTag: flags.get("critical-tag")! } : {}),
+        ...(flags.has("max-cost") ? { maxCostPerTaskUsd: Number(flags.get("max-cost")) } : {}),
+        ...(flags.has("max-latency") ? { maxLatencyP95Ms: Number(flags.get("max-latency")) } : {}),
+        ...(flags.get("fail-on-any-regression") === "true"
+          ? { failOnAnyRegression: true }
+          : {}),
+      });
+
+      const text = formatGate(report, result);
+      console.log(result.status === "pass" ? green(text) : red(text));
+
+      if (flags.has("out")) {
+        const outPath = flags.get("out")!;
+        await mkdir(dirname(outPath), { recursive: true });
+        await writeFile(outPath, await renderReportHtml({ report, store }), "utf8");
+        console.log(dim(`\nreport written to ${outPath}`));
+      }
+      return result.exitCode;
+    }
+
+    case "export": {
+      const { flags } = parseFlags(rest);
+      const suite = await suites.read(flags.get("suite") ?? "default");
+      const path = flags.get("out") ?? `flightrecorder/traces/${suite.name}.traces.json`;
+
+      const result = await exportSuiteTraces({ suite, store, path });
+      console.log(
+        `${result.exported} traces → ${result.path} ` +
+          dim(`(${(result.bytes / 1024).toFixed(0)} KiB)`),
+      );
+      if (result.missing.length > 0) {
+        console.log(yellow(`  ${result.missing.length} referenced traces are not in this store`));
+      }
+
+      // Pin the suite to the commit its baselines were exported at.
+      const commit = result.bundle.commit;
+      if (commit) {
+        await suites.write({ ...suite, baselineCommit: commit });
+        console.log(dim(`  pinned baseline to ${commit.slice(0, 12)}`));
+      } else {
+        console.log(
+          dim("  not pinned — the working tree is dirty, and a pin that does not"),
+        );
+        console.log(dim("  describe the tree looks reproducible without being so."));
+      }
+      return 0;
+    }
+
+    case "import": {
+      const { flags } = parseFlags(rest);
+      const name = flags.get("suite") ?? "default";
+      const path = flags.get("in") ?? `flightrecorder/traces/${name}.traces.json`;
+
+      const result = await importTraceBundle({ store, path });
+      console.log(`${result.imported} traces imported, ${result.skipped} already present.`);
+      if (result.commit) console.log(dim(`  bundle was exported at ${result.commit.slice(0, 12)}`));
+
+      const suite = await suites.read(name);
+      const check = await checkSuiteRunnable(suite, store);
+      console.log(
+        check.runnable
+          ? green(`  suite "${name}" is runnable here.`)
+          : red(`  suite "${name}" still needs ${check.missing.length} traces.`),
+      );
+      return check.runnable ? 0 : 1;
+    }
+
+    case "doctor": {
+      const { flags } = parseFlags(rest);
+      const name = flags.get("suite") ?? "default";
+      const suite = await suites.read(name);
+      const check = await checkSuiteRunnable(suite, store);
+      const commit = await currentCommit();
+
+      console.log(bold(`suite "${name}"`));
+      console.log(`  cases            ${suite.cases.length}`);
+      console.log(`  baseline pinned  ${suite.baselineCommit ?? dim("not pinned")}`);
+      console.log(`  working tree     ${commit ? `clean at ${commit.slice(0, 12)}` : "dirty"}`);
+      console.log(
+        `  traces present   ${check.runnable ? green("all") : red(`${check.missing.length} missing`)}`,
+      );
+      if (!check.runnable) {
+        console.log(dim(`\n  Run: npm run fr -- import --suite ${name}`));
+      }
+      return check.runnable ? 0 : 1;
+    }
+
     case "agents": {
       for (const agent of listAgents()) {
         console.log(`  ${agent.ref.name}@${agent.ref.version}`);
@@ -870,6 +1004,15 @@ async function main(argv: string[]): Promise<number> {
       --concurrency 2             cells in flight
       --no-resume                 re-run cells that already have attempts
   agents                        list registered agents
+
+  gate                          run the report and decide pass/fail (exit 0/1)
+      --baseline/--candidate      same specs as report
+      --critical-tag p0           one regression here fails the build
+      --max-cost / --max-latency  ceilings
+      --fail-on-any-regression    block on any regression, significant or not
+  export --suite <name>         write the suite's traces to git, pin the commit
+  import --suite <name>         load a suite's traces into this store
+  doctor --suite <name>         can this suite run here?
 
   report                        compare two configs, with intervals
       --baseline <model[@temp][#prompt]>   the side to compare against
