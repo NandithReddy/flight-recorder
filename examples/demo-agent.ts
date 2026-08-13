@@ -170,7 +170,7 @@ function search(input: { query: string }): string {
   for (const [key, entry] of Object.entries(KNOWLEDGE_BASE)) {
     const keyWords = key.split(" ");
     const score = keyWords.filter((word) => words.has(word)).length / keyWords.length;
-    if (score > 0 && (best === null || score > best.score)) best = { entry, score };
+    if (score >= 0.5 && (best === null || score > best.score)) best = { entry, score };
   }
 
   return best ? best.entry : "No matching records found.";

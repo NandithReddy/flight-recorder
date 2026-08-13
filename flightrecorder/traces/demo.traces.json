@@ -2,10 +2,10 @@
   "version": 1,
   "suite": "demo",
   "commit": null,
-  "createdAt": 1786650323586,
+  "createdAt": 1786651370916,
   "traces": [
     {
-      "id": "trace_bb6bd270de2b40328285",
+      "id": "trace_354ca11de16644e6835f",
       "schemaVersion": 1,
       "agent": {
         "name": "metrics-analyst",
@@ -26,12 +26,12 @@
       "output": "Active users grew 18.33% quarter over quarter, from 1,200,000 to 1,420,000.",
       "spans": [
         {
-          "id": "span_207c5c9154de40ee92ad",
+          "id": "span_d8d74a8bc2cb482da022",
           "parentId": null,
           "kind": "model",
           "name": "demo-model",
-          "startedAt": 1786650261821,
-          "endedAt": 1786650261827,
+          "startedAt": 1786651325984,
+          "endedAt": 1786651325990,
           "input": {
             "messages": [
               {
@@ -104,12 +104,12 @@
           "error": null
         },
         {
-          "id": "span_b6e23397a17b4682bc52",
+          "id": "span_2445bb657f4b4f70a0ed",
           "parentId": null,
           "kind": "tool",
           "name": "search",
-          "startedAt": 1786650261828,
-          "endedAt": 1786650261828,
+          "startedAt": 1786651325991,
+          "endedAt": 1786651325991,
           "input": {
             "query": "quarterly active users"
           },
@@ -118,12 +118,12 @@
           "error": null
         },
         {
-          "id": "span_c50a57f011b5437c8b85",
+          "id": "span_1d817a7a465f49aa97ed",
           "parentId": null,
           "kind": "model",
           "name": "demo-model",
-          "startedAt": 1786650261828,
-          "endedAt": 1786650261833,
+          "startedAt": 1786651325991,
+          "endedAt": 1786651325997,
           "input": {
             "model": "demo-model",
             "messages": [
@@ -215,12 +215,12 @@
           "error": null
         },
         {
-          "id": "span_f7b43fb5434748e8abc0",
+          "id": "span_c1c35efd2053408e8e04",
           "parentId": null,
           "kind": "tool",
           "name": "calculate",
-          "startedAt": 1786650261833,
-          "endedAt": 1786650261834,
+          "startedAt": 1786651325997,
+          "endedAt": 1786651325997,
           "input": {
             "expression": "(1420000 - 1200000) / 1200000 * 100"
           },
@@ -229,12 +229,12 @@
           "error": null
         },
         {
-          "id": "span_d9cf82e74e1c4e4e84cb",
+          "id": "span_0c29fd42b1744cc4970d",
           "parentId": null,
           "kind": "model",
           "name": "demo-model",
-          "startedAt": 1786650261834,
-          "endedAt": 1786650261839,
+          "startedAt": 1786651325997,
+          "endedAt": 1786651326003,
           "input": {
             "model": "demo-model",
             "messages": [
@@ -337,13 +337,13 @@
           "error": null
         }
       ],
-      "startedAt": 1786650261820,
-      "endedAt": 1786650261839,
+      "startedAt": 1786651325983,
+      "endedAt": 1786651326003,
       "totals": {
         "inputTokens": 424,
         "outputTokens": 42,
         "costUsd": 0.001902,
-        "wallMs": 19,
+        "wallMs": 20,
         "steps": 5
       },
       "error": null,
@@ -353,7 +353,7 @@
       ]
     },
     {
-      "id": "trace_a636efad856f44529004",
+      "id": "trace_397f9bf0d74b462fa60f",
       "schemaVersion": 1,
       "agent": {
         "name": "metrics-analyst",
@@ -374,12 +374,12 @@
       "output": "Active users grew 18.33% quarter over quarter, from 1,200,000 to 1,420,000.",
       "spans": [
         {
-          "id": "span_490f1c609a5a4116b4ff",
+          "id": "span_9ded1e1f826744008631",
           "parentId": null,
           "kind": "model",
           "name": "demo-model",
-          "startedAt": 1786650261844,
-          "endedAt": 1786650261850,
+          "startedAt": 1786651326006,
+          "endedAt": 1786651326011,
           "input": {
             "messages": [
               {
@@ -452,12 +452,12 @@
           "error": null
         },
         {
-          "id": "span_c7ad98d82d9e41b2b303",
+          "id": "span_a9332a4d9b0c4fa28bd2",
           "parentId": null,
           "kind": "tool",
           "name": "search",
-          "startedAt": 1786650261850,
-          "endedAt": 1786650261850,
+          "startedAt": 1786651326011,
+          "endedAt": 1786651326011,
           "input": {
             "query": "quarterly active users"
           },
@@ -466,12 +466,12 @@
           "error": null
         },
         {
-          "id": "span_5a479ed21ebd4ea08c2d",
+          "id": "span_0ac077ce1752491db7b3",
           "parentId": null,
           "kind": "model",
           "name": "demo-model",
-          "startedAt": 1786650261850,
-          "endedAt": 1786650261856,
+          "startedAt": 1786651326011,
+          "endedAt": 1786651326017,
           "input": {
             "model": "demo-model",
             "messages": [
@@ -563,12 +563,12 @@
           "error": null
         },
         {
-          "id": "span_40d8ad73bb474c808bf9",
+          "id": "span_350f1e4e0ce04f5bb314",
           "parentId": null,
           "kind": "tool",
           "name": "calculate",
-          "startedAt": 1786650261856,
-          "endedAt": 1786650261856,
+          "startedAt": 1786651326017,
+          "endedAt": 1786651326017,
           "input": {
             "expression": "(1420000 - 1200000) / 1200000 * 100"
           },
@@ -577,12 +577,12 @@
           "error": null
         },
         {
-          "id": "span_fe7cfc652239432a860b",
+          "id": "span_e17bfb08117344299f6c",
           "parentId": null,
           "kind": "model",
           "name": "demo-model",
-          "startedAt": 1786650261856,
-          "endedAt": 1786650261862,
+          "startedAt": 1786651326017,
+          "endedAt": 1786651326023,
           "input": {
             "model": "demo-model",
             "messages": [
@@ -685,8 +685,8 @@
           "error": null
         }
       ],
-      "startedAt": 1786650261844,
-      "endedAt": 1786650261862,
+      "startedAt": 1786651326005,
+      "endedAt": 1786651326023,
       "totals": {
         "inputTokens": 424,
         "outputTokens": 42,
@@ -701,7 +701,7 @@
       ]
     },
     {
-      "id": "trace_e3fe9ad6f966470290c7",
+      "id": "trace_86fcac313f83477591b3",
       "schemaVersion": 1,
       "agent": {
         "name": "metrics-analyst",
@@ -722,12 +722,12 @@
       "output": "Active users grew 18.33% quarter over quarter, from 1,200,000 to 1,420,000.",
       "spans": [
         {
-          "id": "span_59a002d8d1274540bef1",
+          "id": "span_0895fb04aecf406ea718",
           "parentId": null,
           "kind": "model",
           "name": "demo-model",
-          "startedAt": 1786650261864,
-          "endedAt": 1786650261870,
+          "startedAt": 1786651326024,
+          "endedAt": 1786651326030,
           "input": {
             "messages": [
               {
@@ -800,12 +800,12 @@
           "error": null
         },
         {
-          "id": "span_7a746ab6125f4e49a04d",
+          "id": "span_5f3eb6d4c2544bc68eb3",
           "parentId": null,
           "kind": "tool",
           "name": "search",
-          "startedAt": 1786650261870,
-          "endedAt": 1786650261870,
+          "startedAt": 1786651326030,
+          "endedAt": 1786651326030,
           "input": {
             "query": "quarterly active users"
           },
@@ -814,12 +814,12 @@
           "error": null
         },
         {
-          "id": "span_017ffe33ae994467a989",
+          "id": "span_4d26fe1982db47d7ad5d",
           "parentId": null,
           "kind": "model",
           "name": "demo-model",
-          "startedAt": 1786650261870,
-          "endedAt": 1786650261876,
+          "startedAt": 1786651326030,
+          "endedAt": 1786651326036,
           "input": {
             "model": "demo-model",
             "messages": [
@@ -911,12 +911,12 @@
           "error": null
         },
         {
-          "id": "span_7a5dd9841e3e4d218944",
+          "id": "span_bc5b9d778f694fb5b6b9",
           "parentId": null,
           "kind": "tool",
           "name": "calculate",
-          "startedAt": 1786650261876,
-          "endedAt": 1786650261876,
+          "startedAt": 1786651326036,
+          "endedAt": 1786651326036,
           "input": {
             "expression": "(1420000 - 1200000) / 1200000 * 100"
           },
@@ -925,12 +925,12 @@
           "error": null
         },
         {
-          "id": "span_e41ff5d605f34f4a859f",
+          "id": "span_105e4077fe8a4611bbfc",
           "parentId": null,
           "kind": "model",
           "name": "demo-model",
-          "startedAt": 1786650261876,
-          "endedAt": 1786650261882,
+          "startedAt": 1786651326036,
+          "endedAt": 1786651326042,
           "input": {
             "model": "demo-model",
             "messages": [
@@ -1033,8 +1033,8 @@
           "error": null
         }
       ],
-      "startedAt": 1786650261864,
-      "endedAt": 1786650261882,
+      "startedAt": 1786651326024,
+      "endedAt": 1786651326042,
       "totals": {
         "inputTokens": 421,
         "outputTokens": 42,
@@ -1049,7 +1049,7 @@
       ]
     },
     {
-      "id": "trace_d070958523bd45cfa8f3",
+      "id": "trace_70141ff6afd2493596d0",
       "schemaVersion": 1,
       "agent": {
         "name": "metrics-analyst",
@@ -1070,12 +1070,12 @@
       "output": "Active users grew 18.33% quarter over quarter, from 1,200,000 to 1,420,000.",
       "spans": [
         {
-          "id": "span_76217f9f8e2e460aa297",
+          "id": "span_de7a2cffcef549999132",
           "parentId": null,
           "kind": "model",
           "name": "demo-model",
-          "startedAt": 1786650261883,
-          "endedAt": 1786650261889,
+          "startedAt": 1786651326043,
+          "endedAt": 1786651326049,
           "input": {
             "messages": [
               {
@@ -1148,12 +1148,12 @@
           "error": null
         },
         {
-          "id": "span_9fe92207ef5340a1ba22",
+          "id": "span_d7060fd98b6b451782bc",
           "parentId": null,
           "kind": "tool",
           "name": "search",
-          "startedAt": 1786650261889,
-          "endedAt": 1786650261889,
+          "startedAt": 1786651326049,
+          "endedAt": 1786651326049,
           "input": {
             "query": "quarterly active users"
           },
@@ -1162,12 +1162,12 @@
           "error": null
         },
         {
-          "id": "span_f7355c6b16fd4a518d25",
+          "id": "span_38d7d77928304ec8895d",
           "parentId": null,
           "kind": "model",
           "name": "demo-model",
-          "startedAt": 1786650261889,
-          "endedAt": 1786650261894,
+          "startedAt": 1786651326049,
+          "endedAt": 1786651326055,
           "input": {
             "model": "demo-model",
             "messages": [
@@ -1259,12 +1259,12 @@
           "error": null
         },
         {
-          "id": "span_4f95292ea077408f9b4e",
+          "id": "span_0175e4542ee649db84a4",
           "parentId": null,
           "kind": "tool",
           "name": "calculate",
-          "startedAt": 1786650261894,
-          "endedAt": 1786650261894,
+          "startedAt": 1786651326055,
+          "endedAt": 1786651326055,
           "input": {
             "expression": "(1420000 - 1200000) / 1200000 * 100"
           },
@@ -1273,12 +1273,12 @@
           "error": null
         },
         {
-          "id": "span_fa6eef2431b74a7c8b13",
+          "id": "span_4d349f2c207f45ec81f8",
           "parentId": null,
           "kind": "model",
           "name": "demo-model",
-          "startedAt": 1786650261894,
-          "endedAt": 1786650261900,
+          "startedAt": 1786651326055,
+          "endedAt": 1786651326060,
           "input": {
             "model": "demo-model",
             "messages": [
@@ -1381,8 +1381,8 @@
           "error": null
         }
       ],
-      "startedAt": 1786650261883,
-      "endedAt": 1786650261900,
+      "startedAt": 1786651326043,
+      "endedAt": 1786651326060,
       "totals": {
         "inputTokens": 442,
         "outputTokens": 42,
@@ -1397,7 +1397,7 @@
       ]
     },
     {
-      "id": "trace_af56c10501ec4c038ef5",
+      "id": "trace_a7d4bdcdaffb4ef88164",
       "schemaVersion": 1,
       "agent": {
         "name": "metrics-analyst",
@@ -1418,12 +1418,12 @@
       "output": "Active users grew 18.33% quarter over quarter, from 1,200,000 to 1,420,000.",
       "spans": [
         {
-          "id": "span_3486beb360214f77ba5f",
+          "id": "span_1fc1169fc8214727a6c2",
           "parentId": null,
           "kind": "model",
           "name": "demo-model",
-          "startedAt": 1786650261903,
-          "endedAt": 1786650261909,
+          "startedAt": 1786651326062,
+          "endedAt": 1786651326067,
           "input": {
             "messages": [
               {
@@ -1496,12 +1496,12 @@
           "error": null
         },
         {
-          "id": "span_cd13b018a92e4b72aa47",
+          "id": "span_f20fedfe25e84413a101",
           "parentId": null,
           "kind": "tool",
           "name": "search",
-          "startedAt": 1786650261909,
-          "endedAt": 1786650261909,
+          "startedAt": 1786651326067,
+          "endedAt": 1786651326067,
           "input": {
             "query": "quarterly active users"
           },
@@ -1510,12 +1510,12 @@
           "error": null
         },
         {
-          "id": "span_03e42ec77518451dae00",
+          "id": "span_59774c2c06f549819729",
           "parentId": null,
           "kind": "model",
           "name": "demo-model",
-          "startedAt": 1786650261909,
-          "endedAt": 1786650261915,
+          "startedAt": 1786651326067,
+          "endedAt": 1786651326073,
           "input": {
             "model": "demo-model",
             "messages": [
@@ -1607,12 +1607,12 @@
           "error": null
         },
         {
-          "id": "span_f4e6ef571e9c4743ad9c",
+          "id": "span_d46071c6df03494688e1",
           "parentId": null,
           "kind": "tool",
           "name": "calculate",
-          "startedAt": 1786650261915,
-          "endedAt": 1786650261915,
+          "startedAt": 1786651326073,
+          "endedAt": 1786651326073,
           "input": {
             "expression": "(1420000 - 1200000) / 1200000 * 100"
           },
@@ -1621,12 +1621,12 @@
           "error": null
         },
         {
-          "id": "span_120640f1890f4f338697",
+          "id": "span_7112be7a0e74411ebaec",
           "parentId": null,
           "kind": "model",
           "name": "demo-model",
-          "startedAt": 1786650261915,
-          "endedAt": 1786650261920,
+          "startedAt": 1786651326073,
+          "endedAt": 1786651326079,
           "input": {
             "model": "demo-model",
             "messages": [
@@ -1729,8 +1729,8 @@
           "error": null
         }
       ],
-      "startedAt": 1786650261903,
-      "endedAt": 1786650261920,
+      "startedAt": 1786651326062,
+      "endedAt": 1786651326079,
       "totals": {
         "inputTokens": 415,
         "outputTokens": 42,
@@ -1745,7 +1745,7 @@
       ]
     },
     {
-      "id": "trace_c935108652974f38a963",
+      "id": "trace_663c87f8f18f4c75949c",
       "schemaVersion": 1,
       "agent": {
         "name": "metrics-analyst",
@@ -1766,12 +1766,12 @@
       "output": "Active users grew 18.33% quarter over quarter, from 1,200,000 to 1,420,000.",
       "spans": [
         {
-          "id": "span_88672887252d4cf48d64",
+          "id": "span_f4c314870ec24067999f",
           "parentId": null,
           "kind": "model",
           "name": "demo-model",
-          "startedAt": 1786650261921,
-          "endedAt": 1786650261927,
+          "startedAt": 1786651326080,
+          "endedAt": 1786651326085,
           "input": {
             "messages": [
               {
@@ -1844,12 +1844,12 @@
           "error": null
         },
         {
-          "id": "span_5a922fd55a3b42fd8421",
+          "id": "span_eb3c065e6c944667b233",
           "parentId": null,
           "kind": "tool",
           "name": "search",
-          "startedAt": 1786650261927,
-          "endedAt": 1786650261927,
+          "startedAt": 1786651326085,
+          "endedAt": 1786651326085,
           "input": {
             "query": "quarterly active users"
           },
@@ -1858,12 +1858,12 @@
           "error": null
         },
         {
-          "id": "span_c5638b8a4496465f8f70",
+          "id": "span_f9bde66495ac4a52bc75",
           "parentId": null,
           "kind": "model",
           "name": "demo-model",
-          "startedAt": 1786650261927,
-          "endedAt": 1786650261933,
+          "startedAt": 1786651326085,
+          "endedAt": 1786651326091,
           "input": {
             "model": "demo-model",
             "messages": [
@@ -1955,12 +1955,12 @@
           "error": null
         },
         {
-          "id": "span_5ca0191ec7a2439e9467",
+          "id": "span_34ee9901062c4a53a2c9",
           "parentId": null,
           "kind": "tool",
           "name": "calculate",
-          "startedAt": 1786650261933,
-          "endedAt": 1786650261933,
+          "startedAt": 1786651326091,
+          "endedAt": 1786651326091,
           "input": {
             "expression": "(1420000 - 1200000) / 1200000 * 100"
           },
@@ -1969,12 +1969,12 @@
           "error": null
         },
         {
-          "id": "span_fc7223b356054157b2f6",
+          "id": "span_4ddd18acec7c4d739822",
           "parentId": null,
           "kind": "model",
           "name": "demo-model",
-          "startedAt": 1786650261933,
-          "endedAt": 1786650261939,
+          "startedAt": 1786651326091,
+          "endedAt": 1786651326097,
           "input": {
             "model": "demo-model",
             "messages": [
@@ -2077,13 +2077,13 @@
           "error": null
         }
       ],
-      "startedAt": 1786650261921,
-      "endedAt": 1786650261939,
+      "startedAt": 1786651326080,
+      "endedAt": 1786651326097,
       "totals": {
         "inputTokens": 430,
         "outputTokens": 42,
         "costUsd": 0.0019199999999999998,
-        "wallMs": 18,
+        "wallMs": 17,
         "steps": 5
       },
       "error": null,
@@ -2093,7 +2093,7 @@
       ]
     },
     {
-      "id": "trace_014931d13797443f88de",
+      "id": "trace_1bc5acff3c394bf58377",
       "schemaVersion": 1,
       "agent": {
         "name": "metrics-analyst",
@@ -2114,12 +2114,12 @@
       "output": "Active users grew 18.33% quarter over quarter, from 1,200,000 to 1,420,000.",
       "spans": [
         {
-          "id": "span_f1dee20de73f4709b2c8",
+          "id": "span_d970fb09aba3442db056",
           "parentId": null,
           "kind": "model",
           "name": "demo-model",
-          "startedAt": 1786650261940,
-          "endedAt": 1786650261946,
+          "startedAt": 1786651326098,
+          "endedAt": 1786651326103,
           "input": {
             "messages": [
               {
@@ -2192,12 +2192,12 @@
           "error": null
         },
         {
-          "id": "span_ad632cf7fe6841ba982f",
+          "id": "span_f9589457f1b44a668c56",
           "parentId": null,
           "kind": "tool",
           "name": "search",
-          "startedAt": 1786650261946,
-          "endedAt": 1786650261946,
+          "startedAt": 1786651326103,
+          "endedAt": 1786651326103,
           "input": {
             "query": "quarterly active users"
           },
@@ -2206,12 +2206,12 @@
           "error": null
         },
         {
-          "id": "span_c69391f621a54332ae56",
+          "id": "span_b42463196a2643c28a92",
           "parentId": null,
           "kind": "model",
           "name": "demo-model",
-          "startedAt": 1786650261946,
-          "endedAt": 1786650261952,
+          "startedAt": 1786651326103,
+          "endedAt": 1786651326109,
           "input": {
             "model": "demo-model",
             "messages": [
@@ -2303,12 +2303,12 @@
           "error": null
         },
         {
-          "id": "span_d47a85630953437987e6",
+          "id": "span_e7da155f5da344e9b14a",
           "parentId": null,
           "kind": "tool",
           "name": "calculate",
-          "startedAt": 1786650261952,
-          "endedAt": 1786650261952,
+          "startedAt": 1786651326109,
+          "endedAt": 1786651326109,
           "input": {
             "expression": "(1420000 - 1200000) / 1200000 * 100"
           },
@@ -2317,12 +2317,12 @@
           "error": null
         },
         {
-          "id": "span_fb0ebb5184d3443397f5",
+          "id": "span_6f9d32ce04e04ec0ad9c",
           "parentId": null,
           "kind": "model",
           "name": "demo-model",
-          "startedAt": 1786650261952,
-          "endedAt": 1786650261957,
+          "startedAt": 1786651326109,
+          "endedAt": 1786651326115,
           "input": {
             "model": "demo-model",
             "messages": [
@@ -2425,8 +2425,8 @@
           "error": null
         }
       ],
-      "startedAt": 1786650261940,
-      "endedAt": 1786650261957,
+      "startedAt": 1786651326098,
+      "endedAt": 1786651326115,
       "totals": {
         "inputTokens": 430,
         "outputTokens": 42,
@@ -2441,7 +2441,7 @@
       ]
     },
     {
-      "id": "trace_99180f011e2b43168d7a",
+      "id": "trace_9549e328c6914a0887fa",
       "schemaVersion": 1,
       "agent": {
         "name": "metrics-analyst",
@@ -2462,12 +2462,12 @@
       "output": "Active users grew 18.33% quarter over quarter, from 1,200,000 to 1,420,000.",
       "spans": [
         {
-          "id": "span_57a7ea5532d744b795c9",
+          "id": "span_95b520b5249e4d0cafdf",
           "parentId": null,
           "kind": "model",
           "name": "demo-model",
-          "startedAt": 1786650261959,
-          "endedAt": 1786650261965,
+          "startedAt": 1786651326116,
+          "endedAt": 1786651326122,
           "input": {
             "messages": [
               {
@@ -2540,12 +2540,12 @@
           "error": null
         },
         {
-          "id": "span_0fc1fa6529f04f4bbdb6",
+          "id": "span_e8a222c4c86444c0a406",
           "parentId": null,
           "kind": "tool",
           "name": "search",
-          "startedAt": 1786650261965,
-          "endedAt": 1786650261965,
+          "startedAt": 1786651326122,
+          "endedAt": 1786651326122,
           "input": {
             "query": "quarterly active users"
           },
@@ -2554,12 +2554,12 @@
           "error": null
         },
         {
-          "id": "span_69849e0720ec4a89a1bf",
+          "id": "span_3d2b486225124defadfb",
           "parentId": null,
           "kind": "model",
           "name": "demo-model",
-          "startedAt": 1786650261965,
-          "endedAt": 1786650261970,
+          "startedAt": 1786651326122,
+          "endedAt": 1786651326128,
           "input": {
             "model": "demo-model",
             "messages": [
@@ -2651,12 +2651,12 @@
           "error": null
         },
         {
-          "id": "span_35a884bfae55463dad21",
+          "id": "span_5295ef3cbf9b47a8839f",
           "parentId": null,
           "kind": "tool",
           "name": "calculate",
-          "startedAt": 1786650261970,
-          "endedAt": 1786650261970,
+          "startedAt": 1786651326128,
+          "endedAt": 1786651326128,
           "input": {
             "expression": "(1420000 - 1200000) / 1200000 * 100"
           },
@@ -2665,12 +2665,12 @@
           "error": null
         },
         {
-          "id": "span_9654a551572a43ae8ddf",
+          "id": "span_829d3f7ab94b46fcb755",
           "parentId": null,
           "kind": "model",
           "name": "demo-model",
-          "startedAt": 1786650261970,
-          "endedAt": 1786650261976,
+          "startedAt": 1786651326128,
+          "endedAt": 1786651326133,
           "input": {
             "model": "demo-model",
             "messages": [
@@ -2773,8 +2773,8 @@
           "error": null
         }
       ],
-      "startedAt": 1786650261959,
-      "endedAt": 1786650261976,
+      "startedAt": 1786651326116,
+      "endedAt": 1786651326133,
       "totals": {
         "inputTokens": 433,
         "outputTokens": 42,
@@ -2789,7 +2789,7 @@
       ]
     },
     {
-      "id": "trace_7a0e8cfa83024c5aa39b",
+      "id": "trace_48f75bf7df2a41fab939",
       "schemaVersion": 1,
       "agent": {
         "name": "metrics-analyst",
@@ -2810,12 +2810,12 @@
       "output": "Active users grew 18.33% quarter over quarter, from 1,200,000 to 1,420,000.",
       "spans": [
         {
-          "id": "span_e7ff155bee0a491888de",
+          "id": "span_1f63841fb89540e8a488",
           "parentId": null,
           "kind": "model",
           "name": "demo-model",
-          "startedAt": 1786650261978,
-          "endedAt": 1786650261984,
+          "startedAt": 1786651326134,
+          "endedAt": 1786651326140,
           "input": {
             "messages": [
               {
@@ -2888,12 +2888,12 @@
           "error": null
         },
         {
-          "id": "span_a1e7e00818e1492abe91",
+          "id": "span_52e54621c88d4879bfdf",
           "parentId": null,
           "kind": "tool",
           "name": "search",
-          "startedAt": 1786650261984,
-          "endedAt": 1786650261984,
+          "startedAt": 1786651326140,
+          "endedAt": 1786651326140,
           "input": {
             "query": "quarterly active users"
           },
@@ -2902,12 +2902,12 @@
           "error": null
         },
         {
-          "id": "span_2b34a768eddb45d88779",
+          "id": "span_dc8730ec208f4f998c8a",
           "parentId": null,
           "kind": "model",
           "name": "demo-model",
-          "startedAt": 1786650261984,
-          "endedAt": 1786650261990,
+          "startedAt": 1786651326140,
+          "endedAt": 1786651326146,
           "input": {
             "model": "demo-model",
             "messages": [
@@ -2999,12 +2999,12 @@
           "error": null
         },
         {
-          "id": "span_c2e64076b8d54e08a5a5",
+          "id": "span_2dc004156485410faa12",
           "parentId": null,
           "kind": "tool",
           "name": "calculate",
-          "startedAt": 1786650261990,
-          "endedAt": 1786650261990,
+          "startedAt": 1786651326146,
+          "endedAt": 1786651326146,
           "input": {
             "expression": "(1420000 - 1200000) / 1200000 * 100"
           },
@@ -3013,12 +3013,12 @@
           "error": null
         },
         {
-          "id": "span_0d53d583e0fe4f71b443",
+          "id": "span_319c089f9c8f48f8b358",
           "parentId": null,
           "kind": "model",
           "name": "demo-model",
-          "startedAt": 1786650261990,
-          "endedAt": 1786650261996,
+          "startedAt": 1786651326146,
+          "endedAt": 1786651326152,
           "input": {
             "model": "demo-model",
             "messages": [
@@ -3121,8 +3121,8 @@
           "error": null
         }
       ],
-      "startedAt": 1786650261978,
-      "endedAt": 1786650261996,
+      "startedAt": 1786651326134,
+      "endedAt": 1786651326152,
       "totals": {
         "inputTokens": 412,
         "outputTokens": 42,
@@ -3137,7 +3137,7 @@
       ]
     },
     {
-      "id": "trace_1c651493cbd14099aa8d",
+      "id": "trace_418a12cccfff46ab9d09",
       "schemaVersion": 1,
       "agent": {
         "name": "metrics-analyst",
@@ -3158,12 +3158,12 @@
       "output": "Active users grew 18.33% quarter over quarter, from 1,200,000 to 1,420,000.",
       "spans": [
         {
-          "id": "span_1c3f10d113ed453588e4",
+          "id": "span_a3d7ca21cc0040b69c32",
           "parentId": null,
           "kind": "model",
           "name": "demo-model",
-          "startedAt": 1786650261998,
-          "endedAt": 1786650262004,
+          "startedAt": 1786651326153,
+          "endedAt": 1786651326158,
           "input": {
             "messages": [
               {
@@ -3236,12 +3236,12 @@
           "error": null
         },
         {
-          "id": "span_c7cecfb788a8418ead6b",
+          "id": "span_f8468dba346a4b97bd74",
           "parentId": null,
           "kind": "tool",
           "name": "search",
-          "startedAt": 1786650262004,
-          "endedAt": 1786650262004,
+          "startedAt": 1786651326158,
+          "endedAt": 1786651326159,
           "input": {
             "query": "quarterly active users"
           },
@@ -3250,12 +3250,12 @@
           "error": null
         },
         {
-          "id": "span_03aea1c2367642ee8609",
+          "id": "span_7382b64e11cd472497d5",
           "parentId": null,
           "kind": "model",
           "name": "demo-model",
-          "startedAt": 1786650262004,
-          "endedAt": 1786650262010,
+          "startedAt": 1786651326159,
+          "endedAt": 1786651326164,
           "input": {
             "model": "demo-model",
             "messages": [
@@ -3347,12 +3347,12 @@
           "error": null
         },
         {
-          "id": "span_28b43b63090449a1986e",
+          "id": "span_d5b7ad6fd7204ec58d0d",
           "parentId": null,
           "kind": "tool",
           "name": "calculate",
-          "startedAt": 1786650262010,
-          "endedAt": 1786650262010,
+          "startedAt": 1786651326164,
+          "endedAt": 1786651326164,
           "input": {
             "expression": "(1420000 - 1200000) / 1200000 * 100"
           },
@@ -3361,12 +3361,12 @@
           "error": null
         },
         {
-          "id": "span_1b3ac6396cc14a73b9a4",
+          "id": "span_6f1f03d6954f4ddbbcd9",
           "parentId": null,
           "kind": "model",
           "name": "demo-model",
-          "startedAt": 1786650262010,
-          "endedAt": 1786650262015,
+          "startedAt": 1786651326164,
+          "endedAt": 1786651326170,
           "input": {
             "model": "demo-model",
             "messages": [
@@ -3469,8 +3469,8 @@
           "error": null
         }
       ],
-      "startedAt": 1786650261998,
-      "endedAt": 1786650262015,
+      "startedAt": 1786651326153,
+      "endedAt": 1786651326170,
       "totals": {
         "inputTokens": 427,
         "outputTokens": 42,
@@ -3485,7 +3485,7 @@
       ]
     },
     {
-      "id": "trace_e18ef2e40f134d2a9a4f",
+      "id": "trace_8bd45ab182254e49a391",
       "schemaVersion": 1,
       "agent": {
         "name": "metrics-analyst",
@@ -3506,12 +3506,12 @@
       "output": "Active users grew 18.33% quarter over quarter, from 1,200,000 to 1,420,000.",
       "spans": [
         {
-          "id": "span_ebb67cce8ec446f88e96",
+          "id": "span_1572b2a2ba354fb0ab88",
           "parentId": null,
           "kind": "model",
           "name": "demo-model",
-          "startedAt": 1786650262018,
-          "endedAt": 1786650262023,
+          "startedAt": 1786651326171,
+          "endedAt": 1786651326177,
           "input": {
             "messages": [
               {
@@ -3584,12 +3584,12 @@
           "error": null
         },
         {
-          "id": "span_1ff74418edf948ac875f",
+          "id": "span_1c63439d4288468194bb",
           "parentId": null,
           "kind": "tool",
           "name": "search",
-          "startedAt": 1786650262023,
-          "endedAt": 1786650262023,
+          "startedAt": 1786651326177,
+          "endedAt": 1786651326177,
           "input": {
             "query": "quarterly active users"
           },
@@ -3598,12 +3598,12 @@
           "error": null
         },
         {
-          "id": "span_63f40b2f16334a0f8ef3",
+          "id": "span_aba7b942293a420383fe",
           "parentId": null,
           "kind": "model",
           "name": "demo-model",
-          "startedAt": 1786650262023,
-          "endedAt": 1786650262029,
+          "startedAt": 1786651326177,
+          "endedAt": 1786651326183,
           "input": {
             "model": "demo-model",
             "messages": [
@@ -3695,12 +3695,12 @@
           "error": null
         },
         {
-          "id": "span_4092b1a4ff6a441a9644",
+          "id": "span_3f1f3f7024a84344a7ac",
           "parentId": null,
           "kind": "tool",
           "name": "calculate",
-          "startedAt": 1786650262029,
-          "endedAt": 1786650262029,
+          "startedAt": 1786651326183,
+          "endedAt": 1786651326183,
           "input": {
             "expression": "(1420000 - 1200000) / 1200000 * 100"
           },
@@ -3709,12 +3709,12 @@
           "error": null
         },
         {
-          "id": "span_6e790cbaa0904cf1a897",
+          "id": "span_5b8cbc6682434b28929f",
           "parentId": null,
           "kind": "model",
           "name": "demo-model",
-          "startedAt": 1786650262029,
-          "endedAt": 1786650262035,
+          "startedAt": 1786651326183,
+          "endedAt": 1786651326188,
           "input": {
             "model": "demo-model",
             "messages": [
@@ -3817,8 +3817,8 @@
           "error": null
         }
       ],
-      "startedAt": 1786650262018,
-      "endedAt": 1786650262035,
+      "startedAt": 1786651326171,
+      "endedAt": 1786651326188,
       "totals": {
         "inputTokens": 442,
         "outputTokens": 42,
@@ -3833,7 +3833,7 @@
       ]
     },
     {
-      "id": "trace_e809e850c4ca47138466",
+      "id": "trace_4ad40ab6f3254f0bb051",
       "schemaVersion": 1,
       "agent": {
         "name": "metrics-analyst",
@@ -3854,12 +3854,12 @@
       "output": "Active users grew 18.33% quarter over quarter, from 1,200,000 to 1,420,000.",
       "spans": [
         {
-          "id": "span_41b2ffe32feb46d8a003",
+          "id": "span_63269ec16b3049a8b7c9",
           "parentId": null,
           "kind": "model",
           "name": "demo-model",
-          "startedAt": 1786650262038,
-          "endedAt": 1786650262044,
+          "startedAt": 1786651326190,
+          "endedAt": 1786651326195,
           "input": {
             "messages": [
               {
@@ -3932,12 +3932,12 @@
           "error": null
         },
         {
-          "id": "span_c04abd85e32147c286f0",
+          "id": "span_1f677264db3347168002",
           "parentId": null,
           "kind": "tool",
           "name": "search",
-          "startedAt": 1786650262044,
-          "endedAt": 1786650262044,
+          "startedAt": 1786651326195,
+          "endedAt": 1786651326195,
           "input": {
             "query": "quarterly active users"
           },
@@ -3946,12 +3946,12 @@
           "error": null
         },
         {
-          "id": "span_12e1fc90d5384d158300",
+          "id": "span_0f195eb6324744529f3e",
           "parentId": null,
           "kind": "model",
           "name": "demo-model",
-          "startedAt": 1786650262044,
-          "endedAt": 1786650262050,
+          "startedAt": 1786651326195,
+          "endedAt": 1786651326201,
           "input": {
             "model": "demo-model",
             "messages": [
@@ -4043,12 +4043,12 @@
           "error": null
         },
         {
-          "id": "span_91d51f4a7cb94190a95d",
+          "id": "span_da44670f38ee482fab43",
           "parentId": null,
           "kind": "tool",
           "name": "calculate",
-          "startedAt": 1786650262050,
-          "endedAt": 1786650262050,
+          "startedAt": 1786651326201,
+          "endedAt": 1786651326201,
           "input": {
             "expression": "(1420000 - 1200000) / 1200000 * 100"
           },
@@ -4057,12 +4057,12 @@
           "error": null
         },
         {
-          "id": "span_9d56b029d177412ca75f",
+          "id": "span_02423baeabd44697ac29",
           "parentId": null,
           "kind": "model",
           "name": "demo-model",
-          "startedAt": 1786650262050,
-          "endedAt": 1786650262055,
+          "startedAt": 1786651326201,
+          "endedAt": 1786651326207,
           "input": {
             "model": "demo-model",
             "messages": [
@@ -4165,13 +4165,13 @@
           "error": null
         }
       ],
-      "startedAt": 1786650262038,
-      "endedAt": 1786650262055,
+      "startedAt": 1786651326189,
+      "endedAt": 1786651326207,
       "totals": {
         "inputTokens": 424,
         "outputTokens": 42,
         "costUsd": 0.001902,
-        "wallMs": 17,
+        "wallMs": 18,
         "steps": 5
       },
       "error": null,

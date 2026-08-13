@@ -47,9 +47,10 @@ jobs:
   # Proves the gate actually catches a regression — with no models and no
   # secrets, so it runs for anyone who forks this.
   #
-  # The deterministic mock has a degraded variant that fails in the way real
-  # agents fail: it skips its verification step and answers confidently with an
-  # unchecked number. Nothing throws. The gate has to notice anyway.
+  # The deterministic mock reads its system prompt. Under the weaker prompt it
+  # fails the way real agents fail: it skips its verification step and answers
+  # confidently with an unchecked number. Nothing throws. The gate has to
+  # notice anyway.
   #
   # This job passes when the gate FAILS, because that is the behaviour under
   # test. A gate that cannot be shown to fire is not a gate.
@@ -74,12 +75,12 @@ jobs:
       - name: run both configurations
         run: |
           npm run fr -- matrix --suite demo --provider mock \
-            --models demo-model --prompts v1,v2-degraded --modes live --concurrency 4
+            --models demo-model --prompts v1,v0 --modes live --concurrency 4
 
       - name: the gate must fail on the degraded prompt
         run: |
           if npm run fr --silent -- gate --suite demo --provider mock \
-               --baseline "demo-model#v1" --candidate "demo-model#v2-degraded" --no-judge; then
+               --baseline "demo-model#v1" --candidate "demo-model#v0" --no-judge; then
             echo "::error::The gate passed a known regression. That is the bug this repo exists to prevent."
             exit 1
           fi
@@ -97,6 +98,55 @@ jobs:
           npm run fr -- gate --suite demo --provider mock \
             --baseline "demo-model#v1" --candidate "demo-model#v1" \
             --baseline-committed --fail-on-any-regression --no-judge
+
+  # ---------------------------------------------------------------------------
+  # The actual regression gate for this repository.
+  #
+  # The self-test above proves the gate *can* fire, by handing it a regression
+  # on purpose. This one proves it catches an *accidental* one: it runs the
+  # agent as it exists on this branch and compares the result against the
+  # baseline recordings committed to git.
+  #
+  # On main it passes. On a branch that weakens the agent's prompt it fails --
+  # even though every unit test still passes, because the unit tests pin the
+  # mock's behaviour explicitly and cannot see a prompt change at all. That gap
+  # is the entire reason this project exists.
+  # ---------------------------------------------------------------------------
+  regression:
+    name: no regression against the committed baseline
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+
+      - run: npm ci
+
+      - name: load committed baselines
+        run: npm run fr -- import --suite demo
+
+      - name: run the agent as it is on this branch
+        run: |
+          npm run fr -- matrix --suite demo --provider mock \
+            --models demo-model --prompts v1 --modes live --concurrency 4
+
+      - name: compare against the committed baseline
+        run: |
+          npm run fr -- gate --suite demo --provider mock \
+            --baseline "demo-model#v1" --candidate "demo-model#v1" \
+            --baseline-committed --no-judge --out report.html
+
+      - name: upload report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: regression-report
+          path: report.html
+          retention-days: 30
 
   # ---------------------------------------------------------------------------
   # The real gate, against live models. Opt-in: it needs a credential, and a job

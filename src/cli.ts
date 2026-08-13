@@ -104,7 +104,10 @@ function targetFrom(flags: Map<string, string>, quality: MockQuality): Target {
     model,
     quality,
     temperature: temp === undefined ? 0 : Number(temp),
-    ...(flags.has("prompt") ? { promptVersion: flags.get("prompt")! } : {}),
+    // Always resolved. `fr record degraded` is just shorthand for the weaker
+    // prompt now that the mock reads prompts — there is no separate notion of
+    // a degraded model any more, only a degraded instruction.
+    promptVersion: flags.get("prompt") ?? (quality === "degraded" ? "v0" : "v1"),
   };
 }
 
@@ -112,10 +115,7 @@ function configFor(target: Target) {
   return makeConfig({
     provider: target.provider,
     model: target.model,
-    promptVersion:
-      target.promptVersion ??
-      // The mock's "degraded" flag is its own prompt variant.
-      (target.provider === "mock" && target.quality === "degraded" ? "v2-degraded" : "v1"),
+    promptVersion: target.promptVersion ?? "v1",
     toolset: ["search", "calculate"],
     temperature: target.temperature ?? 0,
   });
@@ -124,12 +124,11 @@ function configFor(target: Target) {
 function clientFor(target: Target) {
   if (target.provider === "ollama") return createOllamaClient();
   if (target.provider === "gateway") return createGatewayClient();
-  // The mock's "degraded" variant *is* its v2-degraded prompt, so selecting a
-  // prompt in the matrix has to select it. Without this the mock could only
-  // ever run its good path and could not demonstrate a regression at all.
-  const quality: MockQuality =
-    target.promptVersion === "v2-degraded" ? "degraded" : target.quality;
-  return createMockClient({ quality });
+
+  // The mock reads the prompt. Forcing behaviour here would make the matrix
+  // compare two labels rather than two prompts, which is the whole point of
+  // having a prompt axis.
+  return createMockClient();
 }
 
 const usd = (n: number) => `$${n.toFixed(6)}`;
@@ -435,6 +434,7 @@ async function main(argv: string[]): Promise<number> {
             model: config.model,
             quality: "good",
             temperature: config.temperature,
+            // Always present, so a mock run is always prompt-driven.
             promptVersion: config.promptVersion,
           }),
         onEvent: (event) => {
