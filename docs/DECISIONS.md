@@ -647,3 +647,57 @@ first report on someone else's machine") tested continuously instead of once.
 a hash when `git status` is not clean, because a baseline pinned to a commit
 that does not describe the working tree looks reproducible without being so,
 which is worse than an honest absence of a pin.
+
+---
+
+### D-039 · The judge's prompt is a config, and v1 was actively harmful
+
+Calibrated against 47 human labels, three judges:
+
+| judge | prompt | κ | 95% CI | verdict |
+|---|---|---|---|---|
+| qwen2.5:7b | v1 | **−0.102** | (−0.203, −0.008) | worse than chance |
+| qwen2.5:7b | v2 | **0.209** | (0.001, 0.409) | fair |
+| llama3.1:8b | v2 | 0.089 | (−0.117, 0.307) | not distinguishable from chance |
+
+**v1 was significantly worse than a coin flip.** Its interval excludes zero, so
+that is a measurement, not noise. The confusion matrix said why, and the judge's
+own reasons said it out loud:
+
+> "Answer B provides supporting details that confirm the…" — preferring the run
+> that invented 450 and 500
+> "Answer B provides a calculation supporting the figure" — preferring fabricated
+> working
+> "Answer A shows the calculation, while Answer B only states…" — preferring the
+> run that printed a tool call as prose and computed nothing
+
+**The judge was rewarding the appearance of work.** Fabricating models produce
+more text, more visible arithmetic, more apparent rigour — and the judge read
+that as quality. It preferred hallucinations, systematically.
+
+The prompt was partly responsible. v1 said *"correct, complete and supported by
+the work shown"*, and a fabricated calculation satisfies "work shown" perfectly.
+The instruction rewarded the exact behaviour it was meant to detect.
+
+It also **never once said TIE** — zero times in 47, against a human who said it
+21 times. The pairs that looked like filler while labelling (same model, two
+prompts, same correct answer) are what exposed that. A pool of only obvious
+cases would have hidden it behind a flattering agreement score.
+
+v2 addresses all three failures explicitly and moves κ by **0.31** on the same
+model and the same labels. **The prompt mattered more than the model** — the
+larger llama scored worse than qwen under identical instructions.
+
+v1 is kept rather than deleted, because that is what makes the improvement
+measurable rather than asserted.
+
+---
+
+### D-040 · Calibrations are comparisons, so they are never overwritten
+
+Running a second calibration silently destroyed the first, which is exactly the
+number you want to compare against. `writeCalibration` now appends every result
+to `<set>.calibrations.jsonl` alongside the current file the report cites.
+
+Found by running three calibrations in a row and watching the evidence for the
+first two disappear.

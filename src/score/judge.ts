@@ -47,12 +47,22 @@ export interface Judge {
 export interface JudgeOptions {
   client: ModelClient;
   model: string;
+  /** Which prompt variant to judge with. Defaults to the current best. */
+  promptVersion?: string;
   /** Extra instruction appended to every prompt. */
   guidance?: string;
   maxTokens?: number;
 }
 
-const SYSTEM = [
+/**
+ * The judge's own prompt is a config, and it is versioned for the same reason
+ * the agent's is: it changes the answer, so it belongs in the matrix.
+ *
+ * v1 is kept rather than deleted. It scored kappa = -0.102 against 47 human
+ * labels — significantly *worse* than chance — and keeping it is what makes the
+ * improvement measurable instead of asserted.
+ */
+const JUDGE_PROMPT_V1 = [
   "You are grading two candidate answers to the same task.",
   "",
   "Judge only on whether the answer is correct, complete and supported by the",
@@ -61,6 +71,49 @@ const SYSTEM = [
   "",
   'Reply with one line of JSON and nothing else: {"winner": "A"|"B"|"TIE", "reason": "<one sentence>"}',
 ].join("\n");
+
+/**
+ * v2, written against v1's confusion matrix rather than from intuition.
+ *
+ * Three things that matrix showed, each addressed explicitly below:
+ *
+ *   1. **It rewarded shown working.** v1 said "supported by the work shown",
+ *      which a fabricated calculation satisfies perfectly. The judge preferred
+ *      answers that invented figures and then showed arithmetic over them.
+ *   2. **It never said TIE.** Zero times in 47, against a human who said it 21
+ *      times. The option existed and the judge would not use it.
+ *   3. **It read detail as quality.** Longer answers restating the figures won
+ *      against correct one-liners.
+ */
+const JUDGE_PROMPT_V2 = [
+  "You are comparing two answers to the same task. Decide which is better, or",
+  "whether they are equally good.",
+  "",
+  "Judge correctness and nothing else. An answer is better when its figures are",
+  "right.",
+  "",
+  "These are NOT evidence of quality:",
+  "- Showing arithmetic. Working can be invented. A wrong figure with a",
+  "  calculation attached is worse than a wrong figure without one, not better,",
+  "  because it manufactures confidence it has not earned.",
+  "- Length or detail. Restating the numbers does not make an answer more",
+  "  correct.",
+  "- Confidence. An answer that says it could not find the data is BETTER than",
+  "  one that invents a plausible-looking number.",
+  "",
+  "TIE is a real verdict and frequently the right one. If both answers give the",
+  "same figure, they are tied, however differently they are worded. Do not hunt",
+  "for a tiebreaker.",
+  "",
+  'Reply with one line of JSON and nothing else: {"winner": "A"|"B"|"TIE", "reason": "<one sentence>"}',
+].join("\n");
+
+export const JUDGE_PROMPTS: Record<string, string> = {
+  v1: JUDGE_PROMPT_V1,
+  v2: JUDGE_PROMPT_V2,
+};
+
+export const DEFAULT_JUDGE_PROMPT = "v2";
 
 function buildPrompt(item: JudgeItem, baselineShownAs: "A" | "B"): string {
   const a = baselineShownAs === "A" ? item.baseline : item.candidate;
@@ -114,11 +167,22 @@ export function baselineSlotFor(id: string): "A" | "B" {
 }
 
 export function createJudge(options: JudgeOptions): Judge {
+  const promptVersion = options.promptVersion ?? DEFAULT_JUDGE_PROMPT;
+  const system = JUDGE_PROMPTS[promptVersion];
+  if (!system) {
+    throw new Error(
+      `No judge prompt "${promptVersion}". Known: ${Object.keys(JUDGE_PROMPTS).join(", ")}.`,
+    );
+  }
+
   const runOnce = async (item: JudgeItem, baselineShownAs: "A" | "B"): Promise<JudgeVerdict> => {
     const response = await options.client.generate({
       model: options.model,
       messages: [
-        { role: "system", content: options.guidance ? `${SYSTEM}\n\n${options.guidance}` : SYSTEM },
+        {
+          role: "system",
+          content: options.guidance ? `${system}\n\n${options.guidance}` : system,
+        },
         { role: "user", content: buildPrompt(item, baselineShownAs) },
       ],
       temperature: 0,

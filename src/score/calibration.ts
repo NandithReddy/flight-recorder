@@ -20,6 +20,7 @@ export interface CalibrationOptions {
   set: LabelSet;
   judge: Judge;
   judgeModel: string;
+  judgePromptVersion?: string;
   /**
    * Also run every item in both presentation orders to measure position bias
    * directly. Doubles the cost, so it is opt-in.
@@ -108,6 +109,7 @@ export async function calibrate(options: CalibrationOptions): Promise<Calibratio
   const stored: StoredCalibration = {
     labelSet: options.set.name,
     judgeModel: options.judgeModel,
+    judgePromptVersion: options.judgePromptVersion ?? "unknown",
     n: pairs.length,
     kappa: kappa.kappa,
     kappaLower: kappa.interval.lower,

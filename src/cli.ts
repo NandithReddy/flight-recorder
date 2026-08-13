@@ -40,7 +40,7 @@ import {
   exportSuiteTraces,
   importTraceBundle,
 } from "./store/portable.ts";
-import { createJudge } from "./score/judge.ts";
+import { createJudge, DEFAULT_JUDGE_PROMPT } from "./score/judge.ts";
 import { calibrate, MIN_LABELS } from "./score/calibration.ts";
 import {
   formatConfusion,
@@ -655,12 +655,21 @@ async function main(argv: string[]): Promise<number> {
       if (!(await isOllamaRunning())) throw new OllamaUnavailableError(DEFAULT_OLLAMA_HOST);
 
       const total = labelledItems(set).length;
-      console.log(bold(`calibrating ${judgeModel} against ${total} human labels`));
+      console.log(
+        bold(`calibrating ${judgeModel} against ${total} human labels`) +
+          dim(`  (judge prompt ${flags.get("judge-prompt") ?? DEFAULT_JUDGE_PROMPT})`),
+      );
 
+      const judgePromptVersion = flags.get("judge-prompt") ?? DEFAULT_JUDGE_PROMPT;
       const result = await calibrate({
         set,
-        judge: createJudge({ client: createOllamaClient(), model: judgeModel }),
+        judge: createJudge({
+          client: createOllamaClient(),
+          model: judgeModel,
+          promptVersion: judgePromptVersion,
+        }),
         judgeModel,
+        judgePromptVersion,
         measurePositionBias: flags.get("position-bias") === "true",
         onProgress: (done, n) => {
           if (done % 10 === 0 || done === n) process.stdout.write(`\r  ${done}/${n}`);
@@ -1026,6 +1035,7 @@ async function main(argv: string[]): Promise<number> {
   label --set <name>            label pairs blind (1 / 2 / t / s / q)
   calibrate --set <name>        measure the judge against those labels
       --judge <model>             judge model (default qwen2.5:7b)
+      --judge-prompt <version>    judge prompt variant (v1, v2)
       --position-bias             also run both orders to measure bias
 
   price [YYYY-MM-DD]            cost table, with promotional rates resolved

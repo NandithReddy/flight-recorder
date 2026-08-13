@@ -9,7 +9,7 @@ Full rationale for each phase lives in [spec.html](./spec.html).
 | 01 | Recorder | 3–5 | **done** |
 | 02 | Store + freezer | 2–3 | **done** |
 | 03 | Replayer | 4–6 | **done** |
-| 04 | Scorer | 5–7 | **built — awaiting labels** |
+| 04 | Scorer | 5–7 | **built and calibrated — criterion not met, honestly** |
 | 05 | Reporter | 3–4 | **done** |
 | 06 | Gate | 2 | **done** |
 | 07 | Dogfood + writeup | 4–5 | next |
@@ -152,11 +152,30 @@ theatre. It exists for the shape phase 07's open-source agent is likely to have.
 - [x] Verdicts degrade honestly — an uncalibrated judge is untrusted by default
 - [x] Blind labelling CLI, incremental save, committed label store
 - [x] 137 tests passing, `tsc --noEmit` clean
-- [ ] **The labels themselves — Nandith's task, not delegable**
+- [x] 47 human labels collected
+- [ ] **κ ≥ 0.6 — not met. No locally-runnable judge reaches it on this task.**
 
-**Why the last box cannot be ticked by the harness.** If the calibration set is
-labelled by a model, the judge has been graded by a model, which is precisely
-the failure tier 3 exists to detect. The labels have to come from a person.
+**The criterion is not met, and that is the result rather than a gap.** Best
+measured judge: qwen2.5:7b under prompt v2, κ = 0.209 (0.001–0.409) on n=47.
+Below the 0.6 threshold, so the system marks its verdicts untrusted, the report
+prints a banner saying so, and the gate refuses to block a merge on them. That
+behaviour is verified end to end.
+
+Shipping a judge at κ = 0.209 *as if it were fact* is the failure this tier
+exists to prevent. Measuring it, publishing it, and degrading on it is the tier
+working.
+
+**What calibration found — the payoff of the whole phase.** The first judge
+scored **κ = −0.102, significantly worse than chance**, because it was rewarding
+the *appearance* of work: fabricating models write more text and show more
+arithmetic, and the judge read that as quality. Its prompt said "supported by
+the work shown", which a fabricated calculation satisfies perfectly. It also
+never said TIE once in 47 pairs against a human who said it 21 times.
+
+Rewriting the prompt against that confusion matrix moved κ by **0.31** on the
+same model and the same labels. A larger model under the same prompt scored
+*worse* (llama3.1:8b, κ = 0.089, interval includes zero). The prompt mattered
+more than the model — see DECISIONS D-039.
 
 **What is ready.** `fr pool` builds blind comparison pairs from stored matrix
 attempts; `fr label` presents them one at a time and saves after every keypress;

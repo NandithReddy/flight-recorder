@@ -1,0 +1,16 @@
+{
+  "labelSet": "metrics",
+  "judgeModel": "qwen2.5:7b",
+  "judgePromptVersion": "v2",
+  "n": 47,
+  "kappa": 0.2086383601756954,
+  "kappaLower": 0.001465201465201416,
+  "kappaUpper": 0.40859716832589493,
+  "observedAgreement": 0.5106382978723404,
+  "unparsedRate": 0,
+  "positionFlipRate": null,
+  "judgeInputTokens": 14474,
+  "judgeOutputTokens": 1166,
+  "judgeCostUsd": 0,
+  "createdAt": 1786647507963
+}
