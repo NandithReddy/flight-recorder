@@ -1,0 +1,681 @@
+<title>Flight Recorder</title>
+<style>
+  :root {
+    --ground:     #FAFAFC;
+    --panel:      #F1F2F6;
+    --panel-2:    #E6E8EF;
+    --rule:       #D6D9E2;
+    --rule-soft:  #E4E6ED;
+    --ink:        #14161C;
+    --ink-2:      #3D4350;
+    --ink-3:      #6C7386;
+    --accent:     #A05C06;
+    --accent-bg:  #F6E7CE;
+    --pass:       #1D6B49;
+    --pass-bg:    #E1EFE8;
+    --fail:       #A02C22;
+    --fail-bg:    #F6E3E1;
+
+    --font-display: "Helvetica Neue", Helvetica, "Segoe UI", system-ui, -apple-system, sans-serif;
+    --font-body: Charter, "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, "Times New Roman", serif;
+    --font-mono: "SF Mono", SFMono-Regular, Menlo, "JetBrains Mono", Consolas, monospace;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --ground:     #0E1015;
+      --panel:      #171A21;
+      --panel-2:    #1F232C;
+      --rule:       #2E333F;
+      --rule-soft:  #23272F;
+      --ink:        #E9EBF1;
+      --ink-2:      #B3B9C8;
+      --ink-3:      #7C8396;
+      --accent:     #E7A64A;
+      --accent-bg:  #3A2A11;
+      --pass:       #52B489;
+      --pass-bg:    #142A20;
+      --fail:       #E17E72;
+      --fail-bg:    #2C1917;
+    }
+  }
+
+  :root[data-theme="dark"] {
+    --ground:     #0E1015;
+    --panel:      #171A21;
+    --panel-2:    #1F232C;
+    --rule:       #2E333F;
+    --rule-soft:  #23272F;
+    --ink:        #E9EBF1;
+    --ink-2:      #B3B9C8;
+    --ink-3:      #7C8396;
+    --accent:     #E7A64A;
+    --accent-bg:  #3A2A11;
+    --pass:       #52B489;
+    --pass-bg:    #142A20;
+    --fail:       #E17E72;
+    --fail-bg:    #2C1917;
+  }
+
+  body {
+    background: var(--ground);
+    color: var(--ink-2);
+    font-family: var(--font-body);
+    font-size: 17px;
+    line-height: 1.62;
+    -webkit-font-smoothing: antialiased;
+    padding: 0 0 6rem;
+  }
+
+  main {
+    display: grid;
+    grid-template-columns:
+      [full-start] minmax(1.25rem, 1fr)
+      [wide-start] minmax(0, 7rem)
+      [text-start]  minmax(0, 67ch)
+      [text-end]   minmax(0, 7rem)
+      [wide-end]   minmax(1.25rem, 1fr)
+      [full-end];
+    row-gap: 1.1rem;
+    padding-top: 3.5rem;
+  }
+  main > *      { grid-column: text; margin: 0; }
+  main > .wide  { grid-column: wide; }
+
+  /* ---- masthead ---- */
+  .eyebrow {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--accent);
+  }
+  h1 {
+    font-family: var(--font-display);
+    font-size: clamp(2.4rem, 6vw, 3.4rem);
+    line-height: 1.02;
+    letter-spacing: -0.028em;
+    font-weight: 700;
+    color: var(--ink);
+    text-wrap: balance;
+    margin-top: 0.5rem;
+  }
+  .standfirst {
+    font-size: 1.22rem;
+    line-height: 1.5;
+    color: var(--ink-2);
+    text-wrap: pretty;
+    margin-top: 0.35rem;
+  }
+
+  .facts {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(9rem, 1fr));
+    border-top: 1px solid var(--rule);
+    border-bottom: 1px solid var(--rule);
+    margin-top: 1.6rem;
+  }
+  .facts div {
+    padding: 0.9rem 1.1rem 0.95rem 0;
+    border-right: 1px solid var(--rule-soft);
+  }
+  .facts div:last-child { border-right: 0; }
+  .facts dt {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    letter-spacing: 0.13em;
+    text-transform: uppercase;
+    color: var(--ink-3);
+  }
+  .facts dd {
+    font-family: var(--font-display);
+    font-size: 1.05rem;
+    font-weight: 600;
+    color: var(--ink);
+    font-variant-numeric: tabular-nums;
+    margin: 0.28rem 0 0;
+  }
+
+  /* ---- headings ---- */
+  h2 {
+    font-family: var(--font-display);
+    font-size: 1.5rem;
+    letter-spacing: -0.018em;
+    font-weight: 700;
+    color: var(--ink);
+    text-wrap: balance;
+    margin-top: 2.1rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 1px solid var(--rule);
+  }
+  h3 {
+    font-family: var(--font-display);
+    font-size: 1.02rem;
+    font-weight: 700;
+    letter-spacing: -0.005em;
+    color: var(--ink);
+    margin-top: 1.1rem;
+  }
+  h2 + p, h3 + p { margin-top: -0.15rem; }
+
+  strong { color: var(--ink); font-weight: 700; }
+  em { color: var(--ink); font-style: italic; }
+  a { color: var(--accent); text-underline-offset: 2px; }
+  a:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+
+  code {
+    font-family: var(--font-mono);
+    font-size: 0.83em;
+    background: var(--panel);
+    border: 1px solid var(--rule-soft);
+    padding: 0.08em 0.36em;
+    border-radius: 2px;
+    color: var(--ink);
+  }
+
+  ul, ol { padding-left: 1.15rem; display: grid; row-gap: 0.42rem; }
+  li::marker { color: var(--ink-3); }
+
+  /* ---- figures ---- */
+  figure {
+    background: var(--panel);
+    border: 1px solid var(--rule);
+    padding: 1.5rem 1.5rem 1.1rem;
+    margin-top: 0.9rem;
+  }
+  .fig-scroll { overflow-x: auto; }
+  figure svg {
+    display: block;
+    width: 100%;
+    min-width: 620px;
+    height: auto;
+    color: var(--ink-2);
+  }
+  figcaption {
+    font-size: 0.88rem;
+    line-height: 1.5;
+    color: var(--ink-3);
+    margin-top: 1rem;
+    padding-top: 0.8rem;
+    border-top: 1px solid var(--rule-soft);
+    text-wrap: pretty;
+  }
+
+  /* ---- tables ---- */
+  .table-wrap { overflow-x: auto; margin-top: 0.9rem; }
+  table {
+    border-collapse: collapse;
+    width: 100%;
+    min-width: 640px;
+    font-family: var(--font-display);
+    font-size: 0.87rem;
+    font-variant-numeric: tabular-nums;
+  }
+  th {
+    text-align: left;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--ink-3);
+    padding: 0 0.9rem 0.6rem 0;
+    border-bottom: 1px solid var(--rule);
+    vertical-align: bottom;
+  }
+  td {
+    padding: 0.72rem 0.9rem 0.72rem 0;
+    border-bottom: 1px solid var(--rule-soft);
+    vertical-align: top;
+    line-height: 1.45;
+  }
+  td:last-child, th:last-child { padding-right: 0; }
+  .num {
+    font-family: var(--font-mono);
+    color: var(--accent);
+    font-weight: 600;
+    white-space: nowrap;
+  }
+  .phase-n {
+    font-family: var(--font-mono);
+    font-size: 0.78rem;
+    color: var(--ink-3);
+  }
+  td strong { display: block; }
+
+  /* ---- callout ---- */
+  .note {
+    background: var(--panel-2);
+    border: 1px solid var(--rule);
+    border-left: 3px solid var(--accent);
+    padding: 1rem 1.2rem;
+    font-size: 0.95rem;
+    margin-top: 0.9rem;
+  }
+  .note p + p { margin-top: 0.55rem; }
+  .note .tag {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    letter-spacing: 0.13em;
+    text-transform: uppercase;
+    color: var(--accent);
+    display: block;
+    margin-bottom: 0.35rem;
+  }
+
+  /* ---- definition list for the data model ---- */
+  .model {
+    border-top: 1px solid var(--rule);
+    margin-top: 0.9rem;
+  }
+  .model > div {
+    display: grid;
+    grid-template-columns: minmax(7rem, 9rem) 1fr;
+    gap: 0 1.2rem;
+    padding: 0.75rem 0;
+    border-bottom: 1px solid var(--rule-soft);
+  }
+  .model dt {
+    font-family: var(--font-mono);
+    font-size: 0.82rem;
+    color: var(--accent);
+    font-weight: 600;
+    padding-top: 0.12rem;
+  }
+  .model dd { margin: 0; font-size: 0.95rem; line-height: 1.5; }
+
+  /* ---- in / out columns ---- */
+  .scope {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(15rem, 1fr));
+    gap: 1.4rem;
+    margin-top: 0.9rem;
+  }
+  .scope section {
+    border-top: 2px solid var(--rule);
+    padding-top: 0.8rem;
+  }
+  .scope h4 {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    letter-spacing: 0.13em;
+    text-transform: uppercase;
+    margin: 0 0 0.6rem;
+  }
+  .scope .in h4  { color: var(--pass); }
+  .scope .out h4 { color: var(--fail); }
+  .scope ul { font-size: 0.93rem; padding-left: 1rem; }
+
+  /* ---- checklist ---- */
+  .check {
+    list-style: none;
+    padding-left: 0;
+    margin-top: 0.9rem;
+    row-gap: 0;
+  }
+  .check li {
+    display: grid;
+    grid-template-columns: 1.6rem 1fr;
+    gap: 0.6rem;
+    padding: 0.6rem 0;
+    border-bottom: 1px solid var(--rule-soft);
+    font-size: 0.96rem;
+  }
+  .check li::before {
+    content: "□";
+    font-family: var(--font-mono);
+    color: var(--accent);
+    font-size: 1.05rem;
+    line-height: 1.4;
+  }
+
+  footer {
+    grid-column: text;
+    margin-top: 2.6rem;
+    padding-top: 1rem;
+    border-top: 1px solid var(--rule);
+    font-size: 0.85rem;
+    color: var(--ink-3);
+    text-wrap: pretty;
+  }
+</style>
+
+<main>
+
+  <p class="eyebrow">Build specification</p>
+  <h1>Flight Recorder</h1>
+  <p class="standfirst">An evaluation and regression harness for LLM agents. It records real agent runs, freezes them into replayable test cases, and blocks any change that quietly makes the agent worse.</p>
+
+  <dl class="facts wide">
+    <div><dt>Focused effort</dt><dd>200–280 h</dd></div>
+    <div><dt>Full time</dt><dd>5–7 weeks</dd></div>
+    <div><dt>Part time</dt><dd>~3 months</dd></div>
+    <div><dt>Phases</dt><dd>8</dd></div>
+    <div><dt>Stack</dt><dd>TypeScript</dd></div>
+  </dl>
+
+  <h2>The problem it exists to solve</h2>
+
+  <p>Conventional software fails loudly. A bad deploy throws an exception, a test goes red, a page 500s. Agent software fails <em>quietly</em>: you change one line of a prompt or move to a newer model, and the agent keeps answering — confidently, plausibly, and 8% worse. Nothing throws. Nothing goes red. You find out from a customer, six weeks later, and by then you have shipped forty other changes and cannot tell which one did it.</p>
+
+  <p>The teams that solve this all converge on the same shape: capture what production actually did, turn a slice of it into a fixed test set, and re-run that set against every proposed change with an honest before-and-after. Almost nobody has built it, because it is unglamorous and because getting the measurement <em>trustworthy</em> is much harder than getting it to produce a number.</p>
+
+  <p>That gap is the whole opportunity. Producing a number is a weekend. Producing a number you would stake a release on is the project.</p>
+
+  <h2>How the system works</h2>
+
+  <p>Two loops. The first runs continuously in your agent's normal life and costs almost nothing: wrap the model and tool calls, emit spans, append them to a store. The second runs on demand, before a change ships: take frozen cases out of that store, replay them under the new configuration, score both sides, and compare.</p>
+
+  <figure class="wide fig-scroll">
+    <svg viewBox="0 0 880 400" role="img" aria-label="Pipeline diagram: a recorder wraps the agent and appends traces to a store; traces are frozen into a test suite, replayed under new configs, scored, diffed against the recorded baseline, and used to gate CI.">
+      <defs>
+        <marker id="fr-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+          <path d="M 0 0 L 10 5 L 0 10 z" fill="currentColor" />
+        </marker>
+        <marker id="fr-arrow-a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+          <path d="M 0 0 L 10 5 L 0 10 z" fill="var(--accent)" />
+        </marker>
+      </defs>
+
+      <!-- row A: capture -->
+      <rect x="40"  y="44" width="150" height="54" rx="2" fill="var(--panel-2)" stroke="currentColor" stroke-opacity="0.3" />
+      <text x="115" y="68"  text-anchor="middle" font-size="13" font-weight="700" fill="var(--ink)">Your agent</text>
+      <text x="115" y="85"  text-anchor="middle" font-size="10" fill="var(--ink-3)">unchanged code</text>
+
+      <rect x="250" y="44" width="150" height="54" rx="2" fill="var(--panel-2)" stroke="currentColor" stroke-opacity="0.3" />
+      <text x="325" y="68"  text-anchor="middle" font-size="13" font-weight="700" fill="var(--ink)">Recorder</text>
+      <text x="325" y="85"  text-anchor="middle" font-size="10" fill="var(--ink-3)">OTel span wrapper</text>
+
+      <rect x="460" y="44" width="150" height="54" rx="2" fill="var(--panel-2)" stroke="currentColor" stroke-opacity="0.3" />
+      <text x="535" y="68"  text-anchor="middle" font-size="13" font-weight="700" fill="var(--ink)">Trace store</text>
+      <text x="535" y="85"  text-anchor="middle" font-size="10" fill="var(--ink-3)">append-only</text>
+
+      <line x1="192" y1="71" x2="244" y2="71" stroke="currentColor" stroke-width="1.3" marker-end="url(#fr-arrow)" />
+      <text x="218" y="63" text-anchor="middle" font-size="10" fill="var(--ink-3)">wraps calls</text>
+      <line x1="402" y1="71" x2="454" y2="71" stroke="currentColor" stroke-width="1.3" marker-end="url(#fr-arrow)" />
+      <text x="428" y="63" text-anchor="middle" font-size="10" fill="var(--ink-3)">spans</text>
+
+      <!-- freeze dogleg -->
+      <polyline points="535,98 535,180 94,180 94,254" fill="none" stroke="var(--accent)" stroke-width="1.5" marker-end="url(#fr-arrow-a)" />
+      <text x="315" y="172" text-anchor="middle" font-size="10" fill="var(--accent)">freeze + attach assertions</text>
+
+      <!-- baseline -->
+      <line x1="600" y1="98" x2="600" y2="254" stroke="currentColor" stroke-width="1.2" stroke-dasharray="4 4" marker-end="url(#fr-arrow)" />
+      <text x="609" y="176" font-size="10" fill="var(--ink-3)">baseline</text>
+
+      <!-- row B: evaluate -->
+      <rect x="30"  y="260" width="128" height="54" rx="2" fill="var(--panel-2)" stroke="currentColor" stroke-opacity="0.3" />
+      <text x="94"  y="284" text-anchor="middle" font-size="13" font-weight="700" fill="var(--ink)">Test suite</text>
+      <text x="94"  y="301" text-anchor="middle" font-size="10" fill="var(--ink-3)">frozen cases</text>
+
+      <rect x="203" y="260" width="128" height="54" rx="2" fill="var(--panel-2)" stroke="currentColor" stroke-opacity="0.3" />
+      <text x="267" y="284" text-anchor="middle" font-size="13" font-weight="700" fill="var(--ink)">Replayer</text>
+      <text x="267" y="301" text-anchor="middle" font-size="10" fill="var(--ink-3)">live or stubbed</text>
+
+      <rect x="376" y="260" width="128" height="54" rx="2" fill="var(--panel-2)" stroke="var(--accent)" stroke-width="1.8" />
+      <text x="440" y="284" text-anchor="middle" font-size="13" font-weight="700" fill="var(--accent)">Scorer</text>
+      <text x="440" y="301" text-anchor="middle" font-size="10" fill="var(--ink-3)">three-tier ladder</text>
+
+      <rect x="549" y="260" width="128" height="54" rx="2" fill="var(--panel-2)" stroke="currentColor" stroke-opacity="0.3" />
+      <text x="613" y="284" text-anchor="middle" font-size="13" font-weight="700" fill="var(--ink)">Report</text>
+      <text x="613" y="301" text-anchor="middle" font-size="10" fill="var(--ink-3)">deltas + intervals</text>
+
+      <rect x="722" y="260" width="128" height="54" rx="2" fill="var(--panel-2)" stroke="currentColor" stroke-opacity="0.3" />
+      <text x="786" y="284" text-anchor="middle" font-size="13" font-weight="700" fill="var(--ink)">CI gate</text>
+      <text x="786" y="301" text-anchor="middle" font-size="10" fill="var(--ink-3)">blocks the merge</text>
+
+      <line x1="160" y1="287" x2="197" y2="287" stroke="currentColor" stroke-width="1.3" marker-end="url(#fr-arrow)" />
+      <text x="178" y="279" text-anchor="middle" font-size="10" fill="var(--ink-3)">×configs</text>
+      <line x1="333" y1="287" x2="370" y2="287" stroke="currentColor" stroke-width="1.3" marker-end="url(#fr-arrow)" />
+      <text x="351" y="279" text-anchor="middle" font-size="10" fill="var(--ink-3)">traces</text>
+      <line x1="506" y1="287" x2="543" y2="287" stroke="currentColor" stroke-width="1.3" marker-end="url(#fr-arrow)" />
+      <text x="524" y="279" text-anchor="middle" font-size="10" fill="var(--ink-3)">verdicts</text>
+      <line x1="679" y1="287" x2="716" y2="287" stroke="currentColor" stroke-width="1.3" marker-end="url(#fr-arrow)" />
+      <text x="697" y="279" text-anchor="middle" font-size="10" fill="var(--ink-3)">deltas</text>
+    </svg>
+    <figcaption>The recording loop (top) never blocks the agent and never scores anything — it only appends. Everything expensive happens in the evaluation loop (bottom), on demand. The dashed line is what makes the whole thing a <em>regression</em> harness rather than an eval script: the report always compares against a pinned baseline drawn from the same store, not against an absolute target score.</figcaption>
+  </figure>
+
+  <h2>The objects you will model</h2>
+
+  <p>Get these seven right on day one and the rest of the system falls out of them. Get them wrong and you will rewrite the store twice.</p>
+
+  <dl class="model">
+    <div><dt>Trace</dt><dd>One immutable recording of one agent run: input, ordered spans, final output, and totals for tokens, cost, and wall time. Never mutated after write — everything else references it by id.</dd></div>
+    <div><dt>Span</dt><dd>One step inside a trace: a model call or a tool call. Carries its parent, name, input, output, token counts, latency, and error state.</dd></div>
+    <div><dt>TestCase</dt><dd>A trace promoted into a fixture: the original input, a list of assertions, an optional judge rubric, tags, and a pointer to the baseline output it should be compared against.</dd></div>
+    <div><dt>RunConfig</dt><dd>Everything that could change the answer — model id, prompt version, tool set, temperature, seed. The unit of comparison. A report is always <em>config A vs config B</em>.</dd></div>
+    <div><dt>Attempt</dt><dd>One execution of one TestCase under one RunConfig. Produces a new Trace, which means attempts are themselves fully inspectable recordings.</dd></div>
+    <div><dt>Verdict</dt><dd>Pass or fail for one attempt, plus the score, the reason, <em>which scorer produced it</em>, and how much that scorer should be trusted. The provenance field is what lets the report separate hard failures from judged ones.</dd></div>
+    <div><dt>Report</dt><dd>An aggregate over attempts against a baseline: pass-rate delta with a confidence interval, cost delta, latency percentiles, and the per-case list of what regressed.</dd></div>
+  </dl>
+
+  <h2>Components, in build order</h2>
+
+  <h3>Recorder</h3>
+  <p>A thin wrapper at the client boundary that emits OpenTelemetry spans using the GenAI semantic conventions. Do not invent a span format — you get ecosystem compatibility for free and you skip a week of bikeshedding. Redact on the way <em>in</em>, never on the way out, so sensitive payloads never touch disk. Sample in production, but always keep 100% of runs that errored or that a user thumbed down; those are the traces you will actually want to freeze.</p>
+
+  <h3>Store</h3>
+  <p>An index plus a blob store, behind one interface. SQLite for the index and content-addressed files on disk for payloads gets you running locally in an afternoon and swaps to Postgres and S3 later without touching callers. Content-address the payloads — agent traces repeat the same system prompt thousands of times, and deduping cuts storage by an order of magnitude.</p>
+
+  <h3>Freezer</h3>
+  <p>The CLI that turns a real trace into a test case. This is the component that decides whether anyone ever uses the tool. Hand-writing fifty test cases is the reason eval tooling sits unused, so the freezer must <em>propose</em> assertions by reading the trace — this tool was called, this field appeared in the output, this finished in four steps and under nine cents — and let you accept, edit, or drop each one. Authoring a case should take ninety seconds, not fifteen minutes.</p>
+
+  <h3>Replayer</h3>
+  <p>Runs the matrix of cases × configs with real concurrency, rate-limit backoff, and resumability. It has two modes, and the second is the most defensible idea in the project:</p>
+  <ul>
+    <li><strong>Live replay</strong> — tools execute for real, inside a sandbox. Tests the whole system as it will actually behave.</li>
+    <li><strong>Stubbed replay</strong> — tool responses are played back from the original recorded trace. The environment is held perfectly still, so the only thing that varies is the model and prompt.</li>
+  </ul>
+  <p>Run both and the difference between them is diagnostic. If a case regresses in stubbed mode, your prompt or model got worse. If it only regresses live, the world changed underneath you — an API returned different data, a page moved, a rate limit hit. Nearly every eval tool conflates these two and leaves you guessing.</p>
+
+  <h3>Scorer</h3>
+  <p>The hard part, and the part that determines whether the numbers mean anything. Three tiers, in strict order, with early exit.</p>
+
+  <figure class="wide fig-scroll">
+    <svg viewBox="0 0 720 372" role="img" aria-label="Scoring ladder: an attempt hits deterministic assertions first and exits immediately on failure; survivors go to a pairwise LLM judge that compares new output against baseline; a human-labeled calibration set continuously audits the judge and produces an agreement score attached to every verdict.">
+      <defs>
+        <marker id="sc-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+          <path d="M 0 0 L 10 5 L 0 10 z" fill="currentColor" />
+        </marker>
+        <marker id="sc-arrow-f" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+          <path d="M 0 0 L 10 5 L 0 10 z" fill="var(--fail)" />
+        </marker>
+      </defs>
+
+      <rect x="256" y="16" width="200" height="42" rx="2" fill="var(--panel-2)" stroke="currentColor" stroke-opacity="0.3" />
+      <text x="356" y="42" text-anchor="middle" font-size="12.5" font-weight="700" fill="var(--ink)">One attempt</text>
+
+      <line x1="356" y1="58" x2="356" y2="94" stroke="currentColor" stroke-width="1.3" marker-end="url(#sc-arrow)" />
+
+      <rect x="216" y="100" width="280" height="60" rx="2" fill="var(--panel-2)" stroke="currentColor" stroke-opacity="0.3" />
+      <text x="356" y="124" text-anchor="middle" font-size="12.5" font-weight="700" fill="var(--ink)">Tier 1 — deterministic</text>
+      <text x="356" y="142" text-anchor="middle" font-size="10" fill="var(--ink-3)">schema, tool calls, step and cost ceilings</text>
+
+      <line x1="496" y1="130" x2="546" y2="130" stroke="var(--fail)" stroke-width="1.4" marker-end="url(#sc-arrow-f)" />
+      <rect x="552" y="108" width="140" height="44" rx="2" fill="var(--fail-bg)" stroke="var(--fail)" stroke-opacity="0.55" />
+      <text x="622" y="128" text-anchor="middle" font-size="12" font-weight="700" fill="var(--fail)">Fail, exit</text>
+      <text x="622" y="143" text-anchor="middle" font-size="10" fill="var(--fail)">no judge cost</text>
+
+      <line x1="356" y1="160" x2="356" y2="200" stroke="currentColor" stroke-width="1.3" marker-end="url(#sc-arrow)" />
+      <text x="364" y="183" font-size="10" fill="var(--ink-3)">all assertions pass</text>
+
+      <rect x="216" y="206" width="280" height="60" rx="2" fill="var(--panel-2)" stroke="var(--accent)" stroke-width="1.8" />
+      <text x="356" y="230" text-anchor="middle" font-size="12.5" font-weight="700" fill="var(--accent)">Tier 2 — pairwise judge</text>
+      <text x="356" y="248" text-anchor="middle" font-size="10" fill="var(--ink-3)">new output vs baseline, order randomised</text>
+
+      <rect x="18" y="206" width="150" height="60" rx="2" fill="var(--panel-2)" stroke="currentColor" stroke-opacity="0.3" />
+      <text x="93" y="230" text-anchor="middle" font-size="12.5" font-weight="700" fill="var(--ink)">Tier 3</text>
+      <text x="93" y="248" text-anchor="middle" font-size="10" fill="var(--ink-3)">human-labelled set</text>
+      <line x1="170" y1="236" x2="210" y2="236" stroke="currentColor" stroke-width="1.2" stroke-dasharray="4 4" marker-end="url(#sc-arrow)" />
+      <text x="190" y="228" text-anchor="middle" font-size="10" fill="var(--ink-3)">audits</text>
+
+      <line x1="356" y1="266" x2="356" y2="302" stroke="currentColor" stroke-width="1.3" marker-end="url(#sc-arrow)" />
+
+      <rect x="216" y="308" width="280" height="48" rx="2" fill="var(--panel-2)" stroke="currentColor" stroke-opacity="0.3" />
+      <text x="356" y="329" text-anchor="middle" font-size="12.5" font-weight="700" fill="var(--ink)">Verdict + provenance + κ</text>
+      <text x="356" y="346" text-anchor="middle" font-size="10" fill="var(--ink-3)">every verdict says who decided it</text>
+    </svg>
+    <figcaption>Cheap and certain checks run first, so a broken output never pays for a judge call — on a healthy suite this keeps judging under 15% of total run cost. Tier 3 is not in the request path: it runs periodically over a held-out human-labelled set and produces Cohen's κ, the agreement between judge and human. That κ rides along on every report. Below about 0.6, the report says the judged verdicts are untrustworthy instead of quietly presenting them as fact.</figcaption>
+  </figure>
+
+  <p>Two details in there matter more than they look. <strong>Pairwise beats absolute:</strong> asking a judge "is B better than A" is dramatically more stable than asking it to score A out of ten, and it maps directly onto the regression question you actually care about. <strong>Randomise the order</strong> of the two candidates, because judges have a well-documented position bias and an unshuffled harness will report a win for whichever side you happened to put first.</p>
+
+  <h3>Reporter</h3>
+  <p>Aggregate attempts into a diff and — this is the part that separates the project from its competitors — refuse to overstate it. Pass rate is a binary outcome over a small sample, so compute the interval by bootstrap resampling rather than reaching for a t-test. When forty cases go from 38 passing to 40 passing, the correct output is <em>not</em> "+5% improvement". It is "+5%, interval −4% to +13%, not significant at n=40." Print that sentence and a reviewer immediately knows you have done this before.</p>
+
+  <p>The report ships as a single self-contained HTML file: headline deltas at the top, then the list of regressed cases, each one expanding into a side-by-side trace diff so you can see the exact step where the two runs diverged.</p>
+
+  <h3>Gate</h3>
+  <p>A GitHub Action wrapping the CLI. It fails a pull request on any of four conditions: a statistically significant pass-rate drop, any case tagged <code>p0</code> regressing at all, cost per task above a ceiling, or p95 latency above a ceiling. Baselines are pinned by commit, so the comparison is reproducible months later.</p>
+
+  <h2>Stack</h2>
+
+  <p>TypeScript on Node 24. Not because it is better at this, but because it is where agents are actually written — the AI SDK and MCP ecosystems live there, adoption is a single <code>npm i</code>, and the CI story is trivial. If your target audience is ML teams rather than product teams, build the identical design in Python with Typer and Pydantic; nothing in the architecture changes.</p>
+
+  <ul>
+    <li><strong>Tracing</strong> — OpenTelemetry, GenAI semantic conventions.</li>
+    <li><strong>Storage</strong> — <code>better-sqlite3</code> index, content-addressed blobs on disk, one interface so Postgres and S3 drop in later.</li>
+    <li><strong>Isolation</strong> — Docker or Vercel Sandbox for live replay. Borrowing this costs two days; building it costs two weeks.</li>
+    <li><strong>Statistics</strong> — bootstrap resampling, ~10,000 iterations. Small, dependency-free, correct.</li>
+    <li><strong>Report</strong> — static self-contained HTML. No server, no dashboard, no auth.</li>
+    <li><strong>Its own tests</strong> — Vitest, with real coverage. An eval tool without tests is a punchline, and reviewers check.</li>
+  </ul>
+
+  <h2>Build phases</h2>
+
+  <p>The exit criteria matter more than the day counts. Each one is a thing you can demonstrate, not a feeling of doneness.</p>
+
+  <div class="table-wrap wide">
+    <table>
+      <thead>
+        <tr><th>#</th><th>Phase</th><th>What ships</th><th>Days</th><th>Exit criterion</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td class="phase-n">00</td>
+          <td><strong>Spike</strong></td>
+          <td>One trace captured, stored, replayed by hand</td>
+          <td class="num">1–2</td>
+          <td>End-to-end skeleton exists. No scoring yet.</td>
+        </tr>
+        <tr>
+          <td class="phase-n">01</td>
+          <td><strong>Recorder</strong></td>
+          <td>SDK wrapper, OTel spans, redaction, sampling</td>
+          <td class="num">3–5</td>
+          <td>A real agent run produces a complete, replayable trace.</td>
+        </tr>
+        <tr>
+          <td class="phase-n">02</td>
+          <td><strong>Store + freezer</strong></td>
+          <td>Index, blob store, <code>freeze</code> with proposed assertions</td>
+          <td class="num">2–3</td>
+          <td>Ten cases created from real traces in under twenty minutes.</td>
+        </tr>
+        <tr>
+          <td class="phase-n">03</td>
+          <td><strong>Replayer</strong></td>
+          <td>Matrix runner, backoff, live and stubbed modes, sandbox</td>
+          <td class="num">4–6</td>
+          <td>Fifty cases × three configs runs unattended to completion.</td>
+        </tr>
+        <tr>
+          <td class="phase-n">04</td>
+          <td><strong>Scorer</strong></td>
+          <td>Three-tier ladder, pairwise judge, calibration set</td>
+          <td class="num">5–7</td>
+          <td>κ ≥ 0.6 on 200 labelled examples; judging under 15% of run cost.</td>
+        </tr>
+        <tr>
+          <td class="phase-n">05</td>
+          <td><strong>Reporter</strong></td>
+          <td>Bootstrap intervals, regression list, trace diff, HTML</td>
+          <td class="num">3–4</td>
+          <td>Report refuses to call a two-case delta significant at n=40.</td>
+        </tr>
+        <tr>
+          <td class="phase-n">06</td>
+          <td><strong>Gate</strong></td>
+          <td>Exit codes, GitHub Action, pinned baselines</td>
+          <td class="num">2</td>
+          <td>A deliberately worsened prompt fails CI on a real pull request.</td>
+        </tr>
+        <tr>
+          <td class="phase-n">07</td>
+          <td><strong>Dogfood + writeup</strong></td>
+          <td>Run against a real agent, publish the results</td>
+          <td class="num">4–5</td>
+          <td>A public report showing a regression the harness caught first.</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="note">
+    <span class="tag">Do not cut phase 07</span>
+    <p>It is the phase everyone drops when they are tired, and it is the half that converts working code into career value. A mediocre project with an excellent postmortem beats an excellent project with a README — because the postmortem is the only artefact that demonstrates judgement rather than throughput.</p>
+  </div>
+
+  <h2>Scope boundaries</h2>
+
+  <p>Everything on the right is a reasonable idea and a separate product. Refusing them is what lets version one exist.</p>
+
+  <div class="scope wide">
+    <section class="in">
+      <h4>Version one builds</h4>
+      <ul>
+        <li>Local-first CLI, single command to first report</li>
+        <li>Live and stubbed replay modes</li>
+        <li>Deterministic assertions and a calibrated pairwise judge</li>
+        <li>Bootstrap confidence intervals on every delta</li>
+        <li>Self-contained HTML report with trace diffs</li>
+        <li>GitHub Action gate with pinned baselines</li>
+      </ul>
+    </section>
+    <section class="out">
+      <h4>Version one refuses</h4>
+      <ul>
+        <li>A web dashboard, accounts, or multi-tenancy</li>
+        <li>A hosted service of any kind</li>
+        <li>Synthetic dataset generation or fine-tuning</li>
+        <li>Real-time production monitoring and alerting</li>
+        <li>Automatic prompt optimisation</li>
+        <li>Support for anything that is not an LLM agent</li>
+      </ul>
+    </section>
+  </div>
+
+  <h2>Why this is not a clone</h2>
+
+  <p>Braintrust, LangSmith, Langfuse and Arize all occupy this space and all have funding you do not. You will not out-feature them, so do not try. Win on five specific things they are collectively weak at:</p>
+
+  <ul>
+    <li><strong>Stubbed replay</strong> separates model regressions from environment drift. Almost everyone conflates the two.</li>
+    <li><strong>Auto-proposed assertions</strong> make authoring cases take ninety seconds, which is the entire adoption problem.</li>
+    <li><strong>Published judge calibration.</strong> Everyone ships an LLM judge; nearly nobody reports how well it agrees with a human.</li>
+    <li><strong>Statistical honesty.</strong> Confidence intervals and explicit non-significance, in the default report, not an advanced setting.</li>
+    <li><strong>Local-first and CI-native.</strong> No account, no upload, no dashboard. It runs in a pull request and prints a verdict.</li>
+  </ul>
+
+  <h2>Definition of done</h2>
+
+  <p>Not "the features are built" — these six, all checkable by someone else:</p>
+
+  <ul class="check">
+    <li>From <code>npm i</code> to a first real report in under twenty minutes, on someone else's machine.</li>
+    <li>The judge's agreement with human labels is published as a number, and the report degrades honestly when that number is low.</li>
+    <li>Stubbed and live replay produce a diagnosable difference on at least one real case.</li>
+    <li>Every headline delta in the report carries an interval, and small samples are labelled not significant.</li>
+    <li>A pull request that makes the agent worse is blocked by the gate, demonstrably, on video or in a public repository.</li>
+    <li>A writeup exists covering what you measured, what surprised you, and what you got wrong and corrected.</li>
+  </ul>
+
+  <div class="note">
+    <span class="tag">The one-week off-ramp</span>
+    <p>If three months is more than you want to commit, phases 00 through 03 plus a Tier-1-only scorer is roughly seventy hours — two weeks full time. It captures, freezes, replays and diffs on deterministic assertions alone, with no judge and no statistics.</p>
+    <p>That version already demos well and already catches real regressions. Ship it, put it in front of people, and let their reaction decide whether tiers two and three are worth the remaining six weeks.</p>
+  </div>
+
+  <footer>Flight Recorder is a working name. Estimates assume an experienced engineer with AI assistance and a real agent to dogfood against; add roughly 30% if either is missing.</footer>
+
+</main>

@@ -1,0 +1,8 @@
+node_modules/
+.flightrecorder/
+dist/
+coverage/
+.env
+.env.*
+!.env.example
+.DS_Store

@@ -1,0 +1,21 @@
+{
+  "name": "flight-recorder",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Evaluation and regression harness for LLM agents",
+  "engines": {
+    "node": ">=22.6"
+  },
+  "scripts": {
+    "fr": "node src/cli.ts",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest"
+  },
+  "devDependencies": {
+    "@types/node": "^26.2.0",
+    "typescript": "^7.0.2",
+    "vitest": "^4.1.10"
+  }
+}
