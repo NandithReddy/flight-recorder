@@ -340,3 +340,79 @@ Two supporting changes:
 Worth keeping for the writeup: the flaw was invisible against the scripted mock
 and surfaced within minutes of pointing the harness at a real small model. The
 fixture that looked adequate was testing the fixture.
+
+---
+
+### D-022 · A stub miss is answered, not thrown and not executed
+
+When a candidate calls a tool the baseline never called, stubbed mode returns a
+legible marker string and records the miss. The two obvious alternatives are
+both worse:
+
+- **Throwing** aborts the run and hides everything the model would have done
+  next, which is exactly the part worth seeing.
+- **Falling through to the real tool** silently makes it a live call and
+  destroys the one property stubbed mode exists to provide.
+
+Divergence is graded rather than binary, because a candidate does not have to
+use tools the way the baseline did and *how* it differs is the finding:
+
+| | meaning |
+|---|---|
+| `exact` | same tool, byte-identical input |
+| `positional` | same tool, different arguments — the model asked differently |
+| `miss` | no recording at all — the model went somewhere new |
+| `unused` | the baseline called it; the candidate did not |
+
+The interception seam lives on the `Recorder` rather than in the replay layer,
+which is what lets the same hook serve the Docker sandbox (D-024).
+
+---
+
+### D-023 · A matrix cell's identity is (case, config, mode)
+
+That triple is `UNIQUE` in the attempts table, which makes resumption a lookup
+rather than bookkeeping and makes re-running one cell idempotent. A 150-cell run
+that dies at cell 140 resumes; in practice a re-run of a finished matrix costs
+0.38s instead of 30s of inference.
+
+Two rules the runner holds to:
+
+- **An unrunnable cell keeps its slot.** Dropping it would silently shrink the
+  denominator and make the pass rate look better than it is.
+- **An agent failure is a result, not an error.** If the agent throws, the trace
+  records it and the cell completes. Only failures that escape `record()` reach
+  the retry path — so a bad expression is recorded once, not three times.
+
+Retry classification is deliberately conservative: an unrecognised error is
+treated as real. Retrying a genuine failure triples the cost of learning the
+same thing.
+
+---
+
+### D-024 · The Docker sandbox is opt-in per tool, and says so
+
+Live tool execution can run in a container: network denied, read-only root,
+capabilities dropped, memory capped, hard timeout. It is tested against real
+containers rather than mocked.
+
+It is **not** applied to every tool, and that is a scope decision rather than an
+omission. The demo agent's tools are pure in-process functions; wrapping one in
+a container would add latency and prove nothing. The sandbox exists for tools
+that shell out — the shape phase 07's open-source agent is likely to have — and
+declaring which tools need it is a one-line configuration.
+
+It reuses the `ToolInterceptor` seam from D-022, which is the payoff of putting
+that hook in the recorder: one mechanism serves both "answer this from a
+recording" and "run this where it cannot do damage".
+
+---
+
+### D-025 · A test case records which agent it exercises
+
+`TestCase` carries an `AgentRef`, and the registry resolves that name back to
+code. A case is inert data and cannot hold a function, so without the name a
+suite is unrunnable on its own — you would have to guess what it was testing.
+
+This is the seam phase 07 uses: pointing the harness at an open-source agent is
+a registration, not a rewrite.

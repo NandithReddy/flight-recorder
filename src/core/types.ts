@@ -143,6 +143,14 @@ export interface Assertion {
 
 export interface TestCase {
   id: string;
+  /**
+   * Which agent this case exercises.
+   *
+   * A case is inert data and cannot carry a function, so it carries the name
+   * the registry resolves back to code. Without it a suite is unrunnable on its
+   * own — you would have to guess what it was testing.
+   */
+  agent: AgentRef;
   sourceTraceId: string;
   input: unknown;
   assertions: Assertion[];

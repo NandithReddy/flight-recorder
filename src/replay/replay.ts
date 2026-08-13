@@ -1,17 +1,16 @@
 /**
- * Replay — phase 0 form.
+ * Recording and replaying a single run.
  *
- * Today this re-runs a registered agent against a stored trace's input under a
- * (possibly different) RunConfig and records the result. Phase 3 turns this
- * into the matrix runner: concurrency, rate-limit backoff, resumability, a
- * sandbox for live mode, and the stubbed mode that plays recorded tool
- * responses back so the environment is held still.
+ * `record` captures one execution; `replay` re-runs a stored trace's input
+ * under a different config, in either `live` or `stubbed` mode. Running many of
+ * these across a config matrix is `matrix.ts`.
  */
 
-import { Recorder } from "../recorder/recorder.ts";
+import { Recorder, type ToolInterceptor } from "../recorder/recorder.ts";
 import { keepEverything, type Sampler, type SamplingDecision } from "../recorder/sampling.ts";
+import { createReplayStub, type StubReport } from "./stub.ts";
 import type { Redactor } from "../recorder/redact.ts";
-import type { AgentRef, RunConfig, Trace } from "../core/types.ts";
+import type { AgentRef, ReplayMode, RunConfig, Trace } from "../core/types.ts";
 import type { ModelClient } from "../provider/types.ts";
 import type { TraceStore } from "../store/types.ts";
 
@@ -46,6 +45,8 @@ export interface RunOptions {
   redact?: Redactor;
   /** Decides whether the trace reaches the store. Defaults to keeping all. */
   sampler?: Sampler;
+  /** Answers tool calls instead of executing them — see `createReplayStub`. */
+  toolInterceptor?: ToolInterceptor;
 }
 
 export interface RecordResult {
@@ -72,6 +73,7 @@ export async function record(options: RunOptions): Promise<RecordResult> {
     replayOf: options.replayOf ?? null,
     tags: options.tags ?? [],
     ...(options.redact ? { redact: options.redact } : {}),
+    ...(options.toolInterceptor ? { toolInterceptor: options.toolInterceptor } : {}),
   });
 
   const client = recorder.wrapModel(options.client);
@@ -102,18 +104,32 @@ export async function record(options: RunOptions): Promise<RecordResult> {
 export interface ReplayResult {
   baseline: Trace;
   candidate: Trace;
+  mode: ReplayMode;
+  /** Present only in stubbed mode: how the candidate's tool use diverged. */
+  stub: StubReport | null;
 }
 
-/** Re-run a stored trace's input under a new config. */
+/**
+ * Re-run a stored trace's input under a new config.
+ *
+ * In `stubbed` mode the tools do not execute — their responses are played back
+ * from the baseline, so the environment is held still and the only thing that
+ * varies is the model and prompt. Running both modes is what separates a model
+ * regression from environment drift.
+ */
 export async function replay(options: {
   traceId: string;
   agent: RecordableAgent;
   client: ModelClient;
   config: RunConfig;
   store: TraceStore;
+  mode?: ReplayMode;
 }): Promise<ReplayResult> {
   const baseline = await options.store.get(options.traceId);
   if (!baseline) throw new Error(`No trace with id ${options.traceId}`);
+
+  const mode = options.mode ?? "live";
+  const stub = mode === "stubbed" ? createReplayStub(baseline) : null;
 
   const { trace: candidate } = await record({
     agent: options.agent,
@@ -122,8 +138,9 @@ export async function replay(options: {
     input: baseline.input,
     store: options.store,
     replayOf: baseline.id,
-    tags: ["replay"],
+    tags: ["replay", mode],
+    ...(stub ? { toolInterceptor: stub.interceptor } : {}),
   });
 
-  return { baseline, candidate };
+  return { baseline, candidate, mode, stub: stub?.report() ?? null };
 }

@@ -8,8 +8,8 @@ Full rationale for each phase lives in [spec.html](./spec.html).
 | 00 | Spike | 1–2 | **done** |
 | 01 | Recorder | 3–5 | **done** |
 | 02 | Store + freezer | 2–3 | **done** |
-| 03 | Replayer | 4–6 | next |
-| 04 | Scorer | 5–7 | |
+| 03 | Replayer | 4–6 | **done** |
+| 04 | Scorer | 5–7 | next |
 | 05 | Reporter | 3–4 | |
 | 06 | Gate | 2 | |
 | 07 | Dogfood + writeup | 4–5 | |
@@ -101,18 +101,47 @@ them.
 the common case and keeps the command scriptable; a TUI can come later if the
 dogfooding in phase 07 shows it is needed.
 
-## Phase 03 — Replayer — next
+## Phase 03 — Replayer — **done**
 
 **Exit criterion:** fifty cases × three configs runs unattended to completion.
 
-- [ ] Matrix runner with a concurrency cap
-- [ ] Rate-limit backoff and resumability after interruption
-- [ ] `stubbed` mode: tool responses played back from the recorded trace
-- [ ] `live` mode: tools execute for real inside Docker
-- [ ] Agent registry so the CLI resolves entrypoints by name
-- [ ] Stubbed-vs-live difference demonstrated as diagnostic on one real case
+- [x] Matrix runner with a concurrency cap
+- [x] Backoff on transient failures, resumability after interruption
+- [x] `stubbed` mode: tool responses played back from the recorded trace
+- [x] `live` mode, with an optional Docker sandbox for tools that shell out
+- [x] Agent registry so a case resolves back to code
+- [x] Stubbed-vs-live demonstrated as diagnostic
+- [x] 97 tests passing, `tsc --noEmit` clean
 
-## Phase 04 — Scorer
+**Evidence.** One frozen case across two local models and both modes:
+
+```
+  ok   qwen2.5:7b    stubbed  8962ms
+  ok   qwen2.5:7b    live     9795ms
+  ok   llama3.2:3b   live     5709ms
+  ok   llama3.2:3b   stubbed  6076ms   stub: 0 exact, 1 loose, 0 miss, 1 unused
+
+tier-1 assertions
+  qwen2.5:7b  live       6/6   100%
+  qwen2.5:7b  stubbed    6/6   100%
+  llama3.2:3b live       4/6    67%
+  llama3.2:3b stubbed    5/6    83%
+```
+
+Read the two together and the diagnosis is unambiguous: llama fails in *both*
+modes, so the environment is not the problem — the model is. Its stub line says
+how: one tool called with different arguments than the baseline, one recorded
+call never made at all.
+
+Re-running resumed all four cells in **0.38s** instead of ~30s of inference.
+
+**Sandbox scope, stated rather than quietly skipped.** The Docker sandbox is
+built and tested against real containers — network denied, read-only root,
+dropped capabilities, timeout enforced. It is opt-in per tool, because the demo
+agent's tools are pure in-process functions and containerising one would be
+theatre. It exists for the shape phase 07's open-source agent is likely to have.
+
+## Phase 04 — Scorer — next
 
 **Exit criterion:** κ ≥ 0.6 on 200 labelled examples; judging under 15% of run cost.
 

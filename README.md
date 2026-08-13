@@ -4,10 +4,9 @@ An evaluation and regression harness for LLM agents. It records real agent
 runs, freezes them into replayable test cases, and blocks any change that
 quietly makes the agent worse.
 
-> **Status: phase 2 of 8 complete.** Record → store → **freeze** → replay →
-> check. Traces go to a transactional SQLite store with payload dedupe; test
-> cases are auto-proposed from a recording and committed to git. No LLM judge,
-> no statistics, no CI gate yet. See [docs/PHASES.md](docs/PHASES.md).
+> **Status: phase 3 of 8 complete.** Record → freeze → **run the matrix** →
+> check, across models and both replay modes, resumable. No LLM judge, no
+> statistics, no CI gate yet. See [docs/PHASES.md](docs/PHASES.md).
 
 ## Why
 
@@ -23,7 +22,7 @@ Requires Node 22.6+ (25 recommended — it runs TypeScript directly).
 
 ```bash
 npm install
-npm test          # 70 tests
+npm test          # 97 tests
 npm run typecheck
 ```
 
@@ -78,11 +77,13 @@ reviewed in a pull request like any other test). See
 | `fr record [good\|degraded]` | Run the demo agent (`--provider mock\|ollama\|gateway`, `--model`) |
 | `fr ls [limit]` | List stored traces |
 | `fr show <trace-id>` | Print one trace with its spans |
-| `fr replay <trace-id> [quality]` | Re-run a trace's input under a new config |
+| `fr replay <trace-id> [quality]` | Re-run a trace's input under a new config (`--mode live\|stubbed`) |
 | `fr diff <baseline> <candidate>` | Naive side-by-side — **not** scoring |
 | `fr freeze <trace-id>` | Promote a trace to a test case (`--suite`, `--drop`, `--tag`) |
 | `fr cases [--suite name]` | List frozen cases |
 | `fr check <case-id> <trace-id>` | Evaluate a case's assertions (tier 1 only) |
+| `fr matrix` | Run every case × config × mode (`--models`, `--modes`, `--concurrency`) |
+| `fr agents` | List registered agents |
 | `fr models` | List locally available Ollama models |
 | `fr price [YYYY-MM-DD]` | Cost table, with promotional rates resolved |
 | `fr stats` | Store size and dedupe savings |
@@ -120,6 +121,36 @@ Same agent, same question, same prompt:
 The 3B model is 4.6× faster, uses half the tokens, and is confidently wrong.
 Every resource metric prefers it. That is the entire argument for measuring
 quality and cost together.
+
+## Stubbed vs live replay
+
+When a case regresses the first question is always *did the model get worse, or
+did the world change?* Running both modes answers it.
+
+In **stubbed** mode the tools never execute — their responses are played back
+from the recording, so the environment is held perfectly still and the only
+thing that varies is the model and prompt. In **live** mode the tools run for
+real, optionally inside a locked-down container.
+
+```bash
+npm run fr -- matrix --models qwen2.5:7b,llama3.2:3b --modes live,stubbed
+```
+
+```
+  ok   qwen2.5:7b    stubbed  8962ms
+  ok   qwen2.5:7b    live     9795ms
+  ok   llama3.2:3b   live     5709ms
+  ok   llama3.2:3b   stubbed  6076ms   stub: 0 exact, 1 loose, 0 miss, 1 unused
+
+  qwen2.5:7b  live 6/6 · stubbed 6/6      llama3.2:3b  live 4/6 · stubbed 5/6
+```
+
+llama fails in *both* modes, so the environment is not the problem — the model
+is. Its stub line says how: one tool called with different arguments than the
+baseline, one recorded call never made at all.
+
+Re-running the same matrix resumes every finished cell, so an interrupted run
+costs seconds rather than starting over.
 
 ## Observability
 

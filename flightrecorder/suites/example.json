@@ -3,78 +3,82 @@
   "baselineCommit": null,
   "cases": [
     {
-      "id": "case_5f13c857e23844199ce3",
-      "sourceTraceId": "trace_63d3b2da34b54670b656",
-      "baselineTraceId": "trace_63d3b2da34b54670b656",
+      "id": "case_df661e7b1d5249859c42",
+      "agent": {
+        "name": "metrics-analyst",
+        "version": "0.1.0"
+      },
+      "sourceTraceId": "trace_8da18de823aa49a3804a",
+      "baselineTraceId": "trace_8da18de823aa49a3804a",
       "tags": [
         "p0"
       ],
-      "createdAt": 1786635790530,
+      "createdAt": 1786637469409,
       "input": "How much did active users grow last quarter, in percent?",
       "rubric": null,
       "assertions": [
         {
-          "id": "assert_c0a3ebbda18d49f1a565",
+          "id": "assert_c95e580e61764b7382f5",
           "kind": "no_error",
           "value": 1,
           "hard": true,
           "note": "the baseline run completed without error"
         },
         {
-          "id": "assert_68c3e45c718a43bfa2ed",
+          "id": "assert_3599e832ccb3403eaf48",
           "kind": "tool_called",
           "value": "search",
           "hard": true,
           "note": "the baseline called search"
         },
         {
-          "id": "assert_5e9218ba19924fc79089",
+          "id": "assert_38429f6da54e4b608f71",
           "kind": "tool_called",
           "value": "calculate",
           "hard": true,
           "note": "the baseline called calculate"
         },
         {
-          "id": "assert_2f765ddc6d164b3b9a32",
+          "id": "assert_2c8cdd4fd88f49e4abd0",
           "kind": "output_contains",
           "value": "18.33",
           "hard": true,
           "note": "\"18.33\" was produced by calculate and appears in the answer"
         },
         {
-          "id": "assert_2554e1f6a31c4c179b88",
+          "id": "assert_0444e87aa02e400aaf21",
           "kind": "output_contains",
           "value": "1,200,000",
           "hard": true,
           "note": "\"1,200,000\" was produced by search and appears in the answer"
         },
         {
-          "id": "assert_2b7cf5a10faf4e399657",
+          "id": "assert_2172f545d92a4cbbabe9",
           "kind": "output_contains",
           "value": "1,420,000",
           "hard": true,
           "note": "\"1,420,000\" was produced by search and appears in the answer"
         },
         {
-          "id": "assert_fee875f514bb463e9a41",
+          "id": "assert_55a339abfded480f9bd2",
           "kind": "max_steps",
           "value": 7,
           "hard": true,
           "note": "the baseline took 5 steps"
         },
         {
-          "id": "assert_23858df510324950af9c",
+          "id": "assert_bbb5bb77b3cd4cb598df",
           "kind": "max_cost_usd",
-          "value": 0.00173,
+          "value": 0.00285,
           "hard": false,
-          "note": "the baseline cost $0.001155"
+          "note": "the baseline cost $0.001902"
         },
         {
-          "id": "assert_60cc41d3482f425daf2a",
+          "id": "assert_4c103b382cc246838647",
           "kind": "max_wall_ms",
-          "value": 54,
+          "value": 57,
           "hard": false,
-          "note": "the baseline took 18ms"
+          "note": "the baseline took 19ms"
         }
       ]
     }

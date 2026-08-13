@@ -78,6 +78,7 @@ export function freeze(options: FreezeOptions): FreezeResult {
 
   const testCase: TestCase = {
     id: newId("case"),
+    agent: trace.agent,
     sourceTraceId: trace.id,
     input: trace.input,
     assertions,

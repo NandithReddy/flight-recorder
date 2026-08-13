@@ -24,7 +24,10 @@ import { analyzeOutput, evaluateAll } from "./freeze/assertions.ts";
 import { freeze } from "./freeze/freezer.ts";
 import { SuiteStore } from "./freeze/suite.ts";
 import { DEMO_QUESTION, demoAgent } from "../examples/demo-agent.ts";
-import type { Trace } from "./core/types.ts";
+import { runMatrix } from "./replay/matrix.ts";
+import { listAgents } from "./replay/registry.ts";
+import "../examples/register.ts";
+import type { ReplayMode, Trace } from "./core/types.ts";
 
 const store = new SqliteTraceStore();
 const suites = new SuiteStore();
@@ -181,20 +184,38 @@ async function main(argv: string[]): Promise<number> {
       const quality = (positional[1] ?? "degraded") as MockQuality;
       const target = targetFrom(flags, quality);
 
-      const { baseline, candidate } = await replay({
+      const { baseline, candidate, mode, stub } = await replay({
         traceId: id,
         agent: demoAgent,
         client: clientFor(target),
         config: configFor(target),
         store,
+        mode: (flags.get("mode") ?? "live") as ReplayMode,
       });
       console.log(bold("baseline"));
       printTrace(baseline);
       console.log();
-      console.log(bold("candidate"));
+      console.log(bold(`candidate  ${dim(`(${mode} mode)`)}`));
       printTrace(candidate);
       console.log();
       printNaiveDiff(baseline, candidate);
+
+      if (stub) {
+        console.log();
+        console.log(bold("tool divergence") + dim("  (environment held still)"));
+        console.log(`  served from recording  ${stub.exact} exact, ${stub.positional} loose`);
+        for (const miss of stub.misses) {
+          console.log(
+            yellow(`  new call     `) + `${miss.tool}  ${dim(JSON.stringify(miss.input).slice(0, 70))}`,
+          );
+        }
+        for (const unused of stub.unused) {
+          console.log(
+            yellow(`  never called `) + `${unused.tool}  ${dim("the baseline used it; this run did not")}`,
+          );
+        }
+        if (stub.identical) console.log(dim("  identical to the baseline"));
+      }
       return 0;
     }
 
@@ -317,6 +338,109 @@ async function main(argv: string[]): Promise<number> {
       return hardFailures > 0 ? 1 : 0;
     }
 
+    case "matrix": {
+      const { flags } = parseFlags(rest);
+      const suite = await suites.read(flags.get("suite") ?? "default");
+      if (suite.cases.length === 0) throw new Error(`Suite "${suite.name}" has no cases.`);
+
+      const provider = flags.get("provider") ?? "ollama";
+      const models = (flags.get("models") ?? DEFAULT_LOCAL_MODEL).split(",").map((m) => m.trim());
+      const modes = (flags.get("modes") ?? "live,stubbed")
+        .split(",")
+        .map((m) => m.trim()) as ReplayMode[];
+
+      const configs = models.map((model) =>
+        configFor({ provider, model, quality: "good" }),
+      );
+
+      if (provider === "ollama" && !(await isOllamaRunning())) {
+        throw new OllamaUnavailableError(DEFAULT_OLLAMA_HOST);
+      }
+
+      console.log(
+        bold(
+          `${suite.cases.length} cases × ${configs.length} configs × ${modes.length} modes ` +
+            `= ${suite.cases.length * configs.length * modes.length} cells`,
+        ),
+      );
+
+      const result = await runMatrix({
+        cases: suite.cases,
+        configs,
+        modes,
+        store,
+        concurrency: Number(flags.get("concurrency") ?? 2),
+        resume: flags.get("no-resume") !== "true",
+        clientFor: (config) =>
+          clientFor({ provider: config.provider, model: config.model, quality: "good" }),
+        onEvent: (event) => {
+          if (event.type === "start" && event.skipped > 0) {
+            console.log(dim(`resuming — ${event.skipped} cells already done`));
+          }
+          if (event.type === "cell-retry") {
+            console.log(
+              yellow(`  retry ${event.attempt} in ${event.delayMs}ms`) + dim(`  ${event.reason}`),
+            );
+          }
+          if (event.type === "cell-done") {
+            const { cell, trace, stub, resumed } = event.result;
+            const ok = event.result.attempt.error === null;
+            const mark = resumed ? dim("skip") : ok ? green("ok  ") : red("err ");
+            const divergence =
+              stub && !stub.identical
+                ? dim(
+                    `  stub: ${stub.exact} exact, ${stub.positional} loose, ` +
+                      `${stub.misses.length} miss, ${stub.unused.length} unused`,
+                  )
+                : "";
+            console.log(
+              `  ${mark} ${cell.config.model.padEnd(14)} ${cell.mode.padEnd(8)} ` +
+                dim(trace ? `${trace.totals.wallMs}ms` : "—") +
+                divergence,
+            );
+          }
+        },
+      });
+
+      console.log();
+      console.log(
+        `${result.ran} ran · ${result.resumed} resumed · ` +
+          (result.failed > 0 ? red(`${result.failed} could not run`) : "0 could not run"),
+      );
+
+      // Tier-1 evaluation only — the statistical report is phase 5.
+      const byConfig = new Map<string, { pass: number; total: number }>();
+      for (const cellResult of result.results) {
+        if (!cellResult.trace) continue;
+        const key = `${cellResult.cell.config.model} ${cellResult.cell.mode}`;
+        const bucket = byConfig.get(key) ?? { pass: 0, total: 0 };
+        const results = evaluateAll(cellResult.cell.testCase.assertions, cellResult.trace);
+        bucket.pass += results.filter((r) => r.pass).length;
+        bucket.total += results.length;
+        byConfig.set(key, bucket);
+      }
+
+      if (byConfig.size > 0) {
+        console.log();
+        console.log(bold("tier-1 assertions") + dim("  (not scoring — no judge, no statistics)"));
+        for (const [key, bucket] of byConfig) {
+          const rate = bucket.total > 0 ? (bucket.pass / bucket.total) * 100 : 0;
+          console.log(
+            `  ${key.padEnd(24)} ${String(bucket.pass).padStart(3)}/${String(bucket.total).padEnd(3)}` +
+              `  ${rate.toFixed(0)}%`,
+          );
+        }
+      }
+      return 0;
+    }
+
+    case "agents": {
+      for (const agent of listAgents()) {
+        console.log(`  ${agent.ref.name}@${agent.ref.version}`);
+      }
+      return 0;
+    }
+
     case "price": {
       const at = rest[0] ? new Date(rest[0]) : new Date();
       if (Number.isNaN(at.getTime())) throw new Error("usage: fr price [YYYY-MM-DD]");
@@ -366,6 +490,7 @@ async function main(argv: string[]): Promise<number> {
   ls [limit]                    list stored traces
   show <trace-id>               print one trace with its spans
   replay <trace-id> [quality]   re-run a trace's input under a new config
+      --mode live|stubbed         stubbed plays recorded tool responses back
   diff <baseline> <candidate>   naive side-by-side (NOT scoring)
 
   freeze <trace-id>             promote a trace to a test case
@@ -374,6 +499,14 @@ async function main(argv: string[]): Promise<number> {
       --tag p0,billing            tags for the case
   cases [--suite <name>]        list frozen cases
   check <case-id> <trace-id>    evaluate a case's assertions (tier 1 only)
+
+  matrix                        run every case across every config and mode
+      --suite <name>              suite to run (default: default)
+      --models a,b                comma-separated model ids
+      --modes live,stubbed        which replay modes to run
+      --concurrency 2             cells in flight
+      --no-resume                 re-run cells that already have attempts
+  agents                        list registered agents
 
   price [YYYY-MM-DD]            cost table, with promotional rates resolved
   stats                         store size and dedupe status

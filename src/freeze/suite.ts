@@ -29,6 +29,7 @@ export interface SuiteFile {
 
 const CASE_KEYS = [
   "id",
+  "agent",
   "sourceTraceId",
   "baselineTraceId",
   "tags",

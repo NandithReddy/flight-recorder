@@ -21,9 +21,33 @@ import { dirname, join } from "node:path";
 import { DatabaseSync } from "node:sqlite";
 
 import { sha256, stableStringify } from "../core/ids.ts";
-import type { Trace, TraceSummary } from "../core/types.ts";
+import type { Attempt, ReplayMode, RunError, Trace, TraceSummary } from "../core/types.ts";
 import type { TraceStore } from "./types.ts";
 import { DEFAULT_ROOT } from "./fs-store.ts";
+
+interface AttemptRow {
+  id: string;
+  case_id: string;
+  config_id: string;
+  mode: string;
+  trace_id: string;
+  started_at: number;
+  ended_at: number;
+  error: string | null;
+}
+
+function rowToAttempt(row: AttemptRow): Attempt {
+  return {
+    id: row.id,
+    caseId: row.case_id,
+    configId: row.config_id,
+    mode: row.mode as ReplayMode,
+    traceId: row.trace_id,
+    startedAt: row.started_at,
+    endedAt: row.ended_at,
+    error: row.error === null ? null : (JSON.parse(row.error) as RunError),
+  };
+}
 
 /** Marker for an extracted subtree. `$fr` keeps it distinguishable from data. */
 interface PayloadRef {
@@ -70,6 +94,22 @@ CREATE INDEX IF NOT EXISTS traces_started_at ON traces (started_at DESC);
 CREATE INDEX IF NOT EXISTS traces_agent      ON traces (agent_name);
 CREATE INDEX IF NOT EXISTS traces_config     ON traces (config_id);
 CREATE INDEX IF NOT EXISTS traces_replay_of  ON traces (replay_of);
+
+CREATE TABLE IF NOT EXISTS attempts (
+  id         TEXT PRIMARY KEY,
+  case_id    TEXT NOT NULL,
+  config_id  TEXT NOT NULL,
+  mode       TEXT NOT NULL,
+  trace_id   TEXT NOT NULL,
+  started_at INTEGER NOT NULL,
+  ended_at   INTEGER NOT NULL,
+  error      TEXT,
+  -- The identity of a matrix cell. Makes resumption a lookup rather than a
+  -- bookkeeping problem, and makes re-running one idempotent.
+  UNIQUE (case_id, config_id, mode)
+);
+
+CREATE INDEX IF NOT EXISTS attempts_case ON attempts (case_id);
 `;
 
 export interface SqliteStoreOptions {
@@ -313,6 +353,47 @@ export class SqliteTraceStore implements TraceStore {
       blobs: payloads.n,
       bytes: payloads.b + skeletons.b,
     };
+  }
+
+  // -------------------------------------------------------------------------
+  // Attempts — one matrix cell each
+  // -------------------------------------------------------------------------
+
+  putAttempt(attempt: Attempt): void {
+    this.#db
+      .prepare(
+        `INSERT OR REPLACE INTO attempts
+           (id, case_id, config_id, mode, trace_id, started_at, ended_at, error)
+         VALUES (?,?,?,?,?,?,?,?)`,
+      )
+      .run(
+        attempt.id,
+        attempt.caseId,
+        attempt.configId,
+        attempt.mode,
+        attempt.traceId,
+        attempt.startedAt,
+        attempt.endedAt,
+        attempt.error === null ? null : JSON.stringify(attempt.error),
+      );
+  }
+
+  findAttempt(caseId: string, configId: string, mode: ReplayMode): Attempt | null {
+    const row = this.#db
+      .prepare("SELECT * FROM attempts WHERE case_id = ? AND config_id = ? AND mode = ?")
+      .get(caseId, configId, mode) as AttemptRow | undefined;
+    return row ? rowToAttempt(row) : null;
+  }
+
+  listAttempts(caseId?: string): Attempt[] {
+    const rows = caseId
+      ? (this.#db
+          .prepare("SELECT * FROM attempts WHERE case_id = ? ORDER BY started_at")
+          .all(caseId) as unknown as AttemptRow[])
+      : (this.#db
+          .prepare("SELECT * FROM attempts ORDER BY started_at")
+          .all() as unknown as AttemptRow[]);
+    return rows.map(rowToAttempt);
   }
 
   /** What deduplication actually saved, for the phase-2 exit evidence. */

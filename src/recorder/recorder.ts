@@ -84,6 +84,23 @@ export interface SpanHandle {
   end(result: SpanResult): void;
 }
 
+export interface ToolCallContext {
+  name: string;
+  input: unknown;
+  /** Runs the real tool. A stub simply never calls it. */
+  execute: () => Promise<unknown>;
+}
+
+/**
+ * Sits between a tool call and the tool.
+ *
+ * This is the seam that makes stubbed replay possible: the interceptor can
+ * answer from a recording instead of executing, so the environment is held
+ * perfectly still and the only thing that varies is the model. It is also where
+ * a sandbox plugs in for tools that touch the outside world.
+ */
+export type ToolInterceptor = (context: ToolCallContext) => Promise<unknown>;
+
 export interface RecorderOptions {
   agent: AgentRef;
   config: RunConfig;
@@ -93,6 +110,8 @@ export interface RecorderOptions {
   tags?: string[];
   /** Overrides the global tracer; tests use this to capture emitted spans. */
   tracer?: Tracer;
+  /** Answers tool calls instead of executing them. */
+  toolInterceptor?: ToolInterceptor;
 }
 
 function toRunError(error: unknown): RunError {
@@ -300,10 +319,18 @@ export class Recorder implements SpanScope {
     fn: (input: I) => Promise<O> | O,
     parentId: string | null,
   ): (input: I) => Promise<O> {
+    const interceptor = this.#options.toolInterceptor;
+
     return async (input: I) => {
       const span = this.#open({ kind: "tool", name, input }, parentId);
       try {
-        const output = await fn(input);
+        const output = interceptor
+          ? ((await interceptor({
+              name,
+              input,
+              execute: async () => fn(input),
+            })) as O)
+          : await fn(input);
         span.end({ output });
         return output;
       } catch (error) {
