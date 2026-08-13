@@ -279,10 +279,10 @@ sufficient, and the matching rule changed from substring to whole-token.
 
 ### D-020 · Ollama is the default provider; no API key is required to run this
 
-The project runs end to end on local models with zero external spend. A Claude
-subscription does not grant API access — those are separately billed products —
-and a harness whose development requires metered inference is a harness that
-does not get developed.
+The project runs end to end on local models with zero external spend. A consumer
+chat subscription does not grant programmatic API access — those are separately
+billed products — and a harness whose development requires metered inference is
+a harness that does not get developed.
 
 For a *regression* harness the subject model's intelligence matters much less
 than it appears to. What the fixtures need is runs that call tools and can
