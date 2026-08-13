@@ -85,10 +85,18 @@ jobs:
           fi
           echo "Gate correctly blocked the degraded prompt."
 
-      - name: and must pass when nothing changed
+      # The real regression check for this repo: run the agent as it stands on
+      # this branch and compare it against the committed reference traces.
+      #
+      # Deliberately NOT a fresh-vs-fresh comparison. A change that makes both
+      # sides equally worse produces a delta of zero, and a uniform regression
+      # would sail straight through. The frozen reference is the only thing that
+      # does not move when the code does.
+      - name: the agent must still match its committed baseline
         run: |
           npm run fr -- gate --suite demo --provider mock \
-            --baseline "demo-model#v1" --candidate "demo-model#v1" --no-judge
+            --baseline "demo-model#v1" --candidate "demo-model#v1" \
+            --baseline-committed --fail-on-any-regression --no-judge
 
   # ---------------------------------------------------------------------------
   # The real gate, against live models. Opt-in: it needs a credential, and a job

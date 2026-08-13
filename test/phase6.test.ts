@@ -302,3 +302,45 @@ describe("suite portability", () => {
     ).rejects.toThrow(/No trace bundle at/);
   });
 });
+
+describe("baseline source", () => {
+  it("catches a regression that made both sides equally worse", async () => {
+    // A change that breaks the agent shows up in the baseline run *and* the
+    // candidate run, so a fresh-vs-fresh delta is zero and the gate passes.
+    // Against the committed reference, it is caught.
+    const good = await traceOf("good");
+    const bad = await traceOf("degraded");
+    const template = freeze({ trace: good }).testCase;
+
+    const cases: TestCase[] = [];
+    for (let i = 0; i < 12; i += 1) {
+      const testCase: TestCase = {
+        ...template,
+        id: `case_${i}`,
+        assertions: template.assertions.map((a) => ({ ...a, id: `${a.id}_${i}` })),
+      };
+      cases.push(testCase);
+      // Both sides run the broken code.
+      store.putAttempt(attemptFor(testCase.id, baselineConfig.id, bad.id));
+      store.putAttempt(attemptFor(testCase.id, candidateConfig.id, bad.id));
+    }
+    const suite: SuiteFile = { name: "s", baselineCommit: null, cases };
+
+    const fresh = await buildReport({
+      suite, store, baselineConfig, candidateConfig, iterations: 1000, now: 1,
+    });
+    const committed = await buildReport({
+      suite, store, baselineConfig, candidateConfig, iterations: 1000, now: 1,
+      baselineSource: "committed",
+    });
+
+    // Fresh-vs-fresh sees no change at all.
+    expect(fresh.passRateDelta.point).toBe(0);
+    expect(evaluateGate(fresh).status).toBe("pass");
+
+    // Against the frozen reference, every case regressed.
+    expect(committed.passRateBefore).toBe(100);
+    expect(committed.passRateAfter).toBe(0);
+    expect(evaluateGate(committed).status).toBe("fail");
+  });
+});

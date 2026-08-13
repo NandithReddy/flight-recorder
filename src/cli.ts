@@ -865,6 +865,9 @@ async function main(argv: string[]): Promise<number> {
         baselineConfig: parseTarget(baselineSpec),
         candidateConfig: parseTarget(candidateSpec),
         mode: (flags.get("mode") ?? "live") as ReplayMode,
+        ...(flags.get("baseline-committed") === "true"
+          ? { baselineSource: "committed" as const }
+          : {}),
         judge: useJudge ? createJudge({ client: createOllamaClient(), model: judgeModel! }) : null,
         judgeModel: judgeModel ?? undefined,
         trust: calibration?.kappa ?? null,
@@ -1054,6 +1057,8 @@ async function main(argv: string[]): Promise<number> {
 
   gate                          run the report and decide pass/fail (exit 0/1)
       --baseline/--candidate      same specs as report
+      --baseline-committed        compare against the frozen reference, not a
+                                  fresh run — catches uniform regressions
       --critical-tag p0           one regression here fails the build
       --max-cost / --max-latency  ceilings
       --fail-on-any-regression    block on any regression, significant or not

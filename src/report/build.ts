@@ -77,6 +77,19 @@ export interface BuildReportOptions {
   baselineConfig: RunConfig;
   candidateConfig: RunConfig;
   mode?: ReplayMode;
+  /**
+   * Where the baseline side comes from.
+   *
+   * `fresh` (default) prefers a run of the baseline config made in this
+   * session — right when comparing two models, since both sides should be
+   * measured the same way.
+   *
+   * `committed` forces the frozen reference the case was created from. This is
+   * what a CI gate wants: if a change makes the baseline and the candidate
+   * *equally* worse, a fresh-versus-fresh delta is zero and the regression
+   * sails through. Comparing against the committed reference catches it.
+   */
+  baselineSource?: "fresh" | "committed";
   judge?: Judge | null;
   judgeModel?: string;
   /** Judge kappa from the last calibration; null means uncalibrated. */
@@ -121,12 +134,11 @@ export async function buildReport(options: BuildReportOptions): Promise<ReportDa
   let missing = 0;
 
   for (const testCase of options.suite.cases) {
-    // The baseline side may be the recording the case was frozen from, or a
-    // fresh run under the baseline config — prefer the fresh run so both sides
-    // are measured the same way.
     const beforeTrace =
-      (await traceFor(options.store, testCase, options.baselineConfig.id, mode)) ??
-      (await options.store.get(testCase.baselineTraceId));
+      options.baselineSource === "committed"
+        ? await options.store.get(testCase.baselineTraceId)
+        : ((await traceFor(options.store, testCase, options.baselineConfig.id, mode)) ??
+          (await options.store.get(testCase.baselineTraceId)));
     const afterTrace = await traceFor(options.store, testCase, options.candidateConfig.id, mode);
 
     if (!beforeTrace || !afterTrace) {
