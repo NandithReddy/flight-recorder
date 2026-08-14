@@ -16,6 +16,7 @@ import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { makeConfig } from "../src/core/ids.ts";
 import { SqliteTraceStore } from "../src/store/sqlite-store.ts";
 import { createMockClient } from "../src/provider/mock.ts";
+import { OllamaUnavailableError } from "../src/provider/ollama.ts";
 import { record, replay, type RecordableAgent } from "../src/replay/replay.ts";
 import { createReplayStub } from "../src/replay/stub.ts";
 import { backoffMs, isTransient, runMatrix, type MatrixEvent } from "../src/replay/matrix.ts";
@@ -310,6 +311,42 @@ describe("matrix runner", () => {
     expect(second.ran).toBe(0);
     expect(second.resumed).toBe(2);
     expect(second.results.every((r) => r.resumed)).toBe(true);
+  });
+
+  it("hands a resumed cell its recorded trace, so rates cover the whole matrix", async () => {
+    // A resumed cell that arrives without its trace looks like no result at
+    // all, so any rate computed over the matrix quietly narrows to whichever
+    // cells happened to run today. One such rate was published (D-045).
+    const testCase = await caseFrom();
+    const first = await runWith(testCase, [configA, configB]);
+
+    const second = await runWith(testCase, [configA, configB]);
+    expect(second.results.every((r) => r.resumed)).toBe(true);
+    expect(second.results.every((r) => r.trace !== null)).toBe(true);
+    expect(second.results.map((r) => r.trace?.id)).toEqual(first.results.map((r) => r.trace?.id));
+  });
+
+  it("does not cache a run that died because the provider was unreachable", async () => {
+    // A dead daemon says nothing about the agent. Stored as an Attempt it
+    // becomes a permanent non-result: resumed on every later run and counted in
+    // every rate computed since. 23 of them sat in this project's own suite.
+    const testCase = await caseFrom();
+    const unreachable: RecordableAgent = {
+      ref: demoAgent.ref,
+      async run() {
+        throw new OllamaUnavailableError("http://127.0.0.1:11434");
+      },
+    };
+
+    const outage = await runWith(testCase, [configA], { agentFor: () => unreachable });
+    expect(outage.failed).toBe(1);
+    expect(store.findAttempt(testCase.id, configA.id, "live")).toBeNull();
+
+    // ...so when the daemon comes back, the cell runs rather than resuming.
+    const recovered = await runWith(testCase, [configA]);
+    expect(recovered.ran).toBe(1);
+    expect(recovered.resumed).toBe(0);
+    expect(recovered.results[0]?.trace?.error).toBeNull();
   });
 
   it("re-runs everything when resume is off", async () => {

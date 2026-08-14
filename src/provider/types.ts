@@ -6,9 +6,32 @@
  * one adapter that satisfies `ModelClient` — nothing else changes.
  */
 
-import type { Usage } from "../core/types.ts";
+import type { RunError, Usage } from "../core/types.ts";
 
 export type Role = "system" | "user" | "assistant" | "tool";
+
+/**
+ * Errors that mean "the harness could not run the agent" rather than "the agent
+ * failed", identified by the `name` an adapter stamps on them — the only part of
+ * an error that survives into a stored `RunError`.
+ *
+ * The distinction is the difference between a result and a non-result. A run
+ * that died because the Ollama daemon was down is not evidence about a model,
+ * but it was stored as an Attempt like any other, resumed forever after, and
+ * counted in every rate computed since: 23 such runs sat in this project's own
+ * metrics suite, scored as agent failures, until a comparison that depended on
+ * them was checked line by line (D-046).
+ */
+export const ENVIRONMENT_ERROR_TYPES: readonly string[] = [
+  "OllamaUnavailableError",
+  "MissingGatewayCredentialError",
+  "DockerUnavailableError",
+];
+
+/** True when a run failed for a reason that says nothing about the agent. */
+export function isEnvironmentFailure(error: RunError | null | undefined): boolean {
+  return error?.type !== undefined && ENVIRONMENT_ERROR_TYPES.includes(error.type);
+}
 
 /**
  * A turn in the conversation.

@@ -4,11 +4,11 @@ An evaluation and regression harness for LLM agents. It records real agent
 runs, freezes them into replayable test cases, and blocks any change that
 quietly makes the agent worse.
 
-> **Status: phases 0–3, 5 and 6 complete, phase 4 built.** Record → freeze →
-> matrix → score → report → **gate**. Suites are portable, baselines pin to a
-> commit, and CI blocks a merge on a significant regression. The judge's trust
-> score is waiting on human labels — the one thing the harness must not generate
-> for itself. See [docs/PHASES.md](docs/PHASES.md).
+> **Status: all seven build phases complete.** Record → freeze → matrix →
+> score → report → gate, now proven against an agent this project did not
+> write: LangGraph's prebuilt ReAct loop runs on the harness through a
+> ~150-line bridge, with recording, stubbed replay and the gate applying
+> unchanged. See [docs/PHASES.md](docs/PHASES.md).
 
 ## Why
 
@@ -18,11 +18,13 @@ wrong 8% of the time. Nothing throws. You find out from a customer.
 
 Full rationale, architecture and build plan: [docs/spec.html](docs/spec.html).
 
-**It caught nine defects, and none of them crashed.** Every one was a number
+**It caught thirteen defects, and none of them crashed.** Every one was a number
 that was quietly wrong — including one in this repository's own judge, which
-measured *worse than chance* against human labels, and one the gate caught in a
-commit of mine that a full green test suite had waved through. The decision log
-([docs/DECISIONS.md](docs/DECISIONS.md)) records each with its evidence.
+measured *worse than chance* against human labels; one the gate caught in a
+commit of mine that a full green test suite had waved through; and one that sat
+unreachable for four phases until a foreign agent's different error semantics
+exposed it. The decision log ([docs/DECISIONS.md](docs/DECISIONS.md)) records
+each with its evidence.
 
 A worked example is [PR #2](https://github.com/NandithReddy/flight-recorder/pull/2):
 an innocuous-looking prompt cleanup where all 174 tests pass, typecheck is
@@ -34,7 +36,7 @@ Requires Node 22.6+ (25 recommended — it runs TypeScript directly).
 
 ```bash
 npm install
-npm test          # 174 tests
+npm test          # 196 tests
 npm run typecheck
 ```
 
@@ -285,6 +287,43 @@ npm run fr -- doctor --suite metrics   # can this suite run here?
 CI runs `import` then `doctor` on every push, so the claim is tested rather than
 assumed. Pinning **refuses on a dirty tree** — a baseline pinned to a commit that
 does not describe the working tree looks reproducible without being so.
+
+## An agent this project did not write
+
+The loop under test in phase 7 is LangGraph's prebuilt ReAct agent. Its model
+calls reach the harness through a `BaseChatModel` bridge
+([src/provider/langchain-bridge.ts](src/provider/langchain-bridge.ts)), so
+recording, stubbed replay, freezing and the gate all apply to it unchanged —
+registering it was one line.
+
+```bash
+npm run fr -- record --agent react-analyst --provider ollama --model qwen2.5:7b
+npm run fr -- matrix --suite react --models qwen2.5:7b,llama3.2:3b --modes live,stubbed
+```
+
+Same 30 tasks, same tools, same prompts, same temperature — only the loop
+differs. Both loops are scored against one assertion set, since each suite's own
+assertions are a different ruler (`node scripts/loop-compare.ts`):
+
+| live runs | hand-rolled | LangGraph ReAct |
+|---|---|---|
+| llama3.2:3b hard assertions | 60% | **71%** |
+| llama3.2:3b runs that died | 13 of 30 | **0 of 30** |
+| qwen2.5:7b hard assertions | 97% | 97% |
+| qwen2.5:7b cases passed | 27/30 | 27/30 |
+
+The weak model gains eleven points and stops dying; the strong model cannot tell
+the two loops apart. Both emit the *same* 13 failed tool calls — the mistakes
+belong to the model — but LangGraph hands each error back for a retry where our
+loop aborts. **So the loop is not a quality parameter in general, it is a
+recovery parameter**, worth exactly as much as the model errs, and a harness
+that only ever tested one loop would never see either half of that.
+
+Integrating the foreign agent also exposed a defect that had been unreachable
+for four phases: stubbed replay served a recorded tool *failure* as a
+successful `null`, because only an agent that recovers from tool errors can
+produce a clean baseline containing an errored span. Fixed, pinned, and
+recorded as [D-042](docs/DECISIONS.md).
 
 ## Observability
 

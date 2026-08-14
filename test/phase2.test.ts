@@ -7,6 +7,7 @@
  * catch the regression they were meant to catch.
  */
 
+import { existsSync } from "node:fs";
 import { mkdtemp, readFile, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
@@ -108,6 +109,27 @@ describe.each([
     await recordGood(store);
     expect((await store.list({ agent: "metrics-analyst" })).length).toBe(1);
     expect((await store.list({ agent: "nobody" })).length).toBe(0);
+  });
+});
+
+describe("store paths", () => {
+  it("treats \":memory:\" as SQLite's sentinel, not a directory name", async () => {
+    // It used to become ":memory:/traces.db", so asking for a throwaway
+    // database silently created a persistent one — in a directory named
+    // ":memory:", which is how this was noticed.
+    const store = new SqliteTraceStore(":memory:");
+    expect(store.path).toBe(":memory:");
+    expect(existsSync(":memory:")).toBe(false);
+
+    const trace = await recordGood(store);
+    expect(await store.get(trace.id)).toEqual(trace);
+    store.close();
+  });
+
+  it("uses a path ending in .db as the database itself", () => {
+    const store = new SqliteTraceStore(join(root, "explicit.db"));
+    expect(store.path).toBe(join(root, "explicit.db"));
+    store.close();
   });
 });
 

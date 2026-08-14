@@ -1,0 +1,617 @@
+<title>Wrong, Not Broken</title>
+<style>
+  :root {
+    --ground:    #FAFAFC;
+    --panel:     #F0F1F6;
+    --panel-2:   #E5E7EF;
+    --rule:      #D5D9E3;
+    --rule-soft: #E3E6ED;
+    --ink:       #13151B;
+    --ink-2:     #3B414F;
+    --ink-3:     #6A7185;
+    --accent:    #27436E;
+    --good:      #1C6A47;
+    --bad:       #9E2B21;
+    --warn:      #8A5A00;
+
+    --font-display: "Helvetica Neue", Helvetica, "Segoe UI", system-ui, -apple-system, sans-serif;
+    --font-body: Charter, "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif;
+    --font-mono: "SF Mono", SFMono-Regular, Menlo, "JetBrains Mono", Consolas, monospace;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --ground:    #0D0F14;
+      --panel:     #161920;
+      --panel-2:   #1E222B;
+      --rule:      #2D323E;
+      --rule-soft: #22262E;
+      --ink:       #E8EAF0;
+      --ink-2:     #B2B8C6;
+      --ink-3:     #7A8195;
+      --accent:    #7BA3DE;
+      --good:      #4FB287;
+      --bad:       #E0776C;
+      --warn:      #DCA646;
+    }
+  }
+
+  :root[data-theme="dark"] {
+    --ground:    #0D0F14;
+    --panel:     #161920;
+    --panel-2:   #1E222B;
+    --rule:      #2D323E;
+    --rule-soft: #22262E;
+    --ink:       #E8EAF0;
+    --ink-2:     #B2B8C6;
+    --ink-3:     #7A8195;
+    --accent:    #7BA3DE;
+    --good:      #4FB287;
+    --bad:       #E0776C;
+    --warn:      #DCA646;
+  }
+
+  body {
+    background: var(--ground);
+    color: var(--ink-2);
+    font-family: var(--font-body);
+    font-size: 17px;
+    line-height: 1.65;
+    -webkit-font-smoothing: antialiased;
+    padding: 0 0 6rem;
+  }
+
+  main {
+    display: grid;
+    grid-template-columns:
+      [full-start] minmax(1.25rem, 1fr)
+      [wide-start] minmax(0, 6rem)
+      [text-start]  minmax(0, 65ch)
+      [text-end]   minmax(0, 6rem)
+      [wide-end]   minmax(1.25rem, 1fr)
+      [full-end];
+    row-gap: 1.15rem;
+    padding-top: 4rem;
+  }
+  main > *     { grid-column: text; margin: 0; }
+  main > .wide { grid-column: wide; }
+
+  .eyebrow {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--accent);
+  }
+  h1 {
+    font-family: var(--font-display);
+    font-size: clamp(2.6rem, 7vw, 4rem);
+    line-height: 0.98;
+    letter-spacing: -0.035em;
+    font-weight: 700;
+    color: var(--ink);
+    text-wrap: balance;
+    margin-top: 0.6rem;
+  }
+  .standfirst {
+    font-size: 1.3rem;
+    line-height: 1.45;
+    color: var(--ink-2);
+    text-wrap: pretty;
+    margin-top: 0.6rem;
+  }
+  .byline {
+    font-family: var(--font-mono);
+    font-size: 12px;
+    color: var(--ink-3);
+    letter-spacing: 0.04em;
+    margin-top: 1.4rem;
+    padding-top: 1rem;
+    border-top: 1px solid var(--rule);
+  }
+
+  h2 {
+    font-family: var(--font-display);
+    font-size: 1.55rem;
+    letter-spacing: -0.022em;
+    font-weight: 700;
+    color: var(--ink);
+    text-wrap: balance;
+    margin-top: 2.6rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 1px solid var(--rule);
+  }
+  h3 {
+    font-family: var(--font-display);
+    font-size: 1.04rem;
+    font-weight: 700;
+    color: var(--ink);
+    margin-top: 1.4rem;
+  }
+  h2 + p, h3 + p { margin-top: -0.1rem; }
+
+  strong { color: var(--ink); font-weight: 700; }
+  em { color: var(--ink); font-style: italic; }
+  a { color: var(--accent); text-underline-offset: 2px; }
+  a:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+
+  code {
+    font-family: var(--font-mono);
+    font-size: 0.82em;
+    background: var(--panel);
+    border: 1px solid var(--rule-soft);
+    padding: 0.08em 0.34em;
+    border-radius: 2px;
+    color: var(--ink);
+  }
+
+  ul, ol { padding-left: 1.15rem; display: grid; row-gap: 0.45rem; }
+  li::marker { color: var(--ink-3); }
+
+  blockquote {
+    margin: 1rem 0;
+    padding: 0.2rem 0 0.2rem 1.1rem;
+    border-left: 2px solid var(--accent);
+    color: var(--ink-2);
+    font-style: italic;
+  }
+  blockquote p + p { margin-top: 0.5rem; }
+
+  .lede {
+    background: var(--panel);
+    border: 1px solid var(--rule);
+    border-left: 3px solid var(--accent);
+    padding: 1.1rem 1.3rem;
+    font-size: 1.05rem;
+    color: var(--ink);
+  }
+
+  /* ---- findings ledger ---- */
+  .ledger { border-top: 1px solid var(--rule); margin-top: 1rem; }
+  .finding {
+    display: grid;
+    grid-template-columns: 2.2rem 1fr;
+    gap: 0 1rem;
+    padding: 1rem 0;
+    border-bottom: 1px solid var(--rule-soft);
+  }
+  .finding .n {
+    font-family: var(--font-mono);
+    font-size: 0.8rem;
+    color: var(--accent);
+    padding-top: 0.15rem;
+  }
+  .finding h4 {
+    font-family: var(--font-display);
+    font-size: 0.98rem;
+    font-weight: 700;
+    color: var(--ink);
+    margin: 0 0 0.3rem;
+  }
+  .finding p { margin: 0 0 0.4rem; font-size: 0.95rem; }
+  .finding .tell {
+    font-family: var(--font-mono);
+    font-size: 0.76rem;
+    color: var(--ink-3);
+    display: block;
+  }
+
+  /* ---- tables ---- */
+  .table-wrap { overflow-x: auto; margin-top: 0.9rem; }
+  table {
+    border-collapse: collapse;
+    width: 100%;
+    min-width: 34rem;
+    font-family: var(--font-display);
+    font-size: 0.88rem;
+    font-variant-numeric: tabular-nums;
+  }
+  th {
+    text-align: left;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--ink-3);
+    padding: 0 0.9rem 0.55rem 0;
+    border-bottom: 1px solid var(--rule);
+  }
+  td {
+    padding: 0.6rem 0.9rem 0.6rem 0;
+    border-bottom: 1px solid var(--rule-soft);
+    vertical-align: top;
+  }
+  td:last-child, th:last-child { padding-right: 0; }
+  .num { font-family: var(--font-mono); white-space: nowrap; }
+  .bad { color: var(--bad); }
+  .good { color: var(--good); }
+  .muted { color: var(--ink-3); }
+
+  pre {
+    font-family: var(--font-mono);
+    font-size: 0.78rem;
+    line-height: 1.5;
+    background: var(--panel);
+    border: 1px solid var(--rule);
+    padding: 0.9rem 1rem;
+    overflow-x: auto;
+    color: var(--ink-2);
+    margin-top: 0.9rem;
+  }
+
+  figure {
+    background: var(--panel);
+    border: 1px solid var(--rule);
+    padding: 1.4rem 1.4rem 1rem;
+    margin-top: 1rem;
+  }
+  .fig-scroll { overflow-x: auto; }
+  figure svg { display: block; width: 100%; min-width: 30rem; height: auto; color: var(--ink-2); }
+  figcaption {
+    font-size: 0.86rem;
+    line-height: 1.5;
+    color: var(--ink-3);
+    margin-top: 1rem;
+    padding-top: 0.8rem;
+    border-top: 1px solid var(--rule-soft);
+    text-wrap: pretty;
+  }
+
+  .stats {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(8rem, 1fr));
+    border-top: 1px solid var(--rule);
+    border-bottom: 1px solid var(--rule);
+    margin-top: 1.4rem;
+  }
+  .stats div { padding: 0.9rem 1rem 0.95rem 0; border-right: 1px solid var(--rule-soft); }
+  .stats div:last-child { border-right: 0; }
+  .stats dt {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    letter-spacing: 0.13em;
+    text-transform: uppercase;
+    color: var(--ink-3);
+  }
+  .stats dd {
+    font-family: var(--font-display);
+    font-size: 1.15rem;
+    font-weight: 700;
+    color: var(--ink);
+    font-variant-numeric: tabular-nums;
+    margin: 0.25rem 0 0;
+  }
+
+  footer {
+    grid-column: text;
+    margin-top: 3rem;
+    padding-top: 1rem;
+    border-top: 1px solid var(--rule);
+    font-size: 0.85rem;
+    color: var(--ink-3);
+    text-wrap: pretty;
+  }
+</style>
+
+<main>
+
+  <p class="eyebrow">Project postmortem</p>
+  <h1>Wrong, Not Broken</h1>
+  <p class="standfirst">I built a regression harness for LLM agents. It found thirteen defects. Not one of them was a crash — every single one was a number that was quietly wrong, including in the harness's own judge, which turned out to be worse than a coin flip.</p>
+
+  <dl class="stats wide">
+    <div><dt>Defects found</dt><dd>13</dd></div>
+    <div><dt>That crashed</dt><dd>0</dd></div>
+    <div><dt>Human labels</dt><dd>47</dd></div>
+    <div><dt>Agent loops</dt><dd>2</dd></div>
+    <div><dt>Tests</dt><dd>196</dd></div>
+    <div><dt>API spend</dt><dd>$0</dd></div>
+  </dl>
+
+  <h2>The premise</h2>
+
+  <p>Conventional software fails loudly. A bad deploy throws, a test goes red, a page 500s. Agent software fails <em>quietly</em>: you change a line of a prompt or move to a newer model, and the agent keeps answering — fluently, confidently, and eight percent worse. Nothing throws. You find out from a customer, six weeks later, after forty other changes have shipped.</p>
+
+  <p>So I built the thing that catches that: record real agent runs, freeze a slice of them into replayable test cases, and re-run those cases against every proposed change with an honest before-and-after. Traces go to a transactional store; assertions are proposed automatically by reading a recording; a three-tier scorer runs cheap deterministic checks first and an LLM judge only when it has to; the report carries confidence intervals; and a CI gate blocks a merge on a significant regression.</p>
+
+  <p class="lede">What I did not expect was that the project would spend most of its life catching <em>itself</em>. Thirteen defects, across seven build phases. Every one produced a wrong number and no error. Six of them were in the measurement apparatus — the part whose entire job is to be trustworthy — and one was caught by the finished gate, in a commit of mine that a fully green test suite had waved through.</p>
+
+  <h2>The thirteen</h2>
+
+  <p>Presented in the order they were found, because the order is part of the argument: the later ones were found by the tool, using the earlier ones.</p>
+
+  <div class="ledger wide">
+
+    <div class="finding">
+      <span class="n">01</span>
+      <div>
+        <h4>Every model call was recorded twice</h4>
+        <p>The client handed to an agent arrives already instrumented. An agent that wants a differently-scoped client naturally calls <code>wrapModel</code> again — and each call then recorded two spans, doubling every token count and every cost total.</p>
+        <span class="tell">Caught by: a span count of 10 where the test expected 7. No error, no symptom, just wrong totals.</span>
+      </div>
+    </div>
+
+    <div class="finding">
+      <span class="n">02</span>
+      <div>
+        <h4>A trace mutated after it was stored</h4>
+        <p>The sampling decision was attached to the trace object with <code>Object.assign</code>, after the trace had been written. Traces are content-addressed, so the same trace now hashed differently depending on whether you hashed it before or after the call returned — meaning one id could acquire two hashes.</p>
+        <span class="tell">Caught by: a round-trip test asserting the stored trace equalled the returned one.</span>
+      </div>
+    </div>
+
+    <div class="finding">
+      <span class="n">03</span>
+      <div>
+        <h4>The assertion proposer would have certified a hallucination</h4>
+        <p>Asked for quarterly growth, a 3B model skipped the lookup entirely, called the calculator with <code>450</code> and <code>500</code> — figures it invented — and answered "11.11%". Arithmetically correct, wholly fabricated. And because <code>11.11</code> genuinely appeared in a tool's output, the proposer would have pinned it as a verified fact.</p>
+        <p>Verification now follows provenance: a tool's output is evidence only if the tool's own inputs were themselves grounded. Otherwise the tool faithfully computes over invented numbers and launders a hallucination into an apparently checked fact.</p>
+        <span class="tell">Caught by: pointing the harness at a real model for the first time. Invisible against the scripted mock.</span>
+      </div>
+    </div>
+
+    <div class="finding">
+      <span class="n">04</span>
+      <div>
+        <h4>The step diff explained nothing</h4>
+        <p>It compared spans by name. On a report comparing two models, every step therefore "differed" — for the trivial reason that the model <em>is</em> the change. It printed "the baseline called qwen2.5:7b, the candidate called llama3.2:3b" twenty-five times.</p>
+        <p>It now compares <em>decisions</em> — which tools a step asked for — not identities. The same report then says, unprompted and across twenty of twenty-five diffs: <em>"The runs diverge immediately: the baseline asked for search, the candidate asked for calculate."</em> That one sentence is the smaller model's entire failure mode.</p>
+        <span class="tell">Caught by: reading the output of a real run instead of a test fixture.</span>
+      </div>
+    </div>
+
+    <div class="finding">
+      <span class="n">05</span>
+      <div>
+        <h4>I compared two things that were not comparable</h4>
+        <p>I recorded in the project's own decision log that a weakened prompt "barely touches" the stronger model, citing 83% against 82%. Those were different configurations — one of them a temperature variant, not the baseline at all.</p>
+        <p>The real comparison is a <strong>20% drop in case pass rate</strong> (−36.7% to −6.7%, significant at n=30) and p95 latency going from 9.5s to 50s. The assertion average hid it completely: 132 of 159 assertions still pass, because a case passes only if <em>every</em> hard assertion holds.</p>
+        <span class="tell">Caught by: running the gate. The tool disagreed with its author.</span>
+      </div>
+    </div>
+
+    <div class="finding">
+      <span class="n">06</span>
+      <div>
+        <h4>Half the calibration set was free points</h4>
+        <p>28 of the first 49 comparison pairs had a blank side, because that run had errored. "An answer beats no answer" is obvious to a human and equally obvious to a judge, so those pairs would have burned a person's attention <em>and</em> inflated the agreement score — human and judge concurring perfectly for reasons unrelated to judging.</p>
+        <span class="tell">Caught by: labelling them by hand and noticing the second pair was empty.</span>
+      </div>
+    </div>
+
+    <div class="finding">
+      <span class="n">07</span>
+      <div>
+        <h4>The judge was worse than a coin flip</h4>
+        <p>Measured against 47 human labels: <strong>κ = −0.102</strong>, interval (−0.203, −0.008). The interval excludes zero, so that is a measurement rather than noise. Its own section below.</p>
+        <span class="tell">Caught by: the calibration tier, which exists for exactly this.</span>
+      </div>
+    </div>
+
+    <div class="finding">
+      <span class="n">08</span>
+      <div>
+        <h4>Each calibration destroyed the previous one</h4>
+        <p>Calibration results were keyed by label set alone, so running a second one overwrote the first — the number you most want to compare against. A calibration is a <em>comparison</em>; storing only the latest makes the comparison impossible.</p>
+        <span class="tell">Caught by: running three in a row and watching the evidence vanish.</span>
+      </div>
+    </div>
+
+    <div class="finding">
+      <span class="n">09</span>
+      <div>
+        <h4>The gate caught me shipping the regression it was built for</h4>
+        <p>A <code>git checkout</code> carried an uncommitted prompt edit across a branch boundary, and a commit titled "Pin the mock in tests that are not about prompts" silently deleted the instruction telling the agent to verify its figures. Every test passed. Typecheck passed. The agent stopped verifying its numbers.</p>
+        <p>The gate failed the push, comparing the agent as it stood against the baseline recordings committed to git: pass rate −100%. I kept both commits in history rather than amending them away — the only defect on this list that nobody staged.</p>
+        <span class="tell">Caught by: the finished gate, on this repository, by accident.</span>
+      </div>
+    </div>
+
+    <div class="finding">
+      <span class="n">10</span>
+      <div>
+        <h4>Stubbed replay served a recorded failure as a success</h4>
+        <p>The stub replayed only a span's <em>output</em>, ignoring its error. A tool call that failed on the baseline replayed as a successful <code>null</code> — which LangChain stringifies into a tool message reading "null" with success status. The candidate saw "null" where the live run saw the error text, the conversations silently diverged, and the report still said <code>identical: true</code>.</p>
+        <p>The defect sat unreachable for four phases: the hand-rolled loop aborts on tool errors, so an errored span never appeared in a clean baseline. LangGraph's loop <em>recovers</em> from tool errors — and recovering is exactly what produces a freezable trace containing a failure. The recording of a failure is still a recording of the environment; the stub now rethrows it.</p>
+        <span class="tell">Caught by: adversarially reviewing the foreign-agent integration.</span>
+      </div>
+    </div>
+
+    <div class="finding">
+      <span class="n">11</span>
+      <div>
+        <h4>The temperature axis was dead — and its ghost was in my own decision log</h4>
+        <p>Both example agents hardcoded <code>temperature: 0</code> in their model calls. A matrix config saying <code>qwen2.5:7b@0.9</code> changed the config's identity and nothing else; every request carried 0. The "41 identical pairs" the calibration pool reported were identical because the 0.9 runs <em>were</em> the 0 runs, byte for byte — and an earlier correction in my decision log confidently attributed a miscompared figure to "temperature 0.9", an axis that did not exist.</p>
+        <p>Third instance of the same failure class this project has caught — model, then prompt, then temperature, each hardcoded somewhere a config was supposed to reach.</p>
+        <span class="tell">Caught by: the same adversarial review. The fix is pinned by a test per agent.</span>
+      </div>
+    </div>
+
+    <div class="finding">
+      <span class="n">12</span>
+      <div>
+        <h4>The matrix reported a pass rate over whichever cells happened to run that day</h4>
+        <p>The runner hands every finished cell back to the caller, but a <em>resumed</em> cell — one whose result was already stored — arrived carrying its attempt row and no trace. The summary skipped cells without a trace. So on any run after the first, the printed rate covered only the cells that had not already finished: a 120-cell matrix announcing <code>23/32</code>.</p>
+        <p>I published one of those. The "64% under the hand-rolled loop" in the table below started as a rate over a fraction of a suite, selected by which cells were unfinished that afternoon, and it reached three documents before anyone tried to re-derive it. The comparison is now a committed script rather than a console line copied into prose.</p>
+        <span class="tell">Caught by: trying to reproduce my own published number and getting a different one.</span>
+      </div>
+    </div>
+
+    <div class="finding">
+      <span class="n">13</span>
+      <div>
+        <h4>An outage was cached as an agent failure, and it inverted a finding</h4>
+        <p>Twenty-three of the hundred and twenty cells in the metrics suite had died with <code>No Ollama daemon at 127.0.0.1:11434</code>. The model host had been killed mid-run, weeks earlier, when a session was interrupted. Each of those runs was stored as a completed attempt, resumed by every matrix run since, and counted in every rate computed from that suite. They are not evidence about an agent; they are evidence that a laptop process was not running.</p>
+        <p>The damage was not hypothetical, because I was in the middle of correcting defect 12 when I found it. With the outage runs in, the loop comparison read <em>"the strong model gains fourteen points under ReAct"</em>. With them purged and the twenty-three cells genuinely re-run, the strong model gains <strong>nothing</strong> — 97% under both loops. The correction I had just written was itself wrong, in the more flattering direction.</p>
+        <p>Recording the failure is right; a trace of a failed run is still a trace. Treating <em>the harness could not run the agent</em> as <em>the agent failed</em> is what was wrong. Provider adapters already name these errors, so the matrix now recognises them, retries, reports the cell as one that could not run, and stores nothing — so the next run re-runs it instead of serving the outage forever.</p>
+        <span class="tell">Caught by: reading the error messages behind a corrected number instead of the totals.</span>
+      </div>
+    </div>
+
+  </div>
+
+  <h2>The agent I didn't write</h2>
+
+  <p>Everything above was measured on an agent I built as a fixture, which is the weakest possible subject — a harness that has only ever tested its author's own loop has proven very little. So the final phase points it at LangGraph's prebuilt ReAct agent: the most widely deployed open-source agent loop in the JS ecosystem, whose decisions about tool routing, retries and stopping are not mine.</p>
+
+  <p>The integration is a single ~150-line bridge — a chat model whose generate method delegates to the harness's own client — plus one registration line. Recording, stubbed replay, the freezer, the matrix and the gate all applied unchanged, which was the promise of the seams and is now a tested claim rather than an intention. The whole foreign loop also runs against the deterministic mock, so CI exercises it with no model and no network.</p>
+
+  <p>And the comparison it enables produced the finding I would least have predicted — after two corrections, one of which reversed half of it. Same thirty tasks, same tools, same prompts, same temperature; only the loop differs. Both loops are scored against a single assertion set, because each suite was frozen from its own baseline and comparing their own rates would compare two rulers as well as two loops:</p>
+
+  <div class="table-wrap wide">
+    <table>
+      <thead><tr><th>live runs</th><th>hand-rolled</th><th>LangGraph ReAct</th></tr></thead>
+      <tbody>
+        <tr><td>llama3.2:3b — hard assertions</td><td class="num">60%</td><td class="num good">71%</td></tr>
+        <tr><td>llama3.2:3b — runs that died</td><td class="num bad">13 / 30</td><td class="num good">0 / 30</td></tr>
+        <tr><td>qwen2.5:7b — hard assertions</td><td class="num">97%</td><td class="num">97%</td></tr>
+        <tr><td>qwen2.5:7b — cases passed</td><td class="num">27 / 30</td><td class="num">27 / 30</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <p><strong>The weak model gains eleven points and stops dying entirely. The strong model cannot tell the two loops apart.</strong> Both loops provoke the <em>same</em> thirteen failed tool calls from the small model — the mistakes belong to the model, not the harness around it — but LangGraph's ToolNode catches each error and hands the text back for a retry, where my loop lets it abort. Thirteen dead runs become none. The 7B model, which gets its arguments right, never reaches the retry machinery at all: 97% either way, the same twenty-seven cases.</p>
+
+  <p>So the loop is not a quality parameter in general. It is a <em>recovery</em> parameter, and it pays in exact proportion to how often the model errs — which is a narrower claim than "ReAct is better", and the one the data supports. It also predicts where the difference should show up and where it should not, which is what makes it worth publishing at all.</p>
+
+  <p>The caveat, since the comparison flatters the loop I did not write: the tasks and the tools are mine, so this measures how two loops handle <em>my</em> tools' errors rather than making a general claim about LangGraph. What transfers is the method — hold the model, prompt, tools and temperature still, vary the loop, score both against one ruler — not the eleven points.</p>
+
+  <h2>The judge that preferred hallucinations</h2>
+
+  <p>The third tier of the scorer exists to answer one question: how much is the judge's opinion worth? You take pairs of answers a person has labelled blind, run the judge over them, and compute Cohen's κ — agreement corrected for chance.</p>
+
+  <p>Raw agreement is a flattering and near-meaningless number. If seventy percent of pairs are ties and the judge always says "tie", it agrees seventy percent of the time while knowing nothing. κ scores that at zero.</p>
+
+  <p>My first judge scored <strong>below</strong> zero.</p>
+
+  <figure class="wide fig-scroll">
+    <svg viewBox="0 0 720 250" role="img" aria-label="Cohen's kappa for three judge configurations with 95% confidence intervals: qwen2.5:7b with prompt v1 at -0.102, spanning -0.203 to -0.008; qwen2.5:7b with prompt v2 at 0.209, spanning 0.001 to 0.409; llama3.1:8b with prompt v2 at 0.089, spanning -0.117 to 0.307. The trustworthy threshold is 0.6, which none reach.">
+      <defs>
+        <marker id="wu-tick" viewBox="0 0 4 10" refX="2" refY="5" markerWidth="4" markerHeight="10" orient="auto">
+          <line x1="2" y1="0" x2="2" y2="10" stroke="currentColor" stroke-width="1.4" />
+        </marker>
+      </defs>
+
+      <!-- zero line -->
+      <line x1="258" y1="34" x2="258" y2="196" stroke="currentColor" stroke-opacity="0.4" stroke-width="1" />
+      <text x="258" y="24" text-anchor="middle" font-size="10" fill="var(--ink-3)">0 — chance</text>
+
+      <!-- trust threshold -->
+      <line x1="594" y1="34" x2="594" y2="196" stroke="var(--accent)" stroke-width="1.4" stroke-dasharray="4 4" />
+      <text x="594" y="24" text-anchor="middle" font-size="10" fill="var(--accent)">0.6 — trustworthy</text>
+
+      <!-- row 1: qwen v1 -->
+      <text x="82" y="74" text-anchor="end" font-size="12" font-weight="700" fill="var(--ink)">qwen2.5:7b</text>
+      <text x="82" y="88" text-anchor="end" font-size="10" fill="var(--ink-3)">prompt v1</text>
+      <line x1="144" y1="72" x2="254" y2="72" stroke="var(--bad)" stroke-width="1.6"
+            marker-start="url(#wu-tick)" marker-end="url(#wu-tick)" />
+      <circle cx="201" cy="72" r="5" fill="var(--bad)" />
+      <text x="264" y="76" font-size="11" fill="var(--bad)" font-weight="700">−0.102</text>
+
+      <!-- row 2: qwen v2 -->
+      <text x="82" y="128" text-anchor="end" font-size="12" font-weight="700" fill="var(--ink)">qwen2.5:7b</text>
+      <text x="82" y="142" text-anchor="end" font-size="10" fill="var(--ink-3)">prompt v2</text>
+      <line x1="259" y1="126" x2="487" y2="126" stroke="var(--good)" stroke-width="1.6"
+            marker-start="url(#wu-tick)" marker-end="url(#wu-tick)" />
+      <circle cx="375" cy="126" r="5" fill="var(--good)" />
+      <text x="497" y="130" font-size="11" fill="var(--good)" font-weight="700">0.209</text>
+
+      <!-- row 3: llama v2 -->
+      <text x="82" y="182" text-anchor="end" font-size="12" font-weight="700" fill="var(--ink)">llama3.1:8b</text>
+      <text x="82" y="196" text-anchor="end" font-size="10" fill="var(--ink-3)">prompt v2</text>
+      <line x1="192" y1="180" x2="430" y2="180" stroke="currentColor" stroke-opacity="0.55" stroke-width="1.6"
+            marker-start="url(#wu-tick)" marker-end="url(#wu-tick)" />
+      <circle cx="308" cy="180" r="5" fill="currentColor" fill-opacity="0.55" />
+      <text x="440" y="184" font-size="11" fill="var(--ink-3)">0.089</text>
+
+      <!-- axis -->
+      <line x1="90" y1="212" x2="650" y2="212" stroke="currentColor" stroke-opacity="0.3" stroke-width="1" />
+      <text x="90"  y="230" text-anchor="middle" font-size="10" fill="var(--ink-3)">−0.3</text>
+      <text x="258" y="230" text-anchor="middle" font-size="10" fill="var(--ink-3)">0</text>
+      <text x="426" y="230" text-anchor="middle" font-size="10" fill="var(--ink-3)">0.3</text>
+      <text x="594" y="230" text-anchor="middle" font-size="10" fill="var(--ink-3)">0.6</text>
+    </svg>
+    <figcaption>Cohen's κ with 95% bootstrap intervals, n=47. The first configuration's interval sits entirely below zero — it is <em>significantly</em> worse than chance. Rewriting the judge's prompt moved it by 0.31 on the same model and the same labels. A larger model under identical instructions did worse, and its interval crosses zero, so it cannot be distinguished from guessing.</figcaption>
+  </figure>
+
+  <h3>Why it failed</h3>
+
+  <p>The confusion matrix said where, and the judge's own stated reasons said why:</p>
+
+  <blockquote>
+    <p>"Answer B provides supporting details that confirm the…" — preferring the run that invented 450 and 500.</p>
+    <p>"Answer B provides a calculation supporting the figure" — preferring fabricated working.</p>
+    <p>"Answer A shows the calculation, while Answer B only states…" — preferring the run that printed a tool call as prose and computed nothing at all.</p>
+  </blockquote>
+
+  <p><strong>The judge was rewarding the appearance of work.</strong> Models that fabricate produce more text, more visible arithmetic, more apparent rigour — and the judge read all of that as quality. So it preferred hallucinations, systematically, and would have done so silently forever.</p>
+
+  <p>Part of the blame is mine. The prompt said to judge whether an answer was <em>"correct, complete and supported by the work shown"</em>. A fabricated calculation satisfies "work shown" perfectly. I had written an instruction that rewarded the exact behaviour it was meant to detect.</p>
+
+  <p>The other half of the failure only surfaced because of a decision that felt like a waste of time while making it. Roughly half the comparison pairs were the same model under two prompts, usually producing the same correct answer — dull to label, and I nearly filtered them out. The judge said <strong>TIE zero times in 47 pairs</strong>. I said it twenty-one times. It could not express equivalence at all; it always invented a winner. Only the "boring" pairs could have shown that.</p>
+
+  <h3>What fixed it, and what did not</h3>
+
+  <p>A rewritten prompt — one that explicitly states that shown arithmetic can be invented, that length is not accuracy, that an admission of ignorance beats a plausible fabrication, and that TIE is a real verdict — moved κ from −0.102 to 0.209.</p>
+
+  <p>A bigger model did not. <code>llama3.1:8b</code> under the same instructions scored 0.089, with an interval crossing zero. <strong>The prompt mattered more than the model</strong>, which is not what I would have guessed before measuring.</p>
+
+  <h2>The number I did not hit</h2>
+
+  <p>My own spec set the bar at κ ≥ 0.6 on 200 labelled examples. I reached <strong>0.209 on 47</strong>. Both halves missed.</p>
+
+  <p>So the system does the thing I built it to do: judged verdicts are marked untrusted, the report prints a banner explaining why, and the CI gate refuses to block a merge on any of them. Verified end to end — on a real run it flagged one verdict, the gate ignored it, and the build still failed on twenty-nine deterministic regressions that are not opinions.</p>
+
+  <p class="lede">Shipping a judge at κ = 0.209 as though it were fact is the failure this tier exists to prevent. Measuring it, publishing it, and degrading on it is the tier working. I would rather present a low number I can defend than a high one I never checked.</p>
+
+  <h2>Things that were true and surprising</h2>
+
+  <h3>Bigger was worse, repeatedly</h3>
+
+  <div class="table-wrap wide">
+    <table>
+      <thead><tr><th>model</th><th>runs errored</th><th>as judge (κ)</th></tr></thead>
+      <tbody>
+        <tr><td>qwen2.5:7b</td><td class="num good">0 / 60</td><td class="num">0.209</td></tr>
+        <tr><td>llama3.2:3b</td><td class="num">13 / 30</td><td class="num muted">—</td></tr>
+        <tr><td>llama3.1:8b</td><td class="num bad">26 / 30</td><td class="num">0.089</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <p>The 8B model failed nearly nine runs in ten as an agent, and was the weakest of the three as a judge. Parameter count predicted neither. An averages-only report would have hidden both.</p>
+
+  <h3>Broken agents are cheaper and faster</h3>
+
+  <p>This is the finding I would put in front of anyone optimising an agent on cost. A model that skips its lookup and fabricates a number does <em>less work</em>: fewer model calls, fewer tool calls, fewer tokens, lower latency. In this project's own numbers, the fabricating configuration was 4.6× faster and used half the tokens.</p>
+
+  <p>Every resource metric prefers it. Only a semantic check catches it. That is the whole argument for reporting quality, cost and latency in one view and never separately.</p>
+
+  <h3>An aggregate hid a fifth of the suite</h3>
+
+  <p>A weakened prompt left 132 of 159 assertions passing — 83%, which reads like nothing at all. At case level, where a case passes only if <em>every</em> hard assertion holds, it was a 20% drop and statistically significant. Averages are where regressions go to hide.</p>
+
+  <h2>What I would do differently</h2>
+
+  <ul>
+    <li><strong>Point it at a real model on day one.</strong> A deterministic mock is a fast way to build a harness that only works against a deterministic mock. Three of the thirteen were invisible until a real model was involved, and they surfaced within minutes of one being connected.</li>
+    <li><strong>Write the judge's prompt against a confusion matrix, not from intuition.</strong> My intuition produced a judge that was worse than random. Ten minutes with the matrix produced one that was not.</li>
+    <li><strong>Treat every prompt as configuration.</strong> The agent's prompt, and the judge's. Both change the answer, so both belong in the comparison matrix and in version control. I had the agent's prompt as a config field and ignored it for four phases.</li>
+    <li><strong>Keep the boring test cases.</strong> The pairs that felt like filler are the ones that caught the judge's inability to say "equal".</li>
+  </ul>
+
+  <h2>What I would still not claim</h2>
+
+  <p>The judge remains below its trust threshold, and the report says so on every page it touches. The task set is synthetic — thirty questions over a fictional metrics warehouse — chosen so ground truth is always derivable, at the cost of realism. And the "foreign" agent shares my tools and prompts by design, so the comparison isolates the loop; a fully alien agent with its own tools would need the recording proxy this architecture deliberately avoided. Each of these is a boundary I would state in a review, so it belongs here too.</p>
+
+  <h2>What it cost</h2>
+
+  <p>Nothing, in money. The whole project runs on local models through Ollama — no API key at any point, including the calibration. That was a constraint I was handed rather than one I chose, and it made the project better: it forced a second provider adapter, which is what proved the provider abstraction was real, and it made "local versus hosted" a genuine axis of comparison rather than a hypothetical one.</p>
+
+  <p>The expensive input was attention. Forty-seven pairs, labelled by hand, roughly twenty minutes. That is the only part of this that cannot be automated, and it is the part everything else is measured against. If a model labels the calibration set, the judge has been graded by a model — which is precisely the failure the calibration exists to detect.</p>
+
+  <footer>
+    196 tests, all seven build phases complete; the gate demonstration is a public pull request blocked by CI with every unit test green. Traces are stored transactionally with payload-level deduplication; assertions are proposed from recordings and reviewed rather than authored; reports carry percentile bootstrap intervals over paired resamples and refuse to name a direction they cannot support. Every figure in this piece is reproducible from the repository.
+  </footer>
+
+</main>

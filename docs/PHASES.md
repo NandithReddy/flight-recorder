@@ -12,7 +12,7 @@ Full rationale for each phase lives in [spec.html](./spec.html).
 | 04 | Scorer | 5–7 | **built and calibrated — criterion not met, honestly** |
 | 05 | Reporter | 3–4 | **done** |
 | 06 | Gate | 2 | **done** |
-| 07 | Dogfood + writeup | 4–5 | next |
+| 07 | Dogfood + writeup | 4–5 | **done** |
 
 ---
 
@@ -266,12 +266,58 @@ suite and p95 latency goes from 9.5s to 50s. It also caught a factual error in
 this project's own decision log, where I had compared two configs that were not
 comparable and concluded there was no regression (D-036).
 
-## Phase 07 — Dogfood + writeup
+## Phase 07 — Dogfood + writeup — **done**
 
 **Exit criterion:** a public report showing a regression the harness caught first.
 
-- [ ] Point the harness at the chosen open-source agent
-- [ ] Build a real suite from real traces
-- [ ] Run the full matrix, publish the report
-- [ ] Writeup: what was measured, what surprised you, what you got wrong
-- [ ] Verify: `npm i` to first report in under twenty minutes on a clean machine
+- [x] Point the harness at an agent this project did not write — LangGraph's
+      prebuilt ReAct loop, reached through a `BaseChatModel` bridge (D-041)
+- [x] Build a real suite from real traces — 30 cases frozen from qwen2.5:7b
+      runs of the ReAct agent, exported and committed
+- [x] Run the full matrix — 120 cells, 0 failures, live and stubbed
+- [x] Writeup published: [Wrong, Not Broken](https://claude.ai/code/artifact/f87a19f9-3304-4468-bdb7-160b6fb34ed9),
+      thirteen defects with their evidence, mirrored at `docs/writeup.html`
+- [x] Verify: `npm i` to first report — 12 seconds, checked on every push by CI
+
+**What integrating a foreign agent found.** The adversarial review of the
+bridge surfaced two real defects and revived one buried one:
+
+- **Stubbed replay served a recorded tool *failure* as a successful `null`**
+  (D-042). Unreachable for four phases, because the hand-rolled loop aborts on
+  tool errors; LangGraph recovers from them, and recovering is what turns an
+  errored span into a clean baseline that stubbed mode then lies about.
+- **The temperature axis was dead** (D-043): both agents hardcoded 0, so
+  `model@0.9` configs ran at 0 — which retroactively explains the "41
+  identical pairs" in the calibration pool and corrects D-036's account of
+  itself.
+- **LangChain validates tool args before any user code**, so schema-invalid
+  calls never become tool spans. Documented and pinned as a boundary rather
+  than papered over — the rejection is deterministic, so the stubbed-mode
+  guarantee survives it.
+
+- **The matrix reported a rate over whichever cells ran that day** (D-045).
+  Resumed cells reached the summary without their trace, so the printed rate
+  quietly narrowed to the unfinished ones — and one such rate was published in
+  three documents as a full-suite figure. Found by trying to reproduce this
+  phase's own table.
+- **23 cached runs had died because the model daemon was down** (D-046). An
+  outage was stored as an agent failure, resumed ever since, and counted in
+  every rate from that suite. Purging and re-running those cells *inverted* the
+  finding below — which is why it is stated more narrowly than it first was.
+
+**The loop is a recovery parameter, not a quality parameter** (D-044). Same 30
+tasks, tools, prompts and temperature; both loops scored against one assertion
+set by `scripts/loop-compare.ts`:
+
+| live runs | hand-rolled | LangGraph ReAct |
+|---|---|---|
+| llama3.2:3b hard assertions | 60% | **71%** |
+| llama3.2:3b runs that died | 13 of 30 | **0 of 30** |
+| qwen2.5:7b hard assertions | 97% | 97% |
+| qwen2.5:7b cases passed | 27/30 | 27/30 |
+
+The weak model makes the same 13 failed tool calls under either loop; ToolNode
+hands each back for a retry where ours aborts, so 13 dead runs become none. The
+strong model, which never errs, cannot tell the loops apart. The comparison uses
+our tasks and our tools, so what transfers is the method rather than the eleven
+points.

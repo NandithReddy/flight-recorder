@@ -17,7 +17,7 @@
 
 import { newId } from "../core/ids.ts";
 import type { Attempt, ReplayMode, RunConfig, TestCase, Trace } from "../core/types.ts";
-import type { ModelClient } from "../provider/types.ts";
+import { isEnvironmentFailure, type ModelClient } from "../provider/types.ts";
 import type { SqliteTraceStore } from "../store/sqlite-store.ts";
 import { getAgent } from "./registry.ts";
 import { record, type RecordableAgent } from "./replay.ts";
@@ -158,7 +158,15 @@ async function runCell(
       });
 
       // An agent failure is a *result*, not an error: the trace records it and
-      // the report should show it. Only a thrown error reaches the retry path.
+      // the report should show it. A failure of the *environment* is neither —
+      // a run that died because the model daemon was down is not evidence about
+      // the agent, and storing it as an Attempt makes resume serve that
+      // non-result forever (D-046). Rethrow so the retry path sees it and, if
+      // it persists, the cell is reported as one that could not run.
+      if (isEnvironmentFailure(trace.error)) {
+        throw Object.assign(new Error(trace.error!.message), { name: trace.error!.type });
+      }
+
       const attempt: Attempt = {
         id: newId("attempt"),
         caseId: cell.testCase.id,
@@ -199,6 +207,7 @@ export async function runMatrix(options: MatrixOptions): Promise<MatrixResult> {
 
   // Resolve resumable cells up front so the progress total is honest.
   const pending: number[] = [];
+  const resumedCells: number[] = [];
   let skipped = 0;
   cells.forEach((cell, index) => {
     const existing = resume
@@ -214,10 +223,25 @@ export async function runMatrix(options: MatrixOptions): Promise<MatrixResult> {
         retries: 0,
       };
       skipped += 1;
+      resumedCells.push(index);
     } else {
       pending.push(index);
     }
   });
+
+  // A resumed cell carries its recorded trace, not just its attempt row.
+  // Leaving it null reads downstream as "this cell has no result", so anything
+  // computed over the matrix silently drops it — the same shrinking denominator
+  // the failure path below is careful to avoid. The CLI's tier-1 rate did
+  // exactly that, and a rate over the handful of cells that happened to run
+  // that day reached three documents as if it covered the suite (D-045).
+  await Promise.all(
+    resumedCells.map(async (index) => {
+      const result = results[index]!;
+      if (!result.attempt.traceId) return;
+      result.trace = await options.store.get(result.attempt.traceId);
+    }),
+  );
 
   emit({ type: "start", total: cells.length, skipped });
 

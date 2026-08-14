@@ -146,7 +146,12 @@ export class SqliteTraceStore implements TraceStore {
   #path: string;
 
   constructor(root: string = DEFAULT_ROOT, options: SqliteStoreOptions = {}) {
-    this.#path = root.endsWith(".db") ? root : join(root, "traces.db");
+    // ":memory:" is SQLite's own sentinel, not a directory. Appending
+    // "traces.db" to it produced a real on-disk store in a directory literally
+    // named ":memory:" — the guard below then never fired, so a caller asking
+    // for a throwaway database silently got a persistent one.
+    this.#path =
+      root === ":memory:" || root.endsWith(".db") ? root : join(root, "traces.db");
     this.#threshold = options.payloadThresholdBytes ?? 256;
 
     if (this.#path !== ":memory:") mkdirSync(dirname(this.#path), { recursive: true });

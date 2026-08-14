@@ -701,3 +701,218 @@ to `<set>.calibrations.jsonl` alongside the current file the report cites.
 
 Found by running three calibrations in a row and watching the evidence for the
 first two disappear.
+
+---
+
+### D-041 · The open-source agent is LangGraph's prebuilt ReAct loop, reached through a chat-model bridge
+
+Phase 7's claim is that the harness records and regresses an agent this project
+did not write. The loop under test is `createReactAgent` from
+`@langchain/langgraph` — the most widely deployed open-source agent loop in the
+JS ecosystem. It decides when to call tools, how to route results, when to
+stop, and how to recover from a tool error; none of that logic is ours.
+
+**What is ours, stated precisely:** the two domain tools and the prompt
+variants (deliberately identical to the demo agent's, so comparing the two
+agents compares *loops* rather than tasks), and the bridge —
+`src/provider/langchain-bridge.ts`, a `BaseChatModel` whose `_generate`
+delegates to the harness's `ModelClient`.
+
+The bridge is the entire integration surface, and it is why no other part of
+the harness changed: the model calls of the foreign loop arrive through the
+recorder-wrapped client, so model spans, usage, stubbed replay and the sandbox
+all apply unchanged. Registering the agent was one line. That was the promise
+of the `RecordableAgent` seam, and this is the test of it.
+
+**Alternatives rejected:** Python agents (AutoGPT-descendants, smolagents,
+CrewAI) would need an HTTP recording proxy and a subprocess runner, and their
+tools execute out of reach of the stub interceptor — stubbed replay would die.
+Vercel AI SDK's tool loop would work the same way as LangGraph but is less
+recognisable as "an agent someone else wrote".
+
+**Version facts that bit, recorded for the next reader:** in the installed
+`@langchain/core` 1.2.7, `Runnable.bind()` no longer exists (`withConfig` is
+the only binding mechanism); `bindTools` has no default implementation and
+bound tools reach `_generate` only via a caller-declared CallOptions field; the
+system-prompt param on `createReactAgent` is now `prompt` (`stateModifier` and
+`messageModifier` are deprecated); `AIMessage.tool_calls[].args` is a parsed
+object, not a JSON string. All four were extracted from the installed type
+definitions rather than remembered, and all four would have been plausible
+sources of silent conversion bugs.
+
+**One behavioural difference observed, not suppressed:** our hand-rolled loop
+lets a tool error abort the run, while LangGraph's ToolNode catches it and
+hands it back to the model to retry. Neither is wrong. The harness records
+what happened; the tool-error span is still captured either way.
+
+---
+
+### D-042 · A recorded failure replays as a failure
+
+Found by adversarial review of the phase-7 integration, and it is the most
+important defect the project has caught in itself since the judge.
+
+The stub served only `span.output`, ignoring `span.error`. A tool call that
+*failed* on the baseline therefore replayed as a successful `null` — which
+LangChain stringifies into a ToolMessage containing the text "null" with
+status *success*. The candidate model saw "null" where the live model saw the
+error text, the conversations silently diverged, and the stub report still
+claimed `identical: true`. The one guarantee stubbed mode exists to provide —
+the environment held perfectly still — was broken precisely on the runs where
+it matters most.
+
+The foreign agent is what made this reachable. Our hand-rolled loop lets a
+tool error abort the run, so an errored span always came with `trace.error`
+set and such traces never became clean baselines. LangGraph's ToolNode catches
+the error, feeds the text back to the model, and the run *recovers* — a clean,
+freezable trace containing an errored span. The defect sat unreachable for
+four phases until an agent with different error semantics arrived.
+
+The recording of a failure is still a recording of the environment. The stub
+now rethrows recorded errors with the recorded message, so a recovering agent
+sees the identical error text on replay and a non-recovering agent aborts
+identically. Pinned by tests for both agent shapes.
+
+---
+
+### D-043 · The temperature axis was dead, and its ghost is in this log
+
+Both example agents hardcoded `temperature: 0` in their model calls, so the
+matrix's temperature axis — `qwen2.5:7b@0.9` — changed the config id and
+nothing else. Every request carried 0 regardless.
+
+Two consequences already in the record:
+
+- The calibration pool generation noted "41 skipped as duplicate or identical"
+  — because the `@0.9` runs *were* the temp-0 runs, byte for byte.
+- D-036's correction states the miscompared 82% figure was "qwen at
+  temperature 0.9". It was qwen at temperature 0, labelled 0.9. The
+  correction's substance stands — the configs were not comparable — but its
+  explanation named an axis that did not exist.
+
+`AgentContext` now carries `temperature` from the config, both agents use it,
+and a test asserts the request temperature equals the config temperature for
+both loops. This is the third instance of the same failure class caught by
+this project (model in phase 3, prompt in phase 6, temperature now), which is
+an argument for the context object being the *only* way agents receive config.
+
+---
+
+### D-044 · The loop is a quality parameter for models that make mistakes, and invisible for models that don't
+
+*Twice corrected. The first version of this table was a rate over a fraction of
+the suite (D-045); the second included 23 runs that died because the model
+daemon was down (D-046). The finding below is the one that survived both — and
+it is a different, narrower claim than either of them.*
+
+30 identical tasks, identical tools, identical prompts, identical temperature —
+only the agent loop differs. Both loops' traces are scored against **one**
+assertion set (the metrics suite's, frozen from the hand-rolled baseline),
+matched task by task, because each suite's own assertions are a different ruler.
+Reproduce with `node scripts/loop-compare.ts`:
+
+| live runs | hand-rolled | LangGraph ReAct |
+|---|---|---|
+| llama3.2:3b hard assertions | 78/129 · 60% | **91/129 · 71%** |
+| llama3.2:3b runs that died | 13 of 30 | **0 of 30** |
+| qwen2.5:7b hard assertions | 125/129 · 97% | 125/129 · 97% |
+| qwen2.5:7b cases passed | 27/30 | 27/30 |
+
+Two results, and the second is the interesting one.
+
+**The weak model gains eleven points and stops dying.** It emits 13 failed tool
+calls across its 30 live runs under *either* loop — the model's mistakes are the
+model's, and the loop does not change them. LangGraph's ToolNode catches each
+error and hands the text back for a retry; our loop lets it abort. Same
+mistakes, different consequences: 13 dead runs become 0.
+
+**The strong model is completely indifferent to the loop** — 97% either way, the
+same 27 of 30 cases, no errored tool calls to recover from. Every millisecond of
+retry machinery is dead code on a model that gets its arguments right.
+
+So the loop is not a quality parameter in general; it is a *recovery* parameter,
+and it pays exactly in proportion to how often the model errs. That is a much
+narrower claim than "ReAct is better", and it is the one the data supports. It
+also predicts where the difference should appear and where it should not, which
+is the property that makes it worth publishing.
+
+The honest caveat: the tasks and tools are ours, so this measures how two loops
+handle *our* tools' errors rather than making a general claim about LangGraph.
+What transfers is the method — hold the model, prompt, tools and temperature
+still, vary the loop, score both against one ruler.
+
+Also observed: in stubbed mode the difference vanishes for the weak model too
+(77% hand-rolled against 76% ReAct, no deaths under either). Positional matching
+serves the baseline's recorded — correct — call even when the candidate's
+arguments were malformed, so the stub never lets the failure happen and there is
+nothing to recover from. Stubbed mode holds the environment still, and a tool
+error *is* the environment. Worth a line in any report read across modes.
+
+---
+
+### D-045 · The matrix reported a rate over whichever cells happened to run today
+
+Found by trying to reproduce D-044's own published table and failing.
+
+The CLI's tier-1 summary iterated the matrix results and skipped any cell
+without a trace — and `runMatrix` gave a *resumed* cell its stored `Attempt`
+but left `trace: null`. So on a resumed run, which is every run after the first
+one, the printed rate covered only the cells that had not already finished. The
+120-cell react matrix printed `23/32` and called it the assertion rate; the
+figure that reached D-044, PHASES and the README as "64% under the hand-rolled
+loop" was a rate over a fraction of the suite, chosen by which cells happened to
+be unfinished that afternoon.
+
+Nothing errored, the denominator was printed honestly, and the number was
+wrong. Same shape as every other defect on this project's list, and this one is
+in the reporting path — the part whose whole job is to be trustworthy. It also
+sat directly beneath a comment in `matrix.ts` explaining that a failed cell must
+keep its slot because "dropping it would silently shrink the denominator."
+
+A second, smaller version of the same mistake sat two lines below it: the
+summary bucketed cells by model and mode, so a matrix crossing prompts averaged
+`v1` and `v0` into one row. The gate self-test's own matrix printed **78%** —
+the mean of a healthy config at 100% and a deliberately broken one at 56%. It is
+now keyed by the whole config, which prints both.
+
+Resumed cells now carry their recorded trace, so every rate covers the full
+matrix, and a test asserts a resumed run returns the same trace ids as the run
+that recorded them. Corrected figures are in D-044; the cross-loop comparison is
+now a committed script (`scripts/loop-compare.ts`) rather than a console line
+copied into prose, because a number nobody can re-derive is a number nobody
+should have to believe.
+
+---
+
+### D-046 · An outage is not a result: the matrix cached 23 runs that died because the daemon was down
+
+Found immediately after D-045, by recomputing the corrected table and reading
+the error messages instead of the totals.
+
+23 of the 120 metrics-suite cells had died with `No Ollama daemon at
+http://127.0.0.1:11434` — the model host was killed mid-run when a session was
+interrupted, weeks ago. Every one had been stored as a completed `Attempt`,
+resumed on every matrix run since, and counted in every rate computed from that
+suite. They are not evidence about an agent; they are evidence that a laptop
+process was not running.
+
+The damage was not hypothetical. With the outage runs in, the corrected D-044
+table read "the strong model gains 14 points under ReAct" and "20 of 60
+hand-rolled runs died". With them out and the 23 cells actually re-run: the
+strong model gains **nothing** — 97% under both loops — and the deaths were 13,
+all of them the weak model's. The version I nearly published inverted the
+finding, because a dead daemon looks exactly like a fatal agent failure to
+anything reading `trace.error`.
+
+The recorder is right to capture the failure — D-006 says a trace of a failed
+run is written, and that stands. The matrix is what was wrong: it treated *the
+harness could not run the agent* as *the agent failed*. `ModelClient` adapters
+already name these errors (`OllamaUnavailableError`,
+`MissingGatewayCredentialError`, `DockerUnavailableError`), so
+`isEnvironmentFailure` now recognises them by type, the cell is retried and then
+reported as one that could not run, and nothing is persisted — so the next run
+re-runs it rather than serving the outage forever. Pinned by a test that fails a
+cell with a dead daemon and asserts the following run records it for real.
+
+**Reverses if:** a provider's unavailability is ever the thing under test. Then
+it belongs in a case as an assertion, not as a silently cached attempt.

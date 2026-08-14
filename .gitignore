@@ -6,3 +6,6 @@ coverage/
 .env.*
 !.env.example
 .DS_Store
+
+# Generated reports are outputs, not sources.
+flightrecorder/*.html
