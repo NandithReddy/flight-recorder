@@ -18,6 +18,9 @@ wrong 8% of the time. Nothing throws. You find out from a customer.
 
 Full rationale, architecture and build plan: [docs/spec.html](docs/spec.html).
 
+The postmortem — every defect with its evidence, and the numbers that had to be
+corrected twice — is [docs/writeup.html](docs/writeup.html).
+
 **It caught thirteen defects, and none of them crashed.** Every one was a number
 that was quietly wrong — including one in this repository's own judge, which
 measured *worse than chance* against human labels; one the gate caught in a
