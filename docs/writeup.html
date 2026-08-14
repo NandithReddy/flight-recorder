@@ -297,14 +297,14 @@
 
   <p class="eyebrow">Project postmortem</p>
   <h1>Wrong, Not Broken</h1>
-  <p class="standfirst">I built a regression harness for LLM agents. It found thirteen defects. Not one of them was a crash — every single one was a number that was quietly wrong, including in the harness's own judge, which turned out to be worse than a coin flip.</p>
+  <p class="standfirst">I built a regression harness for LLM agents. It found fourteen defects. Not one of them was a crash — every single one was a number that was quietly wrong, including in the harness's own judge, which turned out to be worse than a coin flip.</p>
 
   <dl class="stats wide">
-    <div><dt>Defects found</dt><dd>13</dd></div>
+    <div><dt>Defects found</dt><dd>14</dd></div>
     <div><dt>That crashed</dt><dd>0</dd></div>
     <div><dt>Human labels</dt><dd>47</dd></div>
     <div><dt>Agent loops</dt><dd>2</dd></div>
-    <div><dt>Tests</dt><dd>196</dd></div>
+    <div><dt>Tests</dt><dd>203</dd></div>
     <div><dt>API spend</dt><dd>$0</dd></div>
   </dl>
 
@@ -314,9 +314,9 @@
 
   <p>So I built the thing that catches that: record real agent runs, freeze a slice of them into replayable test cases, and re-run those cases against every proposed change with an honest before-and-after. Traces go to a transactional store; assertions are proposed automatically by reading a recording; a three-tier scorer runs cheap deterministic checks first and an LLM judge only when it has to; the report carries confidence intervals; and a CI gate blocks a merge on a significant regression.</p>
 
-  <p class="lede">What I did not expect was that the project would spend most of its life catching <em>itself</em>. Thirteen defects, across seven build phases. Every one produced a wrong number and no error. Six of them were in the measurement apparatus — the part whose entire job is to be trustworthy — and one was caught by the finished gate, in a commit of mine that a fully green test suite had waved through.</p>
+  <p class="lede">What I did not expect was that the project would spend most of its life catching <em>itself</em>. Fourteen defects, across seven build phases. Every one produced a wrong number and no error. Seven of them were in the measurement apparatus — the part whose entire job is to be trustworthy — and one was caught by the finished gate, in a commit of mine that a fully green test suite had waved through.</p>
 
-  <h2>The thirteen</h2>
+  <h2>The fourteen</h2>
 
   <p>Presented in the order they were found, because the order is part of the argument: the later ones were found by the tool, using the earlier ones.</p>
 
@@ -445,6 +445,17 @@
         <p>The damage was not hypothetical, because I was in the middle of correcting defect 12 when I found it. With the outage runs in, the loop comparison read <em>"the strong model gains fourteen points under ReAct"</em>. With them purged and the twenty-three cells genuinely re-run, the strong model gains <strong>nothing</strong> — 97% under both loops. The correction I had just written was itself wrong, in the more flattering direction.</p>
         <p>Recording the failure is right; a trace of a failed run is still a trace. Treating <em>the harness could not run the agent</em> as <em>the agent failed</em> is what was wrong. Provider adapters already name these errors, so the matrix now recognises them, retries, reports the cell as one that could not run, and stores nothing — so the next run re-runs it instead of serving the outage forever.</p>
         <span class="tell">Caught by: reading the error messages behind a corrected number instead of the totals.</span>
+      </div>
+    </div>
+
+    <div class="finding">
+      <span class="n">14</span>
+      <div>
+        <h4>The merge gate reported PASS when it had compared nothing</h4>
+        <p>A config spec is <code>model#prompt</code>. Write <code>--baseline v1</code> and <code>v1</code> parses as a <em>model name</em>, nothing matches it, and the comparison runs over zero cases — at which point the pass-rate delta is NaN, "not significant" is trivially true, every check passes, and the build goes green. A typo in a CI argument was indistinguishable from a clean bill of health.</p>
+        <p>The statistical report had guarded this for months: with no data it prints an explainer instead of a row of NaN. The gate — the half that actually decides whether code ships — was the half that stayed quiet. <strong>A merge gate whose failure mode is silent approval is worse than no gate, because it is trusted.</strong> It now exits non-zero and prints the parsed config ids next to the specs you gave it.</p>
+        <p>Found by an adversarial review of the two corrections above, which also found that both of those were themselves incomplete: the bucketing fix had left temperature out of the key, and the outage fix was applied when writing an attempt but never when reading one, so every outage already sitting in a store was still being served. The corrections needed correcting.</p>
+        <span class="tell">Caught by: review agents pointed at my own fixes, with instructions to refute their findings before reporting them.</span>
       </div>
     </div>
 
@@ -594,7 +605,7 @@
   <h2>What I would do differently</h2>
 
   <ul>
-    <li><strong>Point it at a real model on day one.</strong> A deterministic mock is a fast way to build a harness that only works against a deterministic mock. Three of the thirteen were invisible until a real model was involved, and they surfaced within minutes of one being connected.</li>
+    <li><strong>Point it at a real model on day one.</strong> A deterministic mock is a fast way to build a harness that only works against a deterministic mock. Three of the fourteen were invisible until a real model was involved, and they surfaced within minutes of one being connected.</li>
     <li><strong>Write the judge's prompt against a confusion matrix, not from intuition.</strong> My intuition produced a judge that was worse than random. Ten minutes with the matrix produced one that was not.</li>
     <li><strong>Treat every prompt as configuration.</strong> The agent's prompt, and the judge's. Both change the answer, so both belong in the comparison matrix and in version control. I had the agent's prompt as a config field and ignored it for four phases.</li>
     <li><strong>Keep the boring test cases.</strong> The pairs that felt like filler are the ones that caught the judge's inability to say "equal".</li>
@@ -611,7 +622,7 @@
   <p>The expensive input was attention. Forty-seven pairs, labelled by hand, roughly twenty minutes. That is the only part of this that cannot be automated, and it is the part everything else is measured against. If a model labels the calibration set, the judge has been graded by a model — which is precisely the failure the calibration exists to detect.</p>
 
   <footer>
-    196 tests, all seven build phases complete; the gate demonstration is a public pull request blocked by CI with every unit test green. Traces are stored transactionally with payload-level deduplication; assertions are proposed from recordings and reviewed rather than authored; reports carry percentile bootstrap intervals over paired resamples and refuse to name a direction they cannot support. Every figure in this piece is reproducible from the repository.
+    203 tests, all seven build phases complete; the gate demonstration is a public pull request blocked by CI with every unit test green. Traces are stored transactionally with payload-level deduplication; assertions are proposed from recordings and reviewed rather than authored; reports carry percentile bootstrap intervals over paired resamples and refuse to name a direction they cannot support. Every figure in this piece is reproducible from the repository.
   </footer>
 
 </main>

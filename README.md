@@ -4,7 +4,10 @@ An evaluation and regression harness for LLM agents. It records real agent
 runs, freezes them into replayable test cases, and blocks any change that
 quietly makes the agent worse.
 
-> **Status: all seven build phases complete.** Record → freeze → matrix →
+> **Status: all seven build phases built; six meet their exit criteria.**
+> Phase 4's own bar — an LLM judge agreeing with humans at κ ≥ 0.6 — is
+> published *unmet* at κ = 0.209, and the system degrades on it rather than
+> pretending otherwise. Record → freeze → matrix →
 > score → report → gate, now proven against an agent this project did not
 > write: LangGraph's prebuilt ReAct loop runs on the harness through a
 > ~150-line bridge, with recording, stubbed replay and the gate applying
@@ -24,7 +27,7 @@ in about thirty lines, seed a suite from your own questions, gate it in CI.
 The postmortem — every defect with its evidence, and the numbers that had to be
 corrected twice — is [docs/writeup.html](docs/writeup.html).
 
-**It caught thirteen defects, and none of them crashed.** Every one was a number
+**It caught fourteen defects, and none of them crashed.** Every one was a number
 that was quietly wrong — including one in this repository's own judge, which
 measured *worse than chance* against human labels; one the gate caught in a
 commit of mine that a full green test suite had waved through; and one that sat
@@ -38,7 +41,9 @@ clean, and the gate blocks it anyway.
 
 ## Quickstart
 
-Requires Node 22.6+ (25 recommended — it runs TypeScript directly).
+Requires **Node 24+** — it runs TypeScript directly and uses the built-in
+`node:sqlite`, both of which are flag-gated on earlier releases. CI runs Node 24;
+development was on 25.
 
 ```bash
 npm install
@@ -64,8 +69,8 @@ add `--provider ollama` for real local models.
 The baseline agent verifies its arithmetic with a tool and answers `18.33%`.
 The degraded one skips verification and answers `roughly 25%`. It does not
 error. It does not throw. It reads as confident, fluent English — and it is
-**33% cheaper and 33% faster**, so anything optimising on cost alone would
-promote it.
+**59% cheaper and 32% faster** ($0.001902 → $0.000774), so anything optimising
+on cost alone would promote it.
 
 Freezing the good run proposes nine assertions with no hand-authoring, because
 `18.33` appears in both the calculator's output and the final answer — which
@@ -73,11 +78,17 @@ makes it a checked fact rather than a claim. Checking that case against the
 degraded run gives:
 
 ```
-FAIL  tool_called(calculate)   called: search
-FAIL  output_contains(18.33)   "18.33" absent from the output
-pass  max_steps(7)             3 steps (limit 7)
-pass  max_cost_usd(0.00173)    $0.000774 (limit $0.001730)
-pass  max_wall_ms(54)          13ms (limit 54ms)
+pass  no_error(1)                    no error
+pass  tool_called(search)            called: search
+FAIL  tool_called(calculate)         called: search
+FAIL  output_contains(18.33)         "18.33" absent from the output
+FAIL  output_contains(1,200,000)     "1,200,000" absent from the output
+FAIL  output_contains(1,420,000)     "1,420,000" absent from the output
+pass  max_steps(7)                   3 steps (limit 7)
+pass  max_cost_usd(0.00285)          $0.000774 (limit $0.002850)
+pass  max_wall_ms(60)                13ms (limit 60ms)
+
+5/9 assertions passed  ·  4 hard failures
 ```
 
 Every resource check passes. Only the semantic ones catch it. That is the
@@ -170,7 +181,11 @@ npm run fr -- matrix --models qwen2.5:7b,llama3.2:3b --modes live,stubbed
   ok   llama3.2:3b   live     5709ms
   ok   llama3.2:3b   stubbed  6076ms   stub: 0 exact, 1 loose, 0 miss, 1 unused
 
-  qwen2.5:7b  live 6/6 · stubbed 6/6      llama3.2:3b  live 4/6 · stubbed 5/6
+tier-1 assertions  (not scoring — no judge, no statistics)
+  qwen2.5:7b#v1 live         6/6   100%
+  qwen2.5:7b#v1 stubbed      6/6   100%
+  llama3.2:3b#v1 live        4/6    67%
+  llama3.2:3b#v1 stubbed     5/6    83%
 ```
 
 llama fails in *both* modes, so the environment is not the problem — the model

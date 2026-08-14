@@ -11,7 +11,7 @@
  *
  * **Quality, cost and latency are reported together, never separately.** This
  * project's own evidence is that resource metrics prefer the broken agent: the
- * degraded mock is 33% cheaper, and a 3B model that fabricates its numbers is
+ * degraded mock is 59% cheaper, and a 3B model that fabricates its numbers is
  * 4.6x faster than the one that looks them up. A report that leads with cost
  * would recommend the wrong thing every time.
  */

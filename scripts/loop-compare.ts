@@ -43,8 +43,11 @@ const suites = new SuiteStore();
 const db = new DatabaseSync(`${STORE_DIR}/traces.db`, { readOnly: true });
 
 const attempts = db
-  .prepare("select case_id, mode, trace_id from attempts where trace_id is not null and trace_id != ''")
-  .all() as { case_id: string; mode: string; trace_id: string }[];
+  .prepare(
+    "select case_id, config_id, mode, trace_id from attempts " +
+      "where trace_id is not null and trace_id != ''",
+  )
+  .all() as { case_id: string; config_id: string; mode: string; trace_id: string }[];
 
 const metrics = await suites.read("metrics");
 const react = await suites.read("react");
@@ -72,10 +75,14 @@ async function tally(loop: string, cases: TestCase[]): Promise<void> {
     const trace = await store.get(row.trace_id);
     if (!trace) continue;
 
-    const key = `${loop}|${trace.config.model}|${row.mode}`;
+    // Keyed by config id, not by model: this script exists to make a published
+    // table re-derivable, so averaging two configs into one row here would be
+    // the same defect it was written to correct (D-045).
+    const key = `${loop}|${row.config_id}|${row.mode}`;
+    const temp = trace.config.temperature ? `@${trace.config.temperature}` : "";
     const bucket: Bucket = buckets.get(key) ?? {
       loop,
-      model: trace.config.model,
+      model: `${trace.config.model}${temp}#${trace.config.promptVersion}`,
       mode: row.mode,
       hardPass: 0,
       hardTotal: 0,
@@ -107,7 +114,7 @@ if (buckets.size === 0) {
   console.log("Nothing to compare — no stored attempts for either suite.");
 } else {
   console.log("both loops scored against the metrics suite's assertions — same 30 tasks, one ruler\n");
-  console.log("  loop         model         mode      hard assertions  cases passed  runs died  tool errors");
+  console.log("  loop         config              mode      hard assertions  cases passed  runs died  tool errors");
 
   const ordered = [...buckets.values()].sort(
     (a, b) =>
@@ -118,7 +125,7 @@ if (buckets.size === 0) {
 
   for (const bucket of ordered) {
     console.log(
-      `  ${bucket.loop.padEnd(12)} ${bucket.model.padEnd(13)} ${bucket.mode.padEnd(9)} ` +
+      `  ${bucket.loop.padEnd(12)} ${bucket.model.padEnd(19)} ${bucket.mode.padEnd(9)} ` +
         `${String(bucket.hardPass).padStart(3)}/${String(bucket.hardTotal).padEnd(4)} ${pct(bucket.hardPass, bucket.hardTotal)}   ` +
         `${String(bucket.casesPassed).padStart(2)}/${bucket.cases} ${pct(bucket.casesPassed, bucket.cases)}    ` +
         `${String(bucket.died).padStart(2)}/${bucket.cases}      ${bucket.toolErrors}`,

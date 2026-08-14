@@ -26,6 +26,7 @@ import { evaluateAll } from "../src/freeze/assertions.ts";
 import { DEMO_QUESTION, demoAgent } from "../examples/demo-agent.ts";
 import {
   dockerSandbox,
+  DockerUnavailableError,
   isDockerAvailable,
   runInSandbox,
 } from "../src/replay/sandbox.ts";
@@ -347,6 +348,53 @@ describe("matrix runner", () => {
     expect(recovered.ran).toBe(1);
     expect(recovered.resumed).toBe(0);
     expect(recovered.results[0]?.trace?.error).toBeNull();
+  });
+
+  it("re-runs an outage already sitting in the store, rather than serving it", async () => {
+    // Refusing to write an outage only protects stores this version created.
+    // 23 attempts recorded before that fix were still being resumed out of this
+    // project's own store, which is the "forever" D-046 claimed to have ended.
+    const testCase = await caseFrom();
+    store.putAttempt({
+      id: "attempt_stale_outage",
+      caseId: testCase.id,
+      configId: configA.id,
+      mode: "live",
+      traceId: "trace_from_the_outage",
+      startedAt: 1,
+      endedAt: 2,
+      error: { message: "No Ollama daemon at http://127.0.0.1:11434.", type: "OllamaUnavailableError" },
+    });
+
+    const result = await runWith(testCase, [configA]);
+    expect(result.resumed).toBe(0);
+    expect(result.ran).toBe(1);
+    expect(result.results[0]?.trace?.error).toBeNull();
+  });
+
+  it("treats an outage inside a tool as an outage, not as a result", async () => {
+    // An agent whose loop catches tool errors — most of them, ours excepted —
+    // turns an unreachable sandbox into a *clean* trace with an errored span,
+    // which a check that only reads trace.error would happily score and cache.
+    const testCase = await caseFrom();
+    const recovering: RecordableAgent = {
+      ref: demoAgent.ref,
+      async run(_input, ctx) {
+        const tool = ctx.recorder.wrapTool("sandboxed", async () => {
+          throw new DockerUnavailableError("docker: command not found");
+        });
+        try {
+          await tool({});
+        } catch {
+          return "carried on without the tool";
+        }
+        return "unreachable";
+      },
+    };
+
+    const outage = await runWith(testCase, [configA], { agentFor: () => recovering });
+    expect(outage.failed).toBe(1);
+    expect(store.findAttempt(testCase.id, configA.id, "live")).toBeNull();
   });
 
   it("re-runs everything when resume is off", async () => {

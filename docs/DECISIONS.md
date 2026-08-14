@@ -74,9 +74,12 @@ replay loop runs with no API key and no spend. It has a `degraded` variant that
 does not fail in any way that throws: it skips the verification tool call and
 answers confidently with an unchecked number.
 
-**Observation worth keeping for the writeup:** the degraded run is 33% cheaper
-and 33% faster than the correct one, because skipping verification skips a
-model call and a tool call. Any optimiser tuned on cost or latency alone would
+**Observation worth keeping for the writeup:** the degraded run is 59% cheaper
+and 32% faster than the correct one, because skipping verification skips a
+model call and a tool call. *(Figures corrected. This entry said "33% and 33%"
+from phase 0 until a review re-derived them: true when written, made stale by
+6e424b0, which restored the verification instruction and lengthened the v1
+prompt. $0.001902 → $0.000774 today.)* Any optimiser tuned on cost or latency alone would
 promote the wrong agent. This is a concrete argument for why the report must
 carry quality, cost and latency together, and never cost alone.
 
@@ -916,3 +919,56 @@ cell with a dead daemon and asserts the following run records it for real.
 
 **Reverses if:** a provider's unavailability is ever the thing under test. Then
 it belongs in a case as an assertion, not as a silently cached attempt.
+
+---
+
+### D-047 · What an adversarial review of the corrections found
+
+The corrections in D-045 and D-046 were themselves reviewed, adversarially, by
+readers with no stake in them. They found four more defects — three of the same
+family as the ones they were reviewing, which is the useful part.
+
+- **The bucketing fix was half a fix.** D-045 changed the matrix summary's key
+  from model+mode to model+prompt+mode. Temperature was still missing, so
+  `--models qwen2.5:7b,qwen2.5:7b@0.9` still averaged two configs into one row —
+  and D-043, in the same batch, is what made temperature reach the model at all,
+  so the fix and the thing that armed the collision shipped together. Keyed by
+  the config's identity now, in the matrix summary *and* in
+  `scripts/loop-compare.ts`, which had the identical flaw in the artifact whose
+  whole job is re-derivability.
+- **D-046 was applied on write, never on read.** Refusing to store an outage
+  protects stores this version creates; every attempt recorded before the fix was
+  still being resumed and counted. The "forever" it claimed to have ended had not
+  ended. The check now runs on resume too, so a poisoned store heals itself.
+- **An outage inside a *tool* was still a result.** The environment check read
+  only `trace.error`, but an agent whose loop catches tool errors — most of them,
+  ours excepted — turns an unreachable sandbox into a clean trace with an errored
+  span. That is D-042's asymmetry pointed at the environment instead of the
+  model, and phase 7's whole premise is running third-party loops with
+  third-party tools. Tool spans are checked now.
+- **A gate that compared nothing reported PASS.** With `n = 0` the pass-rate
+  delta is NaN, "not significant" is trivially true, and the build goes green —
+  so `--baseline v1` (which parses `v1` as a *model* name) reads exactly like a
+  clean bill of health. `report` already refused to print a row of NaN here; the
+  gate was the half that stayed quiet, which is the more dangerous half. It now
+  fails with the parsed config ids and the spec format. **This is the worst
+  defect this project has found in itself since the judge**: a merge gate whose
+  failure mode is silent approval is worse than no gate, because it is trusted.
+
+The documentation review found the guide's CI snippet could not run as printed —
+missing `FR_AGENTS`, a `gate` call without its required specs, and `--provider
+mock` recommended for a reader's own agent when the mock is scripted to this
+repo's demo. Plus a stale `max_cost_usd` and a "33% cheaper" that the prompt
+restored in 6e424b0 had made 59%. All corrected against re-derived output.
+
+**A known limit, recorded rather than fixed.** An `Attempt` is identified by
+`(case, config, mode)` and records nothing about the harness that produced it, so
+a change in *semantics* — D-042 changed what stubbed mode does with a recorded
+tool failure — does not invalidate the results it makes wrong. Resume serves them
+and the comparison script reports them as current. Benign today, because neither
+suite's baselines contain an errored tool span (verified 0/30 in both), and that
+is the only condition under which the old and new stub differ. It stops being
+benign the first time a suite is frozen from a model that errs. The fix is a
+semantics version in the attempt key; the reason it is not done yet is that it
+invalidates every stored attempt on the first bump, and that trade is worth
+making deliberately rather than at the end of a long night.

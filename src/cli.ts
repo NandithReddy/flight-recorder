@@ -551,11 +551,14 @@ async function main(argv: string[]): Promise<number> {
       const byConfig = new Map<string, { pass: number; total: number }>();
       for (const cellResult of result.results) {
         if (!cellResult.trace) continue;
-        // Keyed by the whole config, not just the model: a matrix crossing
-        // prompts would otherwise average v1 and v0 into one row and report the
-        // mean of a regression and its baseline as if it were a rate.
+        // Keyed by the config's IDENTITY, not by a label built from some of its
+        // fields. The first version of this fix keyed on model and prompt, which
+        // still averaged `--models qwen2.5:7b,qwen2.5:7b@0.9` into one row — the
+        // same defect one field over, and newly reachable because D-043 is what
+        // made temperature actually reach the model.
         const { config, mode } = cellResult.cell;
-        const key = `${config.model}#${config.promptVersion} ${mode}`;
+        const temp = config.temperature ? `@${config.temperature}` : "";
+        const key = `${config.model}${temp}#${config.promptVersion} ${mode}`;
         const bucket = byConfig.get(key) ?? { pass: 0, total: 0 };
         const results = evaluateAll(cellResult.cell.testCase.assertions, cellResult.trace);
         bucket.pass += results.filter((r) => r.pass).length;
@@ -956,6 +959,33 @@ async function main(argv: string[]): Promise<number> {
         trust: calibration?.kappa ?? null,
       });
 
+      // A gate that compared nothing must never report PASS. With n = 0 the
+      // pass-rate delta is NaN, "not significant" is trivially true, and CI
+      // goes green — so a typo in a config spec (`--baseline v1` instead of
+      // `--baseline "qwen2.5:7b#v1"`, which parses the prompt version as a
+      // model name) reads exactly like a clean bill of health. `report` already
+      // refuses to print a row of NaN here; the gate was the half that stayed
+      // quiet, which is the more dangerous half.
+      if (report.n === 0) {
+        console.log(
+          red(`FAIL — nothing to compare: no attempts matched both configs in suite "${suite.name}".`),
+        );
+        console.log(
+          dim(
+            `\n  baseline  ${baselineSpec}  →  ${parseTarget(baselineSpec).id}\n` +
+              `  candidate ${candidateSpec}  →  ${parseTarget(candidateSpec).id}\n` +
+              `  ${suite.cases.length} cases loaded, ${report.n} comparable.\n\n` +
+              `  A config spec is model[@temp]#prompt — "qwen2.5:7b#v1", not "v1".\n` +
+              `  Check --provider too (this ran as "${provider}"), then produce the runs:\n`,
+          ),
+        );
+        console.log(
+          `    npm run fr -- matrix --suite ${suite.name} --provider ${provider} ` +
+            `--models ${parseTarget(candidateSpec).model} --modes ${flags.get("mode") ?? "live"}\n`,
+        );
+        return 1;
+      }
+
       const result = evaluateGate(report, {
         ...(flags.has("critical-tag") ? { criticalTag: flags.get("critical-tag")! } : {}),
         ...(flags.has("max-cost") ? { maxCostPerTaskUsd: Number(flags.get("max-cost")) } : {}),
@@ -1110,9 +1140,12 @@ async function main(argv: string[]): Promise<number> {
     }
 
     default:
-      console.log(`fr — Flight Recorder (phase 2)
+      console.log(`fr — Flight Recorder
+
+  Point it at your own agent with FR_AGENTS=./my-agent.ts (see docs/USING.md).
 
   record [good|degraded]        run an agent and store the trace (--agent <name>)
+      --input "<question>"        what to ask (default: the demo question)
   ls [limit]                    list stored traces
   show <trace-id>               print one trace with its spans
   replay <trace-id> [quality]   re-run a trace's input under a new config
@@ -1127,6 +1160,7 @@ async function main(argv: string[]): Promise<number> {
   check <case-id> <trace-id>    evaluate a case's assertions (tier 1 only)
 
   seed                          record every task and freeze each as a case
+      --tasks <file.json>         your own task list, a JSON array of strings
       --suite <name> --limit N    where to write, how many tasks
       --prompt <version>          which prompt variant to record with
       --agent <name>              which registered agent to run (see fr agents)
@@ -1140,7 +1174,7 @@ async function main(argv: string[]): Promise<number> {
   agents                        list registered agents
 
   gate                          run the report and decide pass/fail (exit 0/1)
-      --baseline/--candidate      same specs as report
+      --baseline/--candidate      model[@temp]#prompt, e.g. "qwen2.5:7b#v1"
       --baseline-committed        compare against the frozen reference, not a
                                   fresh run — catches uniform regressions
       --critical-tag p0           one regression here fails the build
@@ -1149,6 +1183,7 @@ async function main(argv: string[]): Promise<number> {
   export --suite <name>         write the suite's traces to git, pin the commit
   import --suite <name>         load a suite's traces into this store
   doctor --suite <name>         can this suite run here?
+  models                        list locally available Ollama models
 
   report                        compare two configs, with intervals
       --baseline <model[@temp][#prompt]>   the side to compare against

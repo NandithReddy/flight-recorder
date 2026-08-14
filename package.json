@@ -5,7 +5,7 @@
   "type": "module",
   "description": "Evaluation and regression harness for LLM agents",
   "engines": {
-    "node": ">=22.6"
+    "node": ">=24"
   },
   "scripts": {
     "fr": "node src/cli.ts",

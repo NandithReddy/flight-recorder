@@ -20,7 +20,7 @@ questions it answers:
 
 | Question you actually have | What you run |
 |---|---|
-| "Is this prompt edit safe to merge?" | `fr gate --baseline v1 --candidate v2` |
+| "Is this prompt edit safe to merge?" | `fr gate --baseline "qwen2.5:7b#v1" --candidate "qwen2.5:7b#v2"` |
 | "Can I move to the cheaper/smaller model?" | `fr matrix --models big,small` then `fr report` |
 | "Did the agent get worse, or did our API change?" | `fr matrix --modes live,stubbed` |
 | "Which step went wrong on that bad run?" | `fr show <trace-id>` |
@@ -77,7 +77,11 @@ imported before any command runs:
 
 ```bash
 export FR_AGENTS=~/work/my-app/flightrecorder/support-agent.ts
-npm run fr -- agents          # support-triage@1.0.0
+npm run fr -- agents
+#   metrics-analyst@0.1.0     <- bundled examples
+#   orchestrator@0.1.0
+#   react-analyst@1.0.0
+#   support-triage@1.0.0      <- yours
 ```
 
 **Already using LangChain or LangGraph?** Skip the wrapper. `ModelClientChatBridge`
@@ -127,10 +131,13 @@ npm run fr -- matrix --suite support --models qwen2.5:7b,llama3.2:3b --modes liv
 ```
 
 ```
-tier-1 assertions
-  qwen2.5:7b#v1  live      11/12   92%
-  qwen2.5:7b#v1  stubbed   12/12  100%
-  llama3.2:3b#v1 live      11/12   92%
+12 ran · 0 resumed · 0 could not run
+
+tier-1 assertions  (not scoring — no judge, no statistics)
+  qwen2.5:7b#v1 live        11/12   92%
+  qwen2.5:7b#v1 stubbed     11/12   92%
+  llama3.2:3b#v1 live       11/12   92%
+  llama3.2:3b#v1 stubbed    11/12   92%
 ```
 
 Read the two modes together, because they answer different questions:
@@ -168,16 +175,40 @@ In CI, commit your suite plus its baseline recordings and let a fresh clone run
 them:
 
 ```bash
-npm run fr -- export --suite support     # pins baselines to a commit
 git add flightrecorder/ && git commit -m "Freeze the support suite"
+npm run fr -- export --suite support     # now it can pin to that commit
+git add flightrecorder/traces/ && git commit --amend --no-edit
 ```
 
+Order matters: `export` refuses to pin a baseline while the working tree is
+dirty, and `seed` has just written an untracked suite file. Pin against a commit
+that exists, or the export records `commit: null` and nobody can tell later
+which code produced those baselines.
+
 ```yaml
-- run: npm ci
-- run: npm run fr -- import --suite support
-- run: npm run fr -- matrix --suite support --provider mock --concurrency 4
-- run: npm run fr -- gate --suite support --baseline-committed --no-judge
+env:
+  # Without this the matrix cannot resolve your agent and every cell fails.
+  FR_AGENTS: ./flightrecorder/support-agent.ts
+steps:
+  - run: npm ci
+  - run: npm run fr -- import --suite support
+  - run: npm run fr -- matrix --suite support --provider ollama
+        --models qwen2.5:7b --modes live --concurrency 4
+  - run: npm run fr -- gate --suite support
+        --baseline "qwen2.5:7b#v1" --candidate "qwen2.5:7b#v1"
+        --baseline-committed --fail-on-any-regression --no-judge
 ```
+
+Three things that bite here, all of which bit this repo first:
+
+- **`FR_AGENTS` must be set in CI too.** The matrix resolves an agent by name
+  from the registry, and a fresh clone has only the bundled examples in it.
+- **Both `--baseline` and `--candidate` are required**, even when comparing a
+  config against its own committed recordings. `--baseline-committed` says
+  *where* the baseline comes from, not *what* it is.
+- **`--provider mock` is not a shortcut for your agent.** This repo's mock is
+  scripted to its own demo, so it returns demo answers whatever you ask it. Use
+  a real provider, or write a mock for your agent.
 
 [.github/workflows/flight-recorder.yml](../.github/workflows/flight-recorder.yml)
 is this repo's own working version, including the job that proves the gate still

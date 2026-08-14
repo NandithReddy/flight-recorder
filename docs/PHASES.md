@@ -305,6 +305,11 @@ bridge surfaced two real defects and revived one buried one:
   quietly narrowed to the unfinished ones — and one such rate was published in
   three documents as a full-suite figure. Found by trying to reproduce this
   phase's own table.
+- **A gate that compared nothing reported PASS** (D-047). With `n = 0` the
+  delta is NaN and "not significant" is trivially true, so a typo in a config
+  spec read as a clean bill of health. Found by an adversarial review of the
+  D-045/D-046 corrections, which also found that D-046 was applied on write but
+  never on read — so every outage already in a store was still being served.
 - **23 cached runs had died because the model daemon was down** (D-046). An
   outage was stored as an agent failure, resumed ever since, and counted in
   every rate from that suite. Purging and re-running those cells *inverted* the

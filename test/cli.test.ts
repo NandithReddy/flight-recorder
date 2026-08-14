@@ -92,6 +92,25 @@ describe("registering an agent from outside the repository", () => {
   });
 });
 
+describe("the gate refuses to pass on nothing", () => {
+  it("fails loudly when no attempts match both configs", async () => {
+    // "v1" parses as a MODEL name, so nothing matches, the pass-rate delta is
+    // NaN, "not significant" is trivially true — and the gate used to print
+    // PASS and exit 0. A typo in a config spec read exactly like a clean bill
+    // of health, which is the one thing a merge gate must never do.
+    const { stdout, code } = await fr([
+      "gate", "--suite", "demo", "--provider", "mock",
+      "--baseline", "v1", "--candidate", "v0", "--no-judge",
+    ]);
+
+    expect(code).toBe(1);
+    expect(stdout).toContain("nothing to compare");
+    expect(stdout).toContain("0 comparable");
+    // It must say how to fix it, not just that it failed.
+    expect(stdout).toContain("model[@temp]#prompt");
+  });
+});
+
 describe("recording something other than the demo question", () => {
   it("records the input given on the command line", async () => {
     const path = await writeExternalAgent("outsider");

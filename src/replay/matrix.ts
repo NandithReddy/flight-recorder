@@ -16,7 +16,7 @@
  */
 
 import { newId } from "../core/ids.ts";
-import type { Attempt, ReplayMode, RunConfig, TestCase, Trace } from "../core/types.ts";
+import type { Attempt, ReplayMode, RunConfig, RunError, TestCase, Trace } from "../core/types.ts";
 import { isEnvironmentFailure, type ModelClient } from "../provider/types.ts";
 import type { SqliteTraceStore } from "../store/sqlite-store.ts";
 import { getAgent } from "./registry.ts";
@@ -117,6 +117,12 @@ function buildCells(options: MatrixOptions): MatrixCell[] {
   return cells;
 }
 
+/** The stored error as a throwable, when it says the environment was down. */
+function outageIn(error: RunError | null | undefined): Error | null {
+  if (!isEnvironmentFailure(error)) return null;
+  return Object.assign(new Error(error!.message), { name: error!.type });
+}
+
 async function runCell(
   cell: MatrixCell,
   options: MatrixOptions,
@@ -163,9 +169,15 @@ async function runCell(
       // the agent, and storing it as an Attempt makes resume serve that
       // non-result forever (D-046). Rethrow so the retry path sees it and, if
       // it persists, the cell is reported as one that could not run.
-      if (isEnvironmentFailure(trace.error)) {
-        throw Object.assign(new Error(trace.error!.message), { name: trace.error!.type });
-      }
+      //
+      // Tool spans are checked too, not just `trace.error`. An agent whose loop
+      // catches tool errors — which is most of them, ours excepted — turns an
+      // unreachable sandbox or an unauthenticated provider into a *clean* trace
+      // with an errored span inside it, and that would sail past a check that
+      // only reads the top-level error.
+      const environmentFailure =
+        outageIn(trace.error) ?? trace.spans.map((span) => outageIn(span.error)).find(Boolean);
+      if (environmentFailure) throw environmentFailure;
 
       const attempt: Attempt = {
         id: newId("attempt"),
@@ -210,9 +222,17 @@ export async function runMatrix(options: MatrixOptions): Promise<MatrixResult> {
   const resumedCells: number[] = [];
   let skipped = 0;
   cells.forEach((cell, index) => {
-    const existing = resume
+    const stored = resume
       ? options.store.findAttempt(cell.testCase.id, cell.config.id, cell.mode)
       : null;
+
+    // Refusing to *write* an outage only protects stores written by this
+    // version. Any attempt recorded before that fix — 23 of them in this
+    // project's own store — is still sitting there, and resume would serve it
+    // for the life of the store, which is exactly the "forever" D-046 claims to
+    // have ended. So the check runs on read as well: a cached outage is not a
+    // result, it is a cell that has not been run yet.
+    const existing = stored && isEnvironmentFailure(stored.error) ? null : stored;
     if (existing) {
       results[index] = {
         cell,
