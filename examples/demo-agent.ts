@@ -158,7 +158,7 @@ export const TASKS: string[] = [
  * the model's ability. A fixture that only works with one phrasing is testing
  * the fixture.
  */
-function search(input: { query: string }): string {
+export function search(input: { query: string }): string {
   const words = new Set(
     input.query
       .toLowerCase()
@@ -241,7 +241,7 @@ function evaluateExpression(source: string): number {
   return result;
 }
 
-function calculate(input: { expression: string }): string {
+export function calculate(input: { expression: string }): string {
   return evaluateExpression(input.expression).toFixed(2);
 }
 
@@ -306,7 +306,7 @@ export const demoAgent: RecordableAgent<string, string> = {
         model: ctx.model,
         messages,
         tools: TOOL_SPECS,
-        temperature: 0,
+        ...(ctx.temperature !== undefined ? { temperature: ctx.temperature } : {}),
       });
 
       // The assistant turn must carry its tool calls: a real provider rejects a

@@ -9,6 +9,8 @@
 import { registerAgent } from "../src/replay/registry.ts";
 import { demoAgent } from "./demo-agent.ts";
 import { nestedAgent } from "./nested-agent.ts";
+import { reactAnalyst } from "./react-analyst.ts";
 
 registerAgent(demoAgent);
 registerAgent(nestedAgent);
+registerAgent(reactAnalyst);

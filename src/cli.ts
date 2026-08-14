@@ -25,7 +25,7 @@ import { freeze } from "./freeze/freezer.ts";
 import { SuiteStore } from "./freeze/suite.ts";
 import { DEMO_QUESTION, demoAgent, TASKS } from "../examples/demo-agent.ts";
 import { runMatrix } from "./replay/matrix.ts";
-import { listAgents } from "./replay/registry.ts";
+import { getAgent, listAgents } from "./replay/registry.ts";
 import "../examples/register.ts";
 import { createInterface } from "node:readline/promises";
 import { mkdir, writeFile } from "node:fs/promises";
@@ -131,6 +131,11 @@ function clientFor(target: Target) {
   return createMockClient();
 }
 
+/** Resolves --agent through the registry; the demo agent stays the default. */
+function agentFrom(flags: Map<string, string>) {
+  return getAgent(flags.get("agent") ?? demoAgent.ref.name);
+}
+
 const usd = (n: number) => `$${n.toFixed(6)}`;
 const dim = (s: string) => `\x1b[2m${s}\x1b[0m`;
 const bold = (s: string) => `\x1b[1m${s}\x1b[0m`;
@@ -174,7 +179,7 @@ async function main(argv: string[]): Promise<number> {
       }
 
       const { trace } = await record({
-        agent: demoAgent,
+        agent: agentFrom(flags),
         client: clientFor(target),
         config: configFor(target),
         input: DEMO_QUESTION,
@@ -224,13 +229,20 @@ async function main(argv: string[]): Promise<number> {
     case "replay": {
       const { positional, flags } = parseFlags(rest);
       const id = positional[0];
-      if (!id) throw new Error("usage: fr replay <trace-id> [good|degraded] [--provider ollama]");
+      if (!id) throw new Error("usage: fr replay <trace-id> [good|degraded] [--provider ollama] [--agent name]");
       const quality = (positional[1] ?? "degraded") as MockQuality;
       const target = targetFrom(flags, quality);
 
+      // The trace knows which agent produced it; --agent only overrides.
+      const original = await store.get(id);
+      if (!original) throw new Error(`No trace with id ${id}`);
+      const replayAgent = flags.has("agent")
+        ? getAgent(flags.get("agent")!)
+        : getAgent(original.agent.name);
+
       const { baseline, candidate, mode, stub } = await replay({
         traceId: id,
-        agent: demoAgent,
+        agent: replayAgent,
         client: clientFor(target),
         config: configFor(target),
         store,
@@ -476,7 +488,11 @@ async function main(argv: string[]): Promise<number> {
       const byConfig = new Map<string, { pass: number; total: number }>();
       for (const cellResult of result.results) {
         if (!cellResult.trace) continue;
-        const key = `${cellResult.cell.config.model} ${cellResult.cell.mode}`;
+        // Keyed by the whole config, not just the model: a matrix crossing
+        // prompts would otherwise average v1 and v0 into one row and report the
+        // mean of a regression and its baseline as if it were a rate.
+        const { config, mode } = cellResult.cell;
+        const key = `${config.model}#${config.promptVersion} ${mode}`;
         const bucket = byConfig.get(key) ?? { pass: 0, total: 0 };
         const results = evaluateAll(cellResult.cell.testCase.assertions, cellResult.trace);
         bucket.pass += results.filter((r) => r.pass).length;
@@ -508,13 +524,17 @@ async function main(argv: string[]): Promise<number> {
         throw new OllamaUnavailableError(DEFAULT_OLLAMA_HOST);
       }
 
+      const seedAgent = agentFrom(flags);
       const tasks = TASKS.slice(0, limit);
-      console.log(bold(`recording ${tasks.length} tasks on ${target.model}`));
+      console.log(
+        bold(`recording ${tasks.length} tasks on ${target.model}`) +
+          dim(`  (agent ${seedAgent.ref.name})`),
+      );
 
       let frozen = 0;
       for (const [index, task] of tasks.entries()) {
         const { trace } = await record({
-          agent: demoAgent,
+          agent: seedAgent,
           client: clientFor(target),
           config: configFor(target),
           input: task,
@@ -1029,7 +1049,7 @@ async function main(argv: string[]): Promise<number> {
     default:
       console.log(`fr — Flight Recorder (phase 2)
 
-  record [good|degraded]        run the demo agent and store the trace
+  record [good|degraded]        run an agent and store the trace (--agent <name>)
   ls [limit]                    list stored traces
   show <trace-id>               print one trace with its spans
   replay <trace-id> [quality]   re-run a trace's input under a new config
@@ -1046,6 +1066,7 @@ async function main(argv: string[]): Promise<number> {
   seed                          record every task and freeze each as a case
       --suite <name> --limit N    where to write, how many tasks
       --prompt <version>          which prompt variant to record with
+      --agent <name>              which registered agent to run (see fr agents)
   matrix                        run every case across every config and mode
       --suite <name>              suite to run (default: default)
       --models a,b@0.7            model ids, optionally with @temperature

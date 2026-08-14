@@ -32,6 +32,16 @@ export interface AgentContext {
    * matrix unable to vary the thing that regresses most often in practice.
    */
   promptVersion: string;
+  /**
+   * Sampling temperature, from the RunConfig.
+   *
+   * Same reasoning again, learned the hard way: both example agents hardcoded
+   * 0, which silently killed the matrix's temperature axis — a config could
+   * say `qwen2.5:7b@0.9` while every request carried 0, and the "identical
+   * answers at 0.9" that produced was written into the decision log as if it
+   * were a fact about the model.
+   */
+  temperature: number | undefined;
 }
 
 /** What an agent must expose to be recordable and replayable. */
@@ -93,6 +103,7 @@ export async function record(options: RunOptions): Promise<RecordResult> {
       client,
       model: options.config.model,
       promptVersion: options.config.promptVersion,
+      temperature: options.config.temperature,
     });
   } catch (caught) {
     error =

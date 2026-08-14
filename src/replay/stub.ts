@@ -21,7 +21,7 @@
 
 import { stableStringify } from "../core/ids.ts";
 import type { ToolInterceptor } from "../recorder/recorder.ts";
-import type { Trace } from "../core/types.ts";
+import type { RunError, Trace } from "../core/types.ts";
 
 export interface StubMiss {
   tool: string;
@@ -51,6 +51,8 @@ interface RecordedCall {
   input: unknown;
   inputKey: string;
   output: unknown;
+  /** The recording of a failure is still a recording of the environment. */
+  error: RunError | null;
   used: boolean;
 }
 
@@ -76,12 +78,32 @@ export function createReplayStub(baseline: Trace): ReplayStub {
       input: span.input,
       inputKey: stableStringify(span.input),
       output: span.output,
+      error: span.error,
       used: false,
     }));
 
   let exact = 0;
   let positional = 0;
   const misses: StubMiss[] = [];
+
+  /**
+   * Serving a recording means serving ALL of it. A tool call that failed on
+   * the baseline must fail identically on replay — an agent that recovered
+   * from the error live (LangGraph's ToolNode feeds it back to the model)
+   * must see the same error text again, or the conversations silently diverge
+   * while the report claims the environment was held still. Found by exactly
+   * that happening: a recovered calculator error replayed as the string
+   * "null" with success status.
+   */
+  const serve = (call: RecordedCall): unknown => {
+    call.used = true;
+    if (call.error) {
+      const error = new Error(call.error.message);
+      if (call.error.type) error.name = call.error.type;
+      throw error;
+    }
+    return call.output;
+  };
 
   const interceptor: ToolInterceptor = async ({ name, input }) => {
     const key = stableStringify(input);
@@ -90,16 +112,14 @@ export function createReplayStub(baseline: Trace): ReplayStub {
       (call) => !call.used && call.tool === name && call.inputKey === key,
     );
     if (exactMatch) {
-      exactMatch.used = true;
       exact += 1;
-      return exactMatch.output;
+      return serve(exactMatch);
     }
 
     const positionalMatch = recorded.find((call) => !call.used && call.tool === name);
     if (positionalMatch) {
-      positionalMatch.used = true;
       positional += 1;
-      return positionalMatch.output;
+      return serve(positionalMatch);
     }
 
     misses.push({ tool: name, input });
