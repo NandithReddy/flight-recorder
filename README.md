@@ -47,7 +47,7 @@ development was on 25.
 
 ```bash
 npm install
-npm test          # 200 tests
+npm test          # 203 tests
 npm run typecheck
 ```
 
