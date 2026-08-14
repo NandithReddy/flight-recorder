@@ -28,8 +28,9 @@ import { runMatrix } from "./replay/matrix.ts";
 import { getAgent, listAgents } from "./replay/registry.ts";
 import "../examples/register.ts";
 import { createInterface } from "node:readline/promises";
-import { mkdir, writeFile } from "node:fs/promises";
-import { dirname } from "node:path";
+import { mkdir, readFile, writeFile } from "node:fs/promises";
+import { dirname, resolve } from "node:path";
+import { pathToFileURL } from "node:url";
 import { buildReport, headline } from "./report/build.ts";
 import { renderReportHtml } from "./report/html.ts";
 import { describeInterval } from "./stats/bootstrap.ts";
@@ -136,6 +137,30 @@ function agentFrom(flags: Map<string, string>) {
   return getAgent(flags.get("agent") ?? demoAgent.ref.name);
 }
 
+/**
+ * The question to record. `--input` for one, `--tasks <file>` for a set.
+ *
+ * Without these the CLI could only ever ask the demo agent's demo question, so
+ * "point the harness at your own agent" meant editing a file in this repo —
+ * true of the registry too, until `FR_AGENTS`.
+ */
+async function tasksFrom(flags: Map<string, string>, fallback: string[]): Promise<string[]> {
+  const single = flags.get("input");
+  if (single !== undefined && single !== "true") return [single];
+
+  const file = flags.get("tasks");
+  if (file === undefined) return fallback;
+
+  const parsed: unknown = JSON.parse(await readFile(resolve(process.cwd(), file), "utf8"));
+  const tasks = Array.isArray(parsed) ? parsed : (parsed as { tasks?: unknown }).tasks;
+  if (!Array.isArray(tasks) || tasks.some((task) => typeof task !== "string")) {
+    throw new Error(
+      `${file} must be a JSON array of strings, or an object with a "tasks" array of strings.`,
+    );
+  }
+  return tasks as string[];
+}
+
 const usd = (n: number) => `$${n.toFixed(6)}`;
 const dim = (s: string) => `\x1b[2m${s}\x1b[0m`;
 const bold = (s: string) => `\x1b[1m${s}\x1b[0m`;
@@ -165,8 +190,44 @@ function printTrace(trace: Trace): void {
   }
 }
 
+/**
+ * Loads agent registrations that do not live in this repository.
+ *
+ * The bundled examples are imported statically above, which is fine for them
+ * and useless for anybody else: pointing the harness at *your* agent should be
+ * a registration, not a fork. `FR_AGENTS` takes one or more module paths —
+ * comma-separated, resolved from the working directory — and each is imported
+ * for its `registerAgent` side effect before any command runs.
+ *
+ * A failure here is fatal rather than a warning. The alternative is `fr matrix`
+ * running against whichever agents did load and reporting a rate over a suite
+ * it silently could not cover, which is the mistake this project has now made
+ * twice (D-045, D-046).
+ */
+async function loadExternalAgents(): Promise<string[]> {
+  const spec = process.env["FR_AGENTS"];
+  if (!spec) return [];
+
+  const loaded: string[] = [];
+  for (const entry of spec.split(",").map((part) => part.trim()).filter(Boolean)) {
+    const path = resolve(process.cwd(), entry);
+    try {
+      await import(pathToFileURL(path).href);
+      loaded.push(entry);
+    } catch (error) {
+      throw new Error(
+        `FR_AGENTS could not load "${entry}" (resolved to ${path}): ` +
+          (error instanceof Error ? error.message : String(error)),
+      );
+    }
+  }
+  return loaded;
+}
+
 async function main(argv: string[]): Promise<number> {
   const [command, ...rest] = argv;
+
+  await loadExternalAgents();
 
   switch (command) {
     case "record": {
@@ -178,11 +239,13 @@ async function main(argv: string[]): Promise<number> {
         throw new OllamaUnavailableError(DEFAULT_OLLAMA_HOST);
       }
 
+      const [question] = await tasksFrom(flags, [DEMO_QUESTION]);
+
       const { trace } = await record({
         agent: agentFrom(flags),
         client: clientFor(target),
         config: configFor(target),
-        input: DEMO_QUESTION,
+        input: question,
         store,
         tags: target.provider === "mock" ? [quality] : [target.provider],
       });
@@ -518,14 +581,14 @@ async function main(argv: string[]): Promise<number> {
       const { flags } = parseFlags(rest);
       const target = targetFrom(flags, "good");
       const suiteName = flags.get("suite") ?? "default";
-      const limit = Number(flags.get("limit") ?? TASKS.length);
+      const limit = Number(flags.get("limit") ?? Number.MAX_SAFE_INTEGER);
 
       if (target.provider === "ollama" && !(await isOllamaRunning())) {
         throw new OllamaUnavailableError(DEFAULT_OLLAMA_HOST);
       }
 
       const seedAgent = agentFrom(flags);
-      const tasks = TASKS.slice(0, limit);
+      const tasks = (await tasksFrom(flags, TASKS)).slice(0, limit);
       console.log(
         bold(`recording ${tasks.length} tasks on ${target.model}`) +
           dim(`  (agent ${seedAgent.ref.name})`),

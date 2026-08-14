@@ -18,6 +18,9 @@ wrong 8% of the time. Nothing throws. You find out from a customer.
 
 Full rationale, architecture and build plan: [docs/spec.html](docs/spec.html).
 
+**Using it on your own agent: [docs/USING.md](docs/USING.md)** — wrap your agent
+in about thirty lines, seed a suite from your own questions, gate it in CI.
+
 The postmortem — every defect with its evidence, and the numbers that had to be
 corrected twice — is [docs/writeup.html](docs/writeup.html).
 
@@ -39,7 +42,7 @@ Requires Node 22.6+ (25 recommended — it runs TypeScript directly).
 
 ```bash
 npm install
-npm test          # 196 tests
+npm test          # 200 tests
 npm run typecheck
 ```
 
@@ -91,7 +94,7 @@ reviewed in a pull request like any other test). See
 
 | Command | Does |
 |---|---|
-| `fr record [good\|degraded]` | Run the demo agent (`--provider mock\|ollama\|gateway`, `--model`) |
+| `fr record [good\|degraded]` | Run an agent (`--agent`, `--input`, `--provider mock\|ollama\|gateway`, `--model`) |
 | `fr ls [limit]` | List stored traces |
 | `fr show <trace-id>` | Print one trace with its spans |
 | `fr replay <trace-id> [quality]` | Re-run a trace's input under a new config (`--mode live\|stubbed`) |
@@ -100,8 +103,8 @@ reviewed in a pull request like any other test). See
 | `fr cases [--suite name]` | List frozen cases |
 | `fr check <case-id> <trace-id>` | Evaluate a case's assertions (tier 1 only) |
 | `fr matrix` | Run every case × config × mode (`--models`, `--modes`, `--concurrency`) |
-| `fr agents` | List registered agents |
-| `fr seed` | Record every task in the set and freeze each as a case |
+| `fr agents` | List registered agents (add your own with `FR_AGENTS=./agent.ts`) |
+| `fr seed` | Record every task and freeze each as a case (`--tasks <file.json>`, `--agent`) |
 | `fr pool --set <name>` | Build blind judge-vs-human comparison pairs |
 | `fr label --set <name>` | Label pairs blind — `1` / `2` / `t` / `s` / `q` |
 | `fr calibrate --set <name>` | Measure the judge against those labels, write κ |
