@@ -60,10 +60,14 @@ re-wrapping it recorded two spans per model call and doubled every token and
 cost total — no error, no symptom, just wrong numbers. Fixed in the API rather
 than the test (DECISIONS D-011). Keep this for the phase 07 writeup.
 
-**Live-provider verification is still outstanding.** The gateway adapter is
-tested for credential handling, message conversion, and cost mapping, but has
-not made a real API call — no key is configured yet. First task of phase 02:
-export `AI_GATEWAY_API_KEY` and record one real trace.
+**The gateway adapter has never made a live call, and that is a standing
+boundary rather than a pending task.** It is tested for credential handling,
+message conversion and cost mapping, but this project runs on local models by
+constraint — no API key, no metered spend, at any phase. The hosted path stays
+credential-gated in CI (the `regression gate (hosted models)` job skips without
+a secret), so anyone with a key can exercise it in one run; nobody here has.
+Stated because a reviewer will ask which claims are backed by a real hosted
+request: none of them are.
 
 ## Phase 02 — Store + freezer — **done**
 
@@ -228,7 +232,7 @@ That single sentence covers 20 of 25 diffs and is llama's whole failure mode.
 so on a cross-model report every step "differed" — the model *is* the change.
 Rewritten to compare decisions rather than identities (D-034).
 
-## Phase 06 — Gate — **done** (bar the public PR)
+## Phase 06 — Gate — **done**
 
 **Exit criterion:** a deliberately worsened prompt fails CI on a real pull request.
 
@@ -238,7 +242,8 @@ Rewritten to compare decisions rather than identities (D-034).
 - [x] GitHub Action wrapping the CLI, report uploaded even when red
 - [x] Trace export/import, so a committed suite runs on a fresh clone
 - [x] 173 tests passing, `tsc --noEmit` clean
-- [ ] **Demonstrated on a real PR** — needs the repo pushed to GitHub
+- [x] **Demonstrated on a real PR** — [#2](https://github.com/NandithReddy/flight-recorder/pull/2),
+      where 174 tests pass, typecheck is clean, and the gate blocks the merge
 
 **Evidence — a worsened prompt fails.** Same model, v1 → v0:
 
