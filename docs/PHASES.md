@@ -305,8 +305,8 @@ comparable and concluded there was no regression (D-036).
 - [x] Build a real suite from real traces — 30 cases frozen from qwen2.5:7b
       runs of the ReAct agent, exported and committed
 - [x] Run the full matrix — 120 cells, 0 failures, live and stubbed
-- [x] Writeup published: [Wrong, Not Broken](https://claude.ai/code/artifact/f87a19f9-3304-4468-bdb7-160b6fb34ed9),
-      thirteen defects with their evidence, mirrored at `docs/writeup.html`
+- [x] Writeup published: [Wrong, Not Broken](https://nandithreddy.github.io/flight-recorder/writeup.html), fourteen
+      defects with their evidence, served from `docs/` by GitHub Pages
 - [x] Verify: `npm i` to first report — 12 seconds, checked on every push by CI
 
 **What integrating a foreign agent found.** The adversarial review of the

@@ -20,13 +20,14 @@ Conventional software fails loudly. Agent software fails *quietly* — you chang
 a prompt or bump a model, the agent keeps answering fluently, and it is now
 wrong 8% of the time. Nothing throws. You find out from a customer.
 
-Full rationale, architecture and build plan: [docs/spec.html](docs/spec.html).
+Full rationale, architecture and build plan: [the spec](https://nandithreddy.github.io/flight-recorder/spec.html).
 
 **Using it on your own agent: [docs/USING.md](docs/USING.md)** — wrap your agent
 in about thirty lines, seed a suite from your own questions, gate it in CI.
 
-The postmortem — every defect with its evidence, and the numbers that had to be
-corrected twice — is [docs/writeup.html](docs/writeup.html).
+**The postmortem: [Wrong, Not Broken](https://nandithreddy.github.io/flight-recorder/writeup.html)** — every defect with
+its evidence, and the numbers that had to be corrected three times before they
+were re-derivable. Source: [docs/writeup.html](docs/writeup.html).
 
 **It caught fourteen defects, and none of them crashed.** Every one was a number
 that was quietly wrong — including one in this repository's own judge, which
