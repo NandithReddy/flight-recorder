@@ -1041,3 +1041,63 @@ what it has always said, only with a different number attached, and
 **Reverses if:** validation on unseen pairs comes back below 0.6, in which case
 the honest headline returns to "not met" and v4 is recorded as overfitted — an
 outcome worth having measured either way.
+
+---
+
+### D-049 · Held-out validation cut the judge from 0.687 to 0.429, and every disagreement but one is the same disagreement
+
+D-048 called 0.687 provisional because prompts v3 and v4 were written against
+the 47 labels they were scored on. A 42-pair validation set was pooled from the
+ReAct suite — same 30 tasks, different agent, and the 17 pairs whose answer
+texts also appeared in the tuned-on set were dropped, so nothing in it informed
+either prompt. Labelled blind under the same protocol, with the same answer key.
+
+**κ = 0.429 (0.187 to 0.662), raw agreement 71.4%.** Below the 0.6 bar. The
+tuned number did not survive, and phase 4's criterion goes back to unmet.
+
+**But the drop is not noise, and that is the finding.** 12 of 42 pairs
+disagreed, and 11 of the 12 are one shape:
+
+```
+human \ judge    baseline      tie
+baseline               10        1
+tie                    11       20
+```
+
+Every one of those 11 is a candidate answer that gives the *correct figure*
+propped up by *invented supporting numbers* — "grew by 40.00% over the year,
+from 9,000 to 12,345", when the key says 145 → 203. The human called them ties:
+same figure, question answered. The judge, holding the same key, saw a
+derivation that contradicts it and called the clean answer better.
+
+Rerun the same verdicts with that single rule aligned and **κ = 0.937 (0.780 to
+1.000), raw agreement 97.6%**. One rule, eleven pairs, half a kappa.
+
+**So this is a rule disagreement, not an accuracy failure — and the judge has
+the better rule.** This repository's third defect was the assertion proposer
+nearly certifying a hallucination because a fabricated figure appeared in a
+tool's output; provenance-aware grounding exists precisely because invented
+support is not neutral. The judge is applying that principle. The human label
+was the weaker of the two.
+
+That is worth stating plainly because it is a limit of the whole tier: **κ
+measures agreement, not correctness.** A judge that is stricter than its
+labeller is punished for it, and no amount of labelling fixes that — only a
+labelling protocol precise enough to say what a tie *is*.
+
+**What was deliberately not done.** Re-labelling those 11 pairs to match the
+judge would produce a number above 0.6 and mean nothing: that is grading to the
+test, and it is the exact move this tier exists to detect. Rewriting v4 into a
+v5 that ties on any matching figure would fit the human's rule at the cost of
+the behaviour that makes the judge useful, and would then need a *third* fresh
+set to validate honestly.
+
+**Where this leaves the number.** Two measurements, both published: 0.687 on the
+set the prompt was written against, 0.429 on a set it was not. The second is the
+one that counts. Judged verdicts stay marked untrusted, the gate keeps refusing
+to block on them, and the deterministic tier keeps doing the work.
+
+**Reverses if:** the labelling protocol is tightened to define a tie explicitly
+— figure only, or figure plus support — and a fresh set is labelled under it. A
+judge and a human applying the same written rule is the only version of this
+measurement that means what it claims to.

@@ -4,12 +4,11 @@ An evaluation and regression harness for LLM agents. It records real agent
 runs, freezes them into replayable test cases, and blocks any change that
 quietly makes the agent worse.
 
-> **Status: all seven build phases built and passing their exit criteria** —
-> the last one provisionally. Phase 4's bar, an LLM judge agreeing with humans
-> at κ ≥ 0.6, went from −0.102 (worse than a coin flip) to **0.687** across four
-> prompt versions; it sat published as *unmet* for most of this project's life,
-> and it is still measured on only 47 labels, against which two of those prompts
-> were written. Record → freeze → matrix →
+> **Status: all seven build phases built; six meet their exit criteria.**
+> Phase 4's bar — an LLM judge agreeing with humans at κ ≥ 0.6 — reached 0.687
+> on the labels its prompt was written against, then **0.429 on 42 held-out
+> pairs**, so it is published as *not met*. Eleven of the twelve held-out
+> disagreements are one rule, worth half a κ. Record → freeze → matrix →
 > score → report → gate, now proven against an agent this project did not
 > write: LangGraph's prebuilt ReAct loop runs on the harness through a
 > ~150-line bridge, with recording, stubbed replay and the gate applying
@@ -232,17 +231,27 @@ to **0.687** was two changes that only work together:
 | v3 — a procedure: extract both figures, tie if they match | blind | 0.459 |
 | v3 | answer key | 0.188 |
 | **v4 — v3, with the rubric fenced off from the tie test** | **answer key** | **0.687** |
+| v4 on **42 held-out pairs it was never tuned against** | answer key | **0.429** |
 
 The judge had been graded blind against humans who labelled with the answer key
 open — an information gap, not a judging failure. But handing that key to v3
 *halved* its score: given a reference, the model grades resemblance to it and
 stops calling equal answers equal. One paragraph fencing the rubric out of the
-tie test took it from 0.188 to 0.687. [D-048](docs/DECISIONS.md) has the
-confusion matrices.
+tie test took it from 0.188 to 0.687.
 
-Provisional, and stated as such: the interval is (0.474, 0.865), the spec asked
-for 200 labels rather than 47, and v3 and v4 were written against the labels
-they are scored on. The next labelling session is validation, not training.
+**Then held-out validation took it back to 0.429**, and the way it fell is the
+useful part. Eleven of the twelve disagreements are one shape: a candidate
+answer giving the *correct figure* on top of *invented numbers* — "grew by
+40.00%, from 9,000 to 12,345", where the key says 145 → 203. The human called
+those ties. The judge called the clean answer better. Align that single rule and
+the same verdicts score **κ = 0.937**.
+
+So the tier's limit is not the model or the prompt: **κ measures agreement, not
+correctness, and a judge stricter than its labeller is punished for it.**
+Re-labelling those eleven pairs would clear the bar and mean nothing — it is
+grading to the test, which is the exact failure this tier exists to detect.
+[D-048](docs/DECISIONS.md) and [D-049](docs/DECISIONS.md) carry the confusion
+matrices.
 
 ```bash
 npm run fr -- pool  --set metrics     # build blind comparison pairs

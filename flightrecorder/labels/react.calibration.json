@@ -1,0 +1,17 @@
+{
+  "labelSet": "react",
+  "judgeModel": "qwen2.5:7b",
+  "judgePromptVersion": "v4",
+  "rubricPairs": 42,
+  "n": 42,
+  "kappa": 0.4285714285714286,
+  "kappaLower": 0.18734940798784921,
+  "kappaUpper": 0.6620689655172415,
+  "observedAgreement": 0.7142857142857143,
+  "unparsedRate": 0,
+  "positionFlipRate": null,
+  "judgeInputTokens": 23855,
+  "judgeOutputTokens": 1067,
+  "judgeCostUsd": 0,
+  "createdAt": 1786996416693
+}

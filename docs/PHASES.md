@@ -9,7 +9,7 @@ Full rationale for each phase lives in [spec.html](./spec.html).
 | 01 | Recorder | 3–5 | **done** |
 | 02 | Store + freezer | 2–3 | **done** |
 | 03 | Replayer | 4–6 | **done** |
-| 04 | Scorer | 5–7 | **κ = 0.687 on 47 labels — bar cleared, provisionally (D-048)** |
+| 04 | Scorer | 5–7 | **0.687 tuned, 0.429 held out — criterion not met (D-049)** |
 | 05 | Reporter | 3–4 | **done** |
 | 06 | Gate | 2 | **done** |
 | 07 | Dogfood + writeup | 4–5 | **done** |
@@ -145,7 +145,7 @@ dropped capabilities, timeout enforced. It is opt-in per tool, because the demo
 agent's tools are pure in-process functions and containerising one would be
 theatre. It exists for the shape phase 07's open-source agent is likely to have.
 
-## Phase 04 — Scorer — **bar cleared on the point estimate, provisionally**
+## Phase 04 — Scorer — **criterion not met, and measured twice to be sure**
 
 **Exit criterion:** κ ≥ 0.6 on 200 labelled examples; judging under 15% of run cost.
 
@@ -157,25 +157,32 @@ theatre. It exists for the shape phase 07's open-source agent is likely to have.
 - [x] Blind labelling CLI, incremental save, committed label store
 - [x] 137 tests passing, `tsc --noEmit` clean
 - [x] 47 human labels collected
-- [x] **κ ≥ 0.6 — met at 0.687** on 47 labels, after four prompt versions and
-      giving the judge the same answer key the humans labelled with (D-048)
-- [ ] **200 labels, and validation on pairs the prompt was not tuned against.**
-      The interval is (0.474, 0.865), so n = 47 cannot confirm the true κ ≥ 0.6.
+- [x] **89 human labels** — 47 for development, 42 held out for validation
+- [x] κ = 0.687 on the 47 the prompt was written against (D-048)
+- [ ] **κ ≥ 0.6 — NOT met. 0.429 (0.187–0.662) on the held-out 42** (D-049).
+      11 of 12 disagreements are one rule: a correct figure propped up by
+      invented numbers. Align that single rule and κ is 0.937 — which is a
+      statement about the protocol, not a number this project gets to claim.
 
-**The criterion is met on the point estimate, and the caveat is the interesting
-part.** Best measured judge: qwen2.5:7b under prompt v4 with the answer key
-supplied, **κ = 0.687 (0.474–0.865) on n=47** — up from 0.209, and from −0.102
-where this started. Two changes got it there and neither works alone: a judge
-that follows a procedure rather than forming an opinion, and a judge given the
-same answer key the human labellers had. Handing the key to the *earlier* prompt
-made it worse, 0.459 → 0.188. Full experiment in [D-048](./DECISIONS.md).
+**The criterion is not met, and it took two measurements to say so honestly.**
 
-It stayed unmet for most of this project's life, and the honest word for it now
-is **provisional**: the interval's lower bound is 0.474, the spec asked for 200
-labels rather than 47, and prompts v3 and v4 were written against the very
-labels they are scored on. That last one is tuning on the test set, and it is
-why the next labelling session should be treated as held-out validation rather
-than more of the same.
+Four prompt versions took the judge from κ = −0.102 (significantly worse than
+chance) to **0.687** — and finding that it had been graded blind against humans
+who labelled with the answer key open was worth more than any of them
+([D-048](./DECISIONS.md)). But v3 and v4 were written against the same 47 labels
+they were scored on, so that number was published as provisional and a held-out
+set was labelled: 42 fresh pairs from the ReAct suite, nothing in them touched
+by either prompt.
+
+**On the held-out set: κ = 0.429 (0.187–0.662).** Below the bar
+([D-049](./DECISIONS.md)).
+
+The drop is not noise. 11 of the 12 disagreements are a single rule: a candidate
+answer that gives the *correct figure* on top of *invented supporting numbers* —
+the human called those ties, the judge called the clean answer better. Align
+that one rule and the same verdicts give κ = 0.937. So the tier's real limit is
+not the model or the prompt: **κ measures agreement, not correctness, and this
+judge is stricter than its labeller was.**
 
 Below the threshold the system marked verdicts untrusted, the report printed a
 banner, and the gate refused to block a merge on them. Above it, that machinery
