@@ -972,3 +972,72 @@ benign the first time a suite is frozen from a model that errs. The fix is a
 semantics version in the attempt key; the reason it is not done yet is that it
 invalidates every stored attempt on the first bump, and that trade is worth
 making deliberately rather than at the end of a long night.
+
+---
+
+### D-048 · The judge reaches κ = 0.687, and the two changes that got it there only work together
+
+Phase 4's criterion was κ ≥ 0.6 on 200 labelled examples. It sat published as
+*unmet* at 0.209 for the rest of the project. It is now met on the point
+estimate, at n = 47, and the road there produced a better finding than the
+number.
+
+**The judge was being measured blind against humans who had ground truth.**
+`flightrecorder/answer-key.md` opens with "Keep this open while labelling", so
+every one of the 47 labels was made by someone who knew the correct answer. The
+judge saw two anonymous strings. Asked which of "18.33%" and "11.11%" is right,
+with no data and no tools, its best available strategy is a coin flip — and κ
+duly measured one. That is not a hard task, it is an impossible one, and the
+tier had been quietly measuring an information gap rather than a judge.
+`fr calibrate` now supplies the same key by default (`--rubrics false` to
+reproduce the blind runs).
+
+**The full experiment**, all on the same 47 labels, `qwen2.5:7b` unless stated:
+
+| judge prompt | rubric | κ | 95% interval |
+|---|---|---|---|
+| v1 | blind | −0.102 | (−0.203, −0.008) |
+| v2 | blind | 0.209 | (0.001, 0.409) |
+| v3 — procedure, tie-first | blind | **0.459** | (0.276, 0.643) |
+| v3 | answer key | 0.188 | (0.029, 0.350) |
+| v4 — rubric fenced off from the tie test | blind | 0.459 | (0.266, 0.656) |
+| **v4** | **answer key** | **0.687** | (0.474, 0.865) |
+| v4 on `llama3.1:8b` | answer key | 0.654 | (0.472, 0.820) |
+
+**Neither change works alone, and one of them backfires.** Handing v3 the answer
+key *halved* its agreement, 0.459 → 0.188. The confusion matrix says exactly
+why: on pairs that genuinely differ the rubric made it near-perfect (22 of 23,
+against 11 of 23 blind), but its ties collapsed from 19 of 21 to 1 of 21. Given
+a reference, the model starts grading each answer's *resemblance* to it, so the
+answer that also shows the derivation beats the one that merely states the same
+correct figure. That is the "detail is quality" failure from v1, returning
+through a door the fix opened.
+
+v4 is v3 with one paragraph added: the rubric is explicitly out of scope until
+after the tie test. 0.188 → 0.687. **The instruction that needs to be hardest to
+skip is the one the model is most motivated to skip.**
+
+Method note, since it is the reusable part: v2 was written against v1's confusion
+matrix, v3 against v2's, v4 against v3's. Four prompts, each one addressing the
+single cell holding the most disagreement. No version was written from intuition
+after v1, and v1 is the one that scored below chance.
+
+**What this does not yet earn.** Three caveats, all pointing at the same
+remaining work:
+
+1. **The interval's lower bound is 0.474.** At n = 47 we cannot say with 95%
+   confidence that the true κ clears 0.6, only that the point estimate does.
+2. **The spec said 200 labels.** We have 47.
+3. **v3 and v4 were written against these same 47 labels.** That is tuning on
+   the test set, and the honest word for 0.687 until it is checked on unseen
+   pairs is *provisional*. A judge prompt fitted to a confusion matrix can fit
+   that matrix's noise as easily as its signal.
+
+All three close with the same action: label a fresh set and treat it as held-out
+validation rather than more training data. Until then the report keeps saying
+what it has always said, only with a different number attached, and
+`isTrustworthy` is doing the deciding rather than an opinion.
+
+**Reverses if:** validation on unseen pairs comes back below 0.6, in which case
+the honest headline returns to "not met" and v4 is recorded as overfitted — an
+outcome worth having measured either way.

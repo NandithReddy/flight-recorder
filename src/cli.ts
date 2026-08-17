@@ -42,6 +42,7 @@ import {
   importTraceBundle,
 } from "./store/portable.ts";
 import { createJudge, DEFAULT_JUDGE_PROMPT } from "./score/judge.ts";
+import { readAnswerKey } from "./score/rubrics.ts";
 import { calibrate, MIN_LABELS } from "./score/calibration.ts";
 import {
   formatConfusion,
@@ -752,8 +753,27 @@ async function main(argv: string[]): Promise<number> {
       );
 
       const judgePromptVersion = flags.get("judge-prompt") ?? DEFAULT_JUDGE_PROMPT;
+
+      // Every human label in this project was made with the answer key open.
+      // Measuring a judge that has never seen it compares two different jobs.
+      const rubrics =
+        flags.get("rubrics") === "false" ? null : await readAnswerKey(flags.get("rubrics"));
+      if (rubrics) {
+        const covered = labelledItems(set).filter((item) => rubrics.has(item.task)).length;
+        console.log(
+          dim(`  rubric from the answer key on ${covered}/${total} pairs — same reference the human had`),
+        );
+      } else if (flags.get("rubrics") !== "false") {
+        // Said out loud, because it is worth 0.5 kappa on this task set: the
+        // judge is being measured blind against humans who had ground truth.
+        console.log(
+          yellow("  no answer key — judging blind, while the humans labelled with one"),
+        );
+      }
+
       const result = await calibrate({
         set,
+        ...(rubrics ? { rubrics } : {}),
         judge: createJudge({
           client: createOllamaClient(),
           model: judgeModel,
@@ -1196,6 +1216,8 @@ async function main(argv: string[]): Promise<number> {
   pool --set <name>             build judge-vs-human pairs from stored attempts
   label --set <name>            label pairs blind (1 / 2 / t / s / q)
   calibrate --set <name>        measure the judge against those labels
+      --judge-prompt v3           which judge prompt to measure
+      --rubrics false             judge blind, without the human's answer key
       --judge <model>             judge model (default qwen2.5:7b)
       --judge-prompt <version>    judge prompt variant (v1, v2)
       --position-bias             also run both orders to measure bias

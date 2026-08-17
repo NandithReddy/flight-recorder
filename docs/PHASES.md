@@ -9,7 +9,7 @@ Full rationale for each phase lives in [spec.html](./spec.html).
 | 01 | Recorder | 3–5 | **done** |
 | 02 | Store + freezer | 2–3 | **done** |
 | 03 | Replayer | 4–6 | **done** |
-| 04 | Scorer | 5–7 | **built and calibrated — criterion not met, honestly** |
+| 04 | Scorer | 5–7 | **κ = 0.687 on 47 labels — bar cleared, provisionally (D-048)** |
 | 05 | Reporter | 3–4 | **done** |
 | 06 | Gate | 2 | **done** |
 | 07 | Dogfood + writeup | 4–5 | **done** |
@@ -145,7 +145,7 @@ dropped capabilities, timeout enforced. It is opt-in per tool, because the demo
 agent's tools are pure in-process functions and containerising one would be
 theatre. It exists for the shape phase 07's open-source agent is likely to have.
 
-## Phase 04 — Scorer — **machinery built, calibration awaiting labels**
+## Phase 04 — Scorer — **bar cleared on the point estimate, provisionally**
 
 **Exit criterion:** κ ≥ 0.6 on 200 labelled examples; judging under 15% of run cost.
 
@@ -157,15 +157,33 @@ theatre. It exists for the shape phase 07's open-source agent is likely to have.
 - [x] Blind labelling CLI, incremental save, committed label store
 - [x] 137 tests passing, `tsc --noEmit` clean
 - [x] 47 human labels collected
-- [ ] **κ ≥ 0.6 — not met. No locally-runnable judge reaches it on this task.**
+- [x] **κ ≥ 0.6 — met at 0.687** on 47 labels, after four prompt versions and
+      giving the judge the same answer key the humans labelled with (D-048)
+- [ ] **200 labels, and validation on pairs the prompt was not tuned against.**
+      The interval is (0.474, 0.865), so n = 47 cannot confirm the true κ ≥ 0.6.
 
-**The criterion is not met, and that is the result rather than a gap.** Best
-measured judge: qwen2.5:7b under prompt v2, κ = 0.209 (0.001–0.409) on n=47.
-Below the 0.6 threshold, so the system marks its verdicts untrusted, the report
-prints a banner saying so, and the gate refuses to block a merge on them. That
-behaviour is verified end to end.
+**The criterion is met on the point estimate, and the caveat is the interesting
+part.** Best measured judge: qwen2.5:7b under prompt v4 with the answer key
+supplied, **κ = 0.687 (0.474–0.865) on n=47** — up from 0.209, and from −0.102
+where this started. Two changes got it there and neither works alone: a judge
+that follows a procedure rather than forming an opinion, and a judge given the
+same answer key the human labellers had. Handing the key to the *earlier* prompt
+made it worse, 0.459 → 0.188. Full experiment in [D-048](./DECISIONS.md).
 
-Shipping a judge at κ = 0.209 *as if it were fact* is the failure this tier
+It stayed unmet for most of this project's life, and the honest word for it now
+is **provisional**: the interval's lower bound is 0.474, the spec asked for 200
+labels rather than 47, and prompts v3 and v4 were written against the very
+labels they are scored on. That last one is tuning on the test set, and it is
+why the next labelling session should be treated as held-out validation rather
+than more of the same.
+
+Below the threshold the system marked verdicts untrusted, the report printed a
+banner, and the gate refused to block a merge on them. Above it, that machinery
+now lets them through — which is exactly why the threshold has to be a measured
+number and not a hopeful one. That behaviour is verified end to end in both
+directions.
+
+Shipping a judge at κ = 0.209 *as if it were fact* was the failure this tier
 exists to prevent. Measuring it, publishing it, and degrading on it is the tier
 working.
 

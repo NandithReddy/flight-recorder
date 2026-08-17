@@ -108,12 +108,112 @@ const JUDGE_PROMPT_V2 = [
   'Reply with one line of JSON and nothing else: {"winner": "A"|"B"|"TIE", "reason": "<one sentence>"}',
 ].join("\n");
 
+/**
+ * v3, written against v2's confusion matrix — the same method that produced v2,
+ * applied to what v2 actually did rather than to what v1 did.
+ *
+ * v2 fixed the thing it was written to fix: it says TIE 9 times where v1 said it
+ * 0. The remaining error is concentrated in one cell. Of the 21 pairs a human
+ * called equivalent, the judge called 11 of them wins for one side — half its
+ * total disagreement sits there, and every one of those is the judge finding a
+ * tiebreaker in wording after the figures already matched.
+ *
+ * So v3 stops asking for a comparison and asks for a procedure: extract each
+ * answer's figure first, and let TIE fall out of the figures agreeing rather
+ * than be a verdict the model has to talk itself into. Telling a model that
+ * "TIE is a real verdict" is a hint. Telling it to compare two extracted values
+ * is an instruction.
+ */
+const JUDGE_PROMPT_V3 = [
+  "You are comparing two answers to the same task. Follow this procedure exactly.",
+  "",
+  "STEP 1. From each answer, extract the single figure it gives as its final",
+  "answer to the task. If an answer gives no figure, or says it cannot find the",
+  "data, record it as NONE.",
+  "",
+  "STEP 2. Compare the two extracted figures.",
+  "  - Same figure (allowing for rounding and formatting — 18.33%, 18.3% and",
+  '    "about 18.33 percent" are the same figure): the verdict is TIE. Stop.',
+  "    Do not look for a tiebreaker in the wording, the detail, the explanation,",
+  "    or the confidence. Two answers that reach the same figure are equally",
+  "    correct, however differently they are written.",
+  "  - Both NONE: the verdict is TIE. Stop.",
+  "  - The figures differ: go to step 3.",
+  "",
+  "STEP 3. Decide which figure is right, using the RUBRIC if one is given.",
+  "Without a rubric, judge which figure the answer actually establishes.",
+  "  - A figure derived from numbers the answer invented is wrong, no matter how",
+  "    correct the arithmetic over them is. Shown working is not evidence; it is",
+  "    the cheapest thing to fabricate.",
+  "  - NONE beats a wrong figure. An answer that says it could not find the data",
+  "    is better than one that invents a plausible number.",
+  "  - Length, detail and confidence are not evidence of anything.",
+  "",
+  'Reply with one line of JSON and nothing else: {"winner": "A"|"B"|"TIE", "reason": "<one sentence>"}',
+].join("\n");
+
+/**
+ * v4 — v3's procedure, defended against the rubric.
+ *
+ * Giving v3 the answer key made it *worse*: kappa fell from 0.459 to 0.188. The
+ * matrix says exactly what happened. On pairs that genuinely differ it became
+ * near-perfect (22 of 23, against 11 of 23 blind) — the rubric works. But its
+ * ties collapsed from 19 of 21 to 1 of 21: handed a reference, the model starts
+ * grading each answer's *resemblance* to it, and the answer that also shows the
+ * derivation wins over the one that just states the same correct figure.
+ *
+ * That is v2's "detail is quality" failure returning through a new door, and it
+ * is invisible to a prompt that merely mentions the rubric late. v4 fences the
+ * rubric off from the tie test explicitly, because the instruction that needs to
+ * be hardest to skip is the one the model is most motivated to skip.
+ */
+const JUDGE_PROMPT_V4 = [
+  "You are comparing two answers to the same task. Follow this procedure exactly,",
+  "in order. Do not skip ahead.",
+  "",
+  "STEP 1. From each answer, extract the single figure it gives as its final",
+  "answer to the task. If an answer gives no figure, or says it cannot find the",
+  "data, record it as NONE. Ignore everything else in the answer.",
+  "",
+  "STEP 2. Compare ONLY those two extracted figures with each other.",
+  "IGNORE THE RUBRIC ENTIRELY IN THIS STEP. It is not relevant yet.",
+  "  - Same figure (allowing for rounding and formatting — 18.33%, 18.3% and",
+  '    "about 18.33 percent" are the same figure): the verdict is TIE. Stop.',
+  "  - Both NONE: the verdict is TIE. Stop.",
+  "  - The figures differ: go to step 3.",
+  "",
+  "Two answers that reach the same figure are equally correct and the verdict is",
+  "TIE, even when one of them shows its working, explains its derivation, matches",
+  "the rubric's wording more closely, or is better written. None of that breaks a",
+  "tie. If you have reached this line because both figures were the same, the",
+  "answer is TIE and there is nothing further to weigh.",
+  "",
+  "STEP 3. Only now, and only because the figures differ: decide which figure is",
+  "right. Use the RUBRIC as ground truth if one is given. Without a rubric, judge",
+  "which figure the answer actually establishes.",
+  "  - A figure derived from numbers the answer invented is wrong, however",
+  "    correct the arithmetic over them is. Shown working is the cheapest thing",
+  "    to fabricate.",
+  "  - NONE beats a wrong figure: saying the data could not be found is better",
+  "    than inventing a plausible number.",
+  "",
+  'Reply with one line of JSON and nothing else: {"winner": "A"|"B"|"TIE", "reason": "<one sentence>"}',
+].join("\n");
+
 export const JUDGE_PROMPTS: Record<string, string> = {
   v1: JUDGE_PROMPT_V1,
   v2: JUDGE_PROMPT_V2,
+  v3: JUDGE_PROMPT_V3,
+  v4: JUDGE_PROMPT_V4,
 };
 
-export const DEFAULT_JUDGE_PROMPT = "v2";
+/**
+ * v4, because it is the only version measured above the trust threshold
+ * (kappa 0.687 against 47 human labels, with the answer key supplied). v1-v3 are
+ * kept rather than deleted: an improvement nobody can re-measure is an
+ * assertion, and the four together are the evidence.
+ */
+export const DEFAULT_JUDGE_PROMPT = "v4";
 
 function buildPrompt(item: JudgeItem, baselineShownAs: "A" | "B"): string {
   const a = baselineShownAs === "A" ? item.baseline : item.candidate;

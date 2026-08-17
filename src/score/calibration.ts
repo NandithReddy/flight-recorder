@@ -26,6 +26,12 @@ export interface CalibrationOptions {
    * directly. Doubles the cost, so it is opt-in.
    */
   measurePositionBias?: boolean;
+  /**
+   * The reference the human had. Every label in this project was made with the
+   * answer key open, so measuring a judge that has never seen it compares two
+   * different jobs and blames the judge for the difference (see rubrics.ts).
+   */
+  rubrics?: ReadonlyMap<string, string>;
   onProgress?: (done: number, total: number) => void;
   now?: number;
 }
@@ -69,6 +75,7 @@ export async function calibrate(options: CalibrationOptions): Promise<Calibratio
       task: item.task,
       baseline: item.baseline,
       candidate: item.candidate,
+      rubric: options.rubrics?.get(item.task) ?? null,
     };
 
     let verdict;
@@ -110,6 +117,7 @@ export async function calibrate(options: CalibrationOptions): Promise<Calibratio
     labelSet: options.set.name,
     judgeModel: options.judgeModel,
     judgePromptVersion: options.judgePromptVersion ?? "unknown",
+    rubricPairs: pairs.filter(({ item }) => options.rubrics?.has(item.task)).length,
     n: pairs.length,
     kappa: kappa.kappa,
     kappaLower: kappa.interval.lower,

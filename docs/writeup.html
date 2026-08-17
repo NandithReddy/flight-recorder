@@ -297,14 +297,15 @@
 
   <p class="eyebrow">Project postmortem</p>
   <h1>Wrong, Not Broken</h1>
-  <p class="standfirst">I built a regression harness for LLM agents. It found fourteen defects. Not one of them was a crash — every single one was a number that was quietly wrong, including in the harness's own judge, which turned out to be worse than a coin flip.</p>
+  <p class="standfirst">I built a regression harness for LLM agents. It found fourteen defects. Not one of them was a crash — every single one was a number that was quietly wrong, including in the harness's own judge, which measured worse than a coin flip until I worked out I had been grading it blind against humans who held the answer key.</p>
 
   <dl class="stats wide">
     <div><dt>Defects found</dt><dd>14</dd></div>
     <div><dt>That crashed</dt><dd>0</dd></div>
     <div><dt>Human labels</dt><dd>47</dd></div>
+    <div><dt>Judge κ</dt><dd>−0.10 → 0.69</dd></div>
     <div><dt>Agent loops</dt><dd>2</dd></div>
-    <div><dt>Tests</dt><dd>203</dd></div>
+    <div><dt>Tests</dt><dd>211</dd></div>
     <div><dt>API spend</dt><dd>$0</dd></div>
   </dl>
 
@@ -496,53 +497,58 @@
   <p>My first judge scored <strong>below</strong> zero.</p>
 
   <figure class="wide fig-scroll">
-    <svg viewBox="0 0 720 250" role="img" aria-label="Cohen's kappa for three judge configurations with 95% confidence intervals: qwen2.5:7b with prompt v1 at -0.102, spanning -0.203 to -0.008; qwen2.5:7b with prompt v2 at 0.209, spanning 0.001 to 0.409; llama3.1:8b with prompt v2 at 0.089, spanning -0.117 to 0.307. The trustworthy threshold is 0.6, which none reach.">
+    <svg viewBox="0 0 830 334" role="img" aria-label="Cohen's kappa for five judge configurations with 95% confidence intervals, all measured on the same 47 human labels. Prompt v1 judging blind scores -0.102, entirely below zero. v2 blind scores 0.209. v3 blind scores 0.459. v3 given the answer key scores 0.188 — worse than v3 blind. v4, which fences the answer key off from the tie test, scores 0.687 and is the only configuration above the 0.6 trust threshold.">
       <defs>
         <marker id="wu-tick" viewBox="0 0 4 10" refX="2" refY="5" markerWidth="4" markerHeight="10" orient="auto">
           <line x1="2" y1="0" x2="2" y2="10" stroke="currentColor" stroke-width="1.4" />
         </marker>
       </defs>
 
-      <!-- zero line -->
-      <line x1="258" y1="34" x2="258" y2="196" stroke="currentColor" stroke-opacity="0.4" stroke-width="1" />
-      <text x="258" y="24" text-anchor="middle" font-size="10" fill="var(--ink-3)">0 — chance</text>
+      <line x1="300" y1="34" x2="300" y2="278" stroke="currentColor" stroke-opacity="0.4" stroke-width="1" />
+      <text x="300" y="24" text-anchor="middle" font-size="10" fill="var(--ink-3)">0 — chance</text>
 
-      <!-- trust threshold -->
-      <line x1="594" y1="34" x2="594" y2="196" stroke="var(--accent)" stroke-width="1.4" stroke-dasharray="4 4" />
-      <text x="594" y="24" text-anchor="middle" font-size="10" fill="var(--accent)">0.6 — trustworthy</text>
+      <line x1="612" y1="34" x2="612" y2="278" stroke="var(--accent)" stroke-width="1.4" stroke-dasharray="4 4" />
+      <text x="612" y="24" text-anchor="middle" font-size="10" fill="var(--accent)">0.6 — trustworthy</text>
 
-      <!-- row 1: qwen v1 -->
-      <text x="82" y="74" text-anchor="end" font-size="12" font-weight="700" fill="var(--ink)">qwen2.5:7b</text>
-      <text x="82" y="88" text-anchor="end" font-size="10" fill="var(--ink-3)">prompt v1</text>
-      <line x1="144" y1="72" x2="254" y2="72" stroke="var(--bad)" stroke-width="1.6"
+      <text x="82" y="59" text-anchor="end" font-size="11.5" font-weight="700" fill="var(--ink)">qwen2.5:7b</text>
+      <text x="82" y="73" text-anchor="end" font-size="9.5" fill="var(--ink-3)">v1 · blind</text>
+      <line x1="194.4" y1="62" x2="295.8" y2="62" stroke="var(--bad)" stroke-opacity="1" stroke-width="1.6"
             marker-start="url(#wu-tick)" marker-end="url(#wu-tick)" />
-      <circle cx="201" cy="72" r="5" fill="var(--bad)" />
-      <text x="264" y="76" font-size="11" fill="var(--bad)" font-weight="700">−0.102</text>
-
-      <!-- row 2: qwen v2 -->
-      <text x="82" y="128" text-anchor="end" font-size="12" font-weight="700" fill="var(--ink)">qwen2.5:7b</text>
-      <text x="82" y="142" text-anchor="end" font-size="10" fill="var(--ink-3)">prompt v2</text>
-      <line x1="259" y1="126" x2="487" y2="126" stroke="var(--good)" stroke-width="1.6"
+      <circle cx="247.0" cy="62" r="4.5" fill="var(--bad)" fill-opacity="1" />
+      <text x="304.8" y="66" font-size="11" fill="var(--bad)" fill-opacity="1" font-weight="700">-0.102</text>
+      <text x="82" y="105" text-anchor="end" font-size="11.5" font-weight="700" fill="var(--ink)">qwen2.5:7b</text>
+      <text x="82" y="119" text-anchor="end" font-size="9.5" fill="var(--ink-3)">v2 · blind</text>
+      <line x1="300.5" y1="108" x2="512.7" y2="108" stroke="currentColor" stroke-opacity="0.55" stroke-width="1.6"
             marker-start="url(#wu-tick)" marker-end="url(#wu-tick)" />
-      <circle cx="375" cy="126" r="5" fill="var(--good)" />
-      <text x="497" y="130" font-size="11" fill="var(--good)" font-weight="700">0.209</text>
-
-      <!-- row 3: llama v2 -->
-      <text x="82" y="182" text-anchor="end" font-size="12" font-weight="700" fill="var(--ink)">llama3.1:8b</text>
-      <text x="82" y="196" text-anchor="end" font-size="10" fill="var(--ink-3)">prompt v2</text>
-      <line x1="192" y1="180" x2="430" y2="180" stroke="currentColor" stroke-opacity="0.55" stroke-width="1.6"
+      <circle cx="408.7" cy="108" r="4.5" fill="currentColor" fill-opacity="0.55" />
+      <text x="521.7" y="112" font-size="11" fill="currentColor" fill-opacity="0.55" font-weight="700">+0.209</text>
+      <text x="82" y="151" text-anchor="end" font-size="11.5" font-weight="700" fill="var(--ink)">qwen2.5:7b</text>
+      <text x="82" y="165" text-anchor="end" font-size="9.5" fill="var(--ink-3)">v3 · blind</text>
+      <line x1="443.5" y1="154" x2="634.4" y2="154" stroke="currentColor" stroke-opacity="0.55" stroke-width="1.6"
             marker-start="url(#wu-tick)" marker-end="url(#wu-tick)" />
-      <circle cx="308" cy="180" r="5" fill="currentColor" fill-opacity="0.55" />
-      <text x="440" y="184" font-size="11" fill="var(--ink-3)">0.089</text>
+      <circle cx="538.7" cy="154" r="4.5" fill="currentColor" fill-opacity="0.55" />
+      <text x="643.4" y="158" font-size="11" fill="currentColor" fill-opacity="0.55" font-weight="700">+0.459</text>
+      <text x="82" y="197" text-anchor="end" font-size="11.5" font-weight="700" fill="var(--ink)">qwen2.5:7b</text>
+      <text x="82" y="211" text-anchor="end" font-size="9.5" fill="var(--ink-3)">v3 · answer key</text>
+      <line x1="315.1" y1="200" x2="482.0" y2="200" stroke="var(--bad)" stroke-opacity="1" stroke-width="1.6"
+            marker-start="url(#wu-tick)" marker-end="url(#wu-tick)" />
+      <circle cx="397.8" cy="200" r="4.5" fill="var(--bad)" fill-opacity="1" />
+      <text x="491.0" y="204" font-size="11" fill="var(--bad)" fill-opacity="1" font-weight="700">+0.188</text>
+      <text x="82" y="243" text-anchor="end" font-size="11.5" font-weight="700" fill="var(--ink)">qwen2.5:7b</text>
+      <text x="82" y="257" text-anchor="end" font-size="9.5" fill="var(--ink-3)">v4 · answer key</text>
+      <line x1="546.5" y1="246" x2="749.8" y2="246" stroke="var(--good)" stroke-opacity="1" stroke-width="1.6"
+            marker-start="url(#wu-tick)" marker-end="url(#wu-tick)" />
+      <circle cx="657.2" cy="246" r="4.5" fill="var(--good)" fill-opacity="1" />
+      <text x="758.8" y="250" font-size="11" fill="var(--good)" fill-opacity="1" font-weight="700">+0.687</text>
 
-      <!-- axis -->
-      <line x1="90" y1="212" x2="650" y2="212" stroke="currentColor" stroke-opacity="0.3" stroke-width="1" />
-      <text x="90"  y="230" text-anchor="middle" font-size="10" fill="var(--ink-3)">−0.3</text>
-      <text x="258" y="230" text-anchor="middle" font-size="10" fill="var(--ink-3)">0</text>
-      <text x="426" y="230" text-anchor="middle" font-size="10" fill="var(--ink-3)">0.3</text>
-      <text x="594" y="230" text-anchor="middle" font-size="10" fill="var(--ink-3)">0.6</text>
+      <line x1="144" y1="284" x2="768" y2="284" stroke="currentColor" stroke-opacity="0.3" stroke-width="1" />
+      <text x="144" y="302" text-anchor="middle" font-size="10" fill="var(--ink-3)">-0.3</text>
+      <text x="300" y="302" text-anchor="middle" font-size="10" fill="var(--ink-3)">0</text>
+      <text x="456" y="302" text-anchor="middle" font-size="10" fill="var(--ink-3)">0.3</text>
+      <text x="612" y="302" text-anchor="middle" font-size="10" fill="var(--ink-3)">0.6</text>
+      <text x="768" y="302" text-anchor="middle" font-size="10" fill="var(--ink-3)">0.9</text>
     </svg>
-    <figcaption>Cohen's κ with 95% bootstrap intervals, n=47. The first configuration's interval sits entirely below zero — it is <em>significantly</em> worse than chance. Rewriting the judge's prompt moved it by 0.31 on the same model and the same labels. A larger model under identical instructions did worse, and its interval crosses zero, so it cannot be distinguished from guessing.</figcaption>
+    <figcaption>Cohen's κ with 95% bootstrap intervals, all on the same 47 human labels. The first configuration's interval sits entirely below zero — it is <em>significantly</em> worse than chance. Every version after v1 was written against its predecessor's confusion matrix rather than from intuition. Note the fourth row: handing v3 the answer key <em>halved</em> its agreement, because a model given a reference starts grading resemblance to it and stops calling equal answers equal. v4 is v3 with one paragraph fencing the rubric out of the tie test.</figcaption>
   </figure>
 
   <h3>Why it failed</h3>
@@ -563,17 +569,45 @@
 
   <h3>What fixed it, and what did not</h3>
 
-  <p>A rewritten prompt — one that explicitly states that shown arithmetic can be invented, that length is not accuracy, that an admission of ignorance beats a plausible fabrication, and that TIE is a real verdict — moved κ from −0.102 to 0.209.</p>
+  <p>A rewritten prompt — one that explicitly states that shown arithmetic can be invented, that length is not accuracy, that an admission of ignorance beats a plausible fabrication, and that TIE is a real verdict — moved κ from −0.102 to 0.209. Above chance, and nowhere near good enough.</p>
 
-  <p>A bigger model did not. <code>llama3.1:8b</code> under the same instructions scored 0.089, with an interval crossing zero. <strong>The prompt mattered more than the model</strong>, which is not what I would have guessed before measuring.</p>
+  <p>A bigger model did not help. <code>llama3.1:8b</code> under the same instructions scored 0.089, with an interval crossing zero. <strong>The prompt mattered more than the model</strong>, which is not what I would have guessed before measuring.</p>
 
-  <h2>The number I did not hit</h2>
+  <p>What eventually worked was giving up on describing what I wanted and specifying a procedure instead. v2 <em>told</em> the judge that TIE was a real verdict; it still called 11 of 21 equivalent pairs a win for one side. v3 stopped asking for an opinion: extract the final figure from each answer, compare those two figures, and if they match the verdict is TIE — stop, do not look for a tiebreaker. Ties went from 9 correct to 19, and κ from 0.209 to <strong>0.459</strong>.</p>
 
-  <p>My own spec set the bar at κ ≥ 0.6 on 200 labelled examples. I reached <strong>0.209 on 47</strong>. Both halves missed.</p>
+  <p><strong>Telling a model what to conclude is a hint. Telling it what to compare is an instruction.</strong> That is the most portable thing I learned here.</p>
 
-  <p>So the system does the thing I built it to do: judged verdicts are marked untrusted, the report prints a banner explaining why, and the CI gate refuses to block a merge on any of them. Verified end to end — on a real run it flagged one verdict, the gate ignored it, and the build still failed on twenty-nine deterministic regressions that are not opinions.</p>
+  <h2>The unfair test I had been running</h2>
 
-  <p class="lede">Shipping a judge at κ = 0.209 as though it were fact is the failure this tier exists to prevent. Measuring it, publishing it, and degrading on it is the tier working. I would rather present a low number I can defend than a high one I never checked.</p>
+  <p>Then I read my own answer key, which opens with a line I had written months earlier and never thought about again:</p>
+
+  <blockquote><p>"Keep this open while labelling. Knowing the correct answer is what makes a label worth anything."</p></blockquote>
+
+  <p>Every one of those 47 human labels was made by someone holding ground truth. The judge being measured against them saw two anonymous strings and no data. Asked which of "18.33%" and "11.11%" is correct, with no tools and no reference, <strong>its best available strategy is a coin flip</strong> — and κ had been faithfully measuring one. I had spent four prompt versions trying to fix a judge that was mostly being asked to guess.</p>
+
+  <p>So I gave it the same key. κ fell to <strong>0.188</strong>.</p>
+
+  <p>The confusion matrix explains it in one line each way. On pairs that genuinely differ, the rubric made the judge nearly perfect — 22 of 23, against 11 of 23 blind. On pairs that agree, its ties collapsed from 19 of 21 to <em>one</em>. Handed a reference, the model stops comparing the two answers and starts grading each one's <em>resemblance</em> to the reference, so the answer that also shows the derivation beats the answer that merely states the same correct figure.</p>
+
+  <p>That is the "detail is quality" failure from v1, walking back in through the door my fix had opened.</p>
+
+  <p>v4 is v3 with one paragraph added — the rubric is explicitly out of scope until after the tie test, in capitals, because the instruction that most needs to survive is the one the model is most motivated to skip. <strong>0.188 → 0.687.</strong></p>
+
+  <h2>The number I finally hit, with an asterisk</h2>
+
+  <p>My own spec set the bar at κ ≥ 0.6 on 200 labelled examples. The judge now scores <strong>0.687</strong>, and the same prompt reaches 0.654 on a different model, so this is a property of the instructions rather than a lucky draw.</p>
+
+  <p>Three reasons I am calling that <em>provisional</em> rather than done:</p>
+
+  <ul>
+    <li>The 95% interval is <strong>(0.474, 0.865)</strong>. At n = 47 the point estimate clears 0.6; the interval does not, so I cannot yet claim the true value does.</li>
+    <li>The spec said 200 labels. I have 47.</li>
+    <li><strong>v3 and v4 were written against the same 47 labels they are scored on.</strong> That is tuning on the test set. A prompt fitted to a confusion matrix can fit that matrix's noise as easily as its signal, and nothing I have distinguishes the two yet.</li>
+  </ul>
+
+  <p>All three close with the same action, which is the next thing I would do: label a fresh set and treat it as held-out validation rather than more training data. If it comes back under 0.6, v4 is overfitted and the honest headline reverts — an outcome worth having measured either way.</p>
+
+  <p class="lede">For most of this project's life the honest answer was "I did not hit my own number, and here is exactly how far off I was." The tier existed to make that statement possible, and the machinery that marked those verdicts untrusted is the same machinery now letting them through. That is only safe because the threshold is a measured quantity rather than a hopeful one — which is the entire argument for building the third tier at all.</p>
 
   <h2>Things that were true and surprising</h2>
 
@@ -583,14 +617,14 @@
     <table>
       <thead><tr><th>model</th><th>runs errored</th><th>as judge (κ)</th></tr></thead>
       <tbody>
-        <tr><td>qwen2.5:7b</td><td class="num good">0 / 60</td><td class="num">0.209</td></tr>
+        <tr><td>qwen2.5:7b</td><td class="num good">0 / 60</td><td class="num">0.209 → 0.687</td></tr>
         <tr><td>llama3.2:3b</td><td class="num">13 / 30</td><td class="num muted">—</td></tr>
-        <tr><td>llama3.1:8b</td><td class="num bad">26 / 30</td><td class="num">0.089</td></tr>
+        <tr><td>llama3.1:8b</td><td class="num bad">26 / 30</td><td class="num">0.089 → 0.654</td></tr>
       </tbody>
     </table>
   </div>
 
-  <p>The 8B model failed nearly nine runs in ten as an agent, and was the weakest of the three as a judge. Parameter count predicted neither. An averages-only report would have hidden both.</p>
+  <p>The 8B model failed nearly nine runs in ten as an agent, and was the weakest of the three as a judge — until the prompt was fixed, at which point it landed within 0.03 of the 7B model. Parameter count predicted neither the agent failures nor the judging, and the arrows in that last column are all prompt, not model.</p>
 
   <h3>Broken agents are cheaper and faster</h3>
 
@@ -606,14 +640,16 @@
 
   <ul>
     <li><strong>Point it at a real model on day one.</strong> A deterministic mock is a fast way to build a harness that only works against a deterministic mock. Three of the fourteen were invisible until a real model was involved, and they surfaced within minutes of one being connected.</li>
-    <li><strong>Write the judge's prompt against a confusion matrix, not from intuition.</strong> My intuition produced a judge that was worse than random. Ten minutes with the matrix produced one that was not.</li>
+    <li><strong>Write the judge's prompt against a confusion matrix, not from intuition.</strong> My intuition produced a judge that was worse than random. Four versions, each written against its predecessor's matrix, produced one at 0.687.</li>
+    <li><strong>Specify a procedure, not a preference.</strong> Telling the judge "TIE is a real verdict" changed almost nothing. Telling it to extract both figures and compare <em>those</em> moved κ by 0.25.</li>
+    <li><strong>Check that the grader and the graded have the same information.</strong> I spent four prompt versions on a judge that was, for half its task, being asked to guess — because the humans it was scored against had an answer key open and it did not.</li>
     <li><strong>Treat every prompt as configuration.</strong> The agent's prompt, and the judge's. Both change the answer, so both belong in the comparison matrix and in version control. I had the agent's prompt as a config field and ignored it for four phases.</li>
     <li><strong>Keep the boring test cases.</strong> The pairs that felt like filler are the ones that caught the judge's inability to say "equal".</li>
   </ul>
 
   <h2>What I would still not claim</h2>
 
-  <p>The judge remains below its trust threshold, and the report says so on every page it touches. The task set is synthetic — thirty questions over a fictional metrics warehouse — chosen so ground truth is always derivable, at the cost of realism. And the "foreign" agent shares my tools and prompts by design, so the comparison isolates the loop; a fully alien agent with its own tools would need the recording proxy this architecture deliberately avoided. Each of these is a boundary I would state in a review, so it belongs here too.</p>
+  <p>The judge's 0.687 is measured on the same 47 labels that two of its four prompt versions were written against — tuning on the test set, and provisional until it is checked on unseen pairs. The task set is synthetic — thirty questions over a fictional metrics warehouse — chosen so ground truth is always derivable, at the cost of realism. And the "foreign" agent shares my tools and prompts by design, so the comparison isolates the loop; a fully alien agent with its own tools would need the recording proxy this architecture deliberately avoided. Each of these is a boundary I would state in a review, so it belongs here too.</p>
 
   <h2>What it cost</h2>
 
@@ -622,7 +658,7 @@
   <p>The expensive input was attention. Forty-seven pairs, labelled by hand, roughly twenty minutes. That is the only part of this that cannot be automated, and it is the part everything else is measured against. If a model labels the calibration set, the judge has been graded by a model — which is precisely the failure the calibration exists to detect.</p>
 
   <footer>
-    203 tests, all seven build phases complete; the gate demonstration is a public pull request blocked by CI with every unit test green. Traces are stored transactionally with payload-level deduplication; assertions are proposed from recordings and reviewed rather than authored; reports carry percentile bootstrap intervals over paired resamples and refuse to name a direction they cannot support. Every figure in this piece is reproducible from the repository.
+    211 tests, all seven build phases complete; the gate demonstration is a public pull request blocked by CI with every unit test green. Traces are stored transactionally with payload-level deduplication; assertions are proposed from recordings and reviewed rather than authored; reports carry percentile bootstrap intervals over paired resamples and refuse to name a direction they cannot support. Every figure in this piece is reproducible from the repository.
   </footer>
 
 </main>

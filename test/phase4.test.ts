@@ -29,10 +29,13 @@ import {
 import {
   baselineSlotFor,
   createJudge,
+  DEFAULT_JUDGE_PROMPT,
+  JUDGE_PROMPTS,
   parseVerdict,
   type Judge,
   type JudgeItem,
 } from "../src/score/judge.ts";
+import { parseAnswerKey, readAnswerKey } from "../src/score/rubrics.ts";
 import { score, scoreTier1, isVerdictTrusted } from "../src/score/scorer.ts";
 import {
   LabelStore,
@@ -66,11 +69,22 @@ afterEach(async () => {
   await rm(root, { recursive: true, force: true });
 });
 
+/**
+ * `reply` receives the USER turn only, never the system prompt.
+ *
+ * Fixtures here decide by looking for an answer's figures in the text, and the
+ * judge's own instructions legitimately contain example figures — v4 uses
+ * "18.33%" to illustrate what counts as the same figure. Joining both turns
+ * made two of these tests fail on a prompt edit that changed no behaviour.
+ */
 function fakeClient(reply: (prompt: string) => string): ModelClient {
   return {
     providerId: "fake",
     async generate(request) {
-      const prompt = request.messages.map((m) => m.content).join("\n");
+      const prompt = request.messages
+        .filter((message) => message.role === "user")
+        .map((message) => message.content)
+        .join("\n");
       return {
         text: reply(prompt),
         toolCalls: [],
@@ -602,6 +616,39 @@ describe("calibration", () => {
     })),
   });
 
+  it("hands the judge the same reference the human had", async () => {
+    // Every label in this project was made with the answer key open, and the
+    // judge measured against them had never seen it. Supplying it is worth
+    // ~0.23 kappa here; the tier was partly measuring an information gap.
+    const seen: (string | null | undefined)[] = [];
+    const judge: Judge = {
+      judge: async (item) => {
+        seen.push(item.rubric);
+        return {
+          winner: "tie" as const,
+          reason: "",
+          baselineShownAs: "A" as const,
+          raw: "",
+          usage: { inputTokens: 1, outputTokens: 1, costUsd: 0 },
+          unparsed: false,
+        };
+      },
+      measurePositionBias: async () => ({ flipped: false, verdicts: [] }),
+    };
+
+    await calibrate({
+      set: setOf(30, () => "tie"),
+      judge,
+      judgeModel: "fake",
+      rubrics: new Map([["task 0", "Correct answer: 18.33%."]]),
+      now: 1,
+    });
+
+    expect(seen[0]).toBe("Correct answer: 18.33%.");
+    // A task with no rubric row gets null, not the previous item's rubric.
+    expect(seen[1]).toBeNull();
+  });
+
   it("refuses to report kappa on too few labels", async () => {
     const judge = createJudge({ client: fakeClient(() => '{"winner":"TIE"}'), model: "fake" });
     await expect(
@@ -711,5 +758,73 @@ describe("label pool quality", () => {
 
     const result = await store.addItems("s", [...blanks, ...real]);
     expect(result.added).toBe(5);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// The answer key, as a rubric
+// ---------------------------------------------------------------------------
+
+describe("answer key parsing", () => {
+  it("reads the committed key into task → correct answer", () => {
+    const rubrics = parseAnswerKey(
+      [
+        "| # | task | correct answer | from |",
+        "|---|------|----------------|------|",
+        "| 1 | How much did active users grow? | **18.33%** | 1,200,000 → 1,420,000 |",
+        "| 2 | What was ARR growth? | **53.0%** | $31.5M → $48.2M |",
+      ].join("\n"),
+    );
+
+    expect(rubrics.get("How much did active users grow?")).toBe(
+      "Correct answer: 18.33% (from 1,200,000 → 1,420,000).",
+    );
+    expect(rubrics.size).toBe(2);
+  });
+
+  it("skips the header and any row that is not a numbered entry", () => {
+    const rubrics = parseAnswerKey(
+      [
+        "Some prose about keeping this open while labelling.",
+        "| # | task | correct answer | from |",
+        "|---|------|----------------|------|",
+        "| | missing index | 1% | x |",
+        "| 3 | kept | **4.0%** | 336 of 8,400 |",
+      ].join("\n"),
+    );
+
+    expect([...rubrics.keys()]).toEqual(["kept"]);
+  });
+
+  it("parses the key this repository actually ships", async () => {
+    // The rubric is worth ~0.23 kappa, so a format drift that silently yielded
+    // an empty map would look like a judge regression.
+    const rubrics = await readAnswerKey();
+    expect(rubrics).not.toBeNull();
+    expect(rubrics!.size).toBeGreaterThanOrEqual(30);
+    expect(rubrics!.get("How much did active users grow last quarter, in percent?")).toContain(
+      "18.33%",
+    );
+  });
+
+  it("returns null when there is no key, rather than throwing", async () => {
+    expect(await readAnswerKey("flightrecorder/no-such-key.md")).toBeNull();
+  });
+});
+
+describe("judge prompt versions", () => {
+  it("keeps every measured version, so the improvement stays re-derivable", () => {
+    expect(Object.keys(JUDGE_PROMPTS)).toEqual(["v1", "v2", "v3", "v4"]);
+  });
+
+  it("defaults to the only version measured above the trust threshold", () => {
+    expect(DEFAULT_JUDGE_PROMPT).toBe("v4");
+  });
+
+  it("fences the rubric off from the tie test, which is what v3 got wrong", () => {
+    // v3 + rubric scored 0.188; v4 + the same rubric scored 0.687. The whole
+    // difference is this instruction, so it is worth pinning.
+    expect(JUDGE_PROMPTS["v4"]).toContain("IGNORE THE RUBRIC ENTIRELY IN THIS STEP");
+    expect(JUDGE_PROMPTS["v3"]).not.toContain("IGNORE THE RUBRIC");
   });
 });
